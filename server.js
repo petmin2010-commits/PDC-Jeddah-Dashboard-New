@@ -201,12 +201,12 @@ function meetingPermitStatus_(v){
 }
 
 async function getWednesdayMeetingData(){
-  const key='PDC_WEDNESDAY_MEETING_V6';
+  const key='PDC_WEDNESDAY_MEETING_V7';
   const hit=cacheGet(key);
   if(hit)return hit;
 
   const cfg=APP.PAGES.workorders;
-  const values=await valuesGet(`${qSheet(cfg.sheet)}!A:BF`);
+  const values=await valuesGet(`${qSheet(cfg.sheet)}!A:BG`);
   if(!values.length)return {updatedAt:now_(),rows:[]};
 
   const headers=(values[0]||[]).map(clean_);
@@ -233,7 +233,8 @@ async function getWednesdayMeetingData(){
     stage:col(['مرحلة التنفيذ'],54),
     stageStatus:col(['حالة المرحلة'],55),
     delayBucket:col(['شريحة ايام التاخير','شريحة أيام التأخير'],56),
-    docsStatus:57 // العمود BF مباشرة: حالة استلام مستندات المقاول
+    docsStatus:57, // العمود BF مباشرة: حالة استلام مستندات المقاول
+    docsSubStatus:58 // العمود BG مباشرة: تفصيل المستندات المستلمة
   };
 
 
@@ -263,6 +264,7 @@ async function getWednesdayMeetingData(){
       stageStatus!=='تم الانتهاء';
 
     const docsStatus=clean_(r[ix.docsStatus])||'غير محدد';
+    const docsSubStatus=clean_(r[ix.docsSubStatus])||'غير محدد';
 
     const obj={
       _row:i+2,
@@ -285,13 +287,14 @@ async function getWednesdayMeetingData(){
       delayBucket:clean_(r[ix.delayBucket])||'غير محدد',
       permitStatus,
       docsStatus,
+      docsSubStatus,
       stage,
       stageStatus:clean_(r[ix.stageStatus]),
       advice:clean_(r[ix.advice])
     };
     obj._search=[
       obj.workOrder,obj.contractor,obj.region,obj.office,obj.section,obj.category,
-      obj.workType,obj.executionStatus,obj.delayStatus,obj.permitStatus,obj.docsStatus,
+      obj.workType,obj.executionStatus,obj.delayStatus,obj.permitStatus,obj.docsStatus,obj.docsSubStatus,
       obj.stage,obj.stageStatus,obj.advice
     ].join(' ').toLowerCase();
     rows.push(obj);

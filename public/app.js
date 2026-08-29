@@ -147,7 +147,7 @@ function bindWednesdayInfoPopups(){
          <p><b>جهة التنفيذ / المكتب:</b> العمود U.</p>
          <p><b>حالة التصاريح:</b> تعتمد كليًا على العمود AO (حالة التصريح من بلدي). جميع القيم المختلفة في AO تظهر تلقائيًا في الجدول والرسم، بما فيها «انتهاء التنسيق - رفض»، وأي حالة جديدة مستقبلًا تظهر تلقائيًا.</p>
          <p><b>شريحة أيام التأخير:</b> العمود BE مباشرة.</p>
-         <p><b>حالة المستندات:</b> العمود BF، ويُحتسب فقط لأوامر العمل التي تم تنفيذها (R = تم التنفيذ)، لأن المقاول يقدم المستندات بعد التنفيذ.</p>
+         <p><b>حالة المستندات:</b> العمود BF، ويُحتسب فقط لأوامر العمل التي تم تنفيذها (R = تم التنفيذ). وعند حالة "تم الاستلام من المقاول" يتم تقسيمها تلقائيًا حسب القيم الموجودة في العمود BG.</p>
        </div>`;
      if(modal){
        modal.classList.add('show');
@@ -327,9 +327,15 @@ function renderWednesdayMeeting(){
  const incompleteRows=rows.filter(r=>statusNorm(r.executionRaw)==='لم يتم التنفيذ');
  const stoppedRows=rows.filter(r=>['موقوف/محول','متوقف/محول'].includes(statusNorm(r.executionRaw)));
 
- // فروع "تم التنفيذ" تعتمد مباشرة على العمود BF فقط.
- const docsReceived=completedRows.filter(r=>statusNorm(r.docsStatus)==='تم الاستلام من المقاول').length;
+ // فروع "تم التنفيذ" تعتمد على BF، ثم يتم تفصيل المستندات المستلمة ديناميكيًا حسب BG.
+ const receivedRows=completedRows.filter(r=>statusNorm(r.docsStatus)==='تم الاستلام من المقاول');
+ const docsReceived=receivedRows.length;
  const docsNotReceived=completedRows.filter(r=>statusNorm(r.docsStatus)==='لم يتم الاستلام من المقاول').length;
+ const docsSubEntries=meetingCountBy(receivedRows,'docsSubStatus');
+ const receivedPct=n=>docsReceived?((n/docsReceived)*100).toFixed(1)+'% من المستلم':'0.0% من المستلم';
+ const docsSubHtml=docsSubEntries.length
+   ? docsSubEntries.map(([label,count])=>`<article class="kpi-story-card kpi-story-grandchild"><span>${esc(label)}</span><strong>${fmt(count)}</strong><small>${receivedPct(count)}</small></article>`).join('')
+   : '<article class="kpi-story-card kpi-story-grandchild"><span>غير محدد</span><strong>0</strong><small>0.0% من المستلم</small></article>';
 
  // فروع "لم يتم التنفيذ" تعتمد مباشرة على العمود AB (موقف التأخير) فقط.
  // أي حالة تحتوي على تأخير/متأخر تُحسب "متأخر عن المدة" مهما كان مستوى أو عدد أيام التأخير.
@@ -357,7 +363,10 @@ function renderWednesdayMeeting(){
     <section class="kpi-story-node completed">
      <article class="kpi-story-card"><span>تم التنفيذ</span><strong>${fmt(completedRows.length)}</strong><small>${pct(completedRows.length)}</small></article>
      <div class="kpi-story-children">
-      <article class="kpi-story-card kpi-story-child"><span>تم استلام مستندات المقاول</span><strong>${fmt(docsReceived)}</strong><small>${pct(docsReceived)}</small></article>
+      <div class="kpi-story-child-node received-docs">
+       <article class="kpi-story-card kpi-story-child"><span>تم استلام مستندات المقاول</span><strong>${fmt(docsReceived)}</strong><small>${pct(docsReceived)}</small></article>
+       <div class="kpi-story-grandchildren">${docsSubHtml}</div>
+      </div>
       <article class="kpi-story-card kpi-story-child"><span>لم يتم استلام مستندات المقاول</span><strong>${fmt(docsNotReceived)}</strong><small>${pct(docsNotReceived)}</small></article>
      </div>
     </section>

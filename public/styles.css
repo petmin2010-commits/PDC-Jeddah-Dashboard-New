@@ -899,3 +899,189 @@ html[data-theme="navy"] body .emergency-performance-table tbody tr:hover{
 .kpi-story-child strong{font-size:20px;color:var(--story-color)}
 .kpi-story-node.stopped .kpi-story-children{display:none}
 @media(max-width:900px){.kpi-story-level1{gap:35px;padding:0 35px}.kpi-story-card span{font-size:10px}}
+
+
+/* V2.2.19 — BF/BG third level under received contractor documents */
+.kpi-story-child-node{position:relative;min-width:0}
+.kpi-story-child-node>.kpi-story-child{height:100%}
+.kpi-story-grandchildren{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:12px;margin-top:40px;position:relative}
+.kpi-story-grandchildren:before{content:"";position:absolute;top:-19px;right:8%;left:8%;height:2px;background:var(--story-color)}
+.kpi-story-grandchildren:after{content:"";position:absolute;top:-40px;left:50%;height:21px;width:2px;background:var(--story-color)}
+.kpi-story-grandchild{min-height:82px;padding:10px 9px;border-right:3px solid var(--story-color)}
+.kpi-story-grandchild:before{content:"";position:absolute;top:-19px;left:50%;height:19px;width:2px;background:var(--story-color)}
+.kpi-story-grandchild span{font-size:9px}.kpi-story-grandchild strong{font-size:18px;color:var(--story-color)}.kpi-story-grandchild small{font-size:8px}
+@media(max-width:900px){.kpi-story-grandchildren{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}}
+
+
+/* V2.2.20 — Ultra-compact Wednesday KPI story cards */
+.kpi-story-card{padding:7px 8px;min-height:54px;border-radius:10px}
+.kpi-story-card span{font-size:8px;line-height:1.25}
+.kpi-story-card strong{font-size:17px;line-height:1.1;margin:2px 0}
+.kpi-story-card small{font-size:7px}
+.kpi-story-root{width:220px;margin-bottom:38px}
+.kpi-story-root strong{font-size:22px}
+.kpi-story-level1{gap:34px;padding:0 28px}
+.kpi-story-level1:before{top:-20px}
+.kpi-story-root:after{height:20px;bottom:-21px}
+.kpi-story-node:before{height:20px;top:-20px}
+.kpi-story-children{gap:10px;margin-top:28px}
+.kpi-story-children:before{top:-14px}
+.kpi-story-children:after{top:-28px;height:14px}
+.kpi-story-child{min-height:58px}
+.kpi-story-child:before{top:-14px;height:14px}
+.kpi-story-child strong{font-size:16px}
+.kpi-story-grandchildren{grid-template-columns:repeat(auto-fit,minmax(95px,1fr));gap:7px;margin-top:26px}
+.kpi-story-grandchildren:before{top:-12px}
+.kpi-story-grandchildren:after{top:-26px;height:14px}
+.kpi-story-grandchild{min-height:50px;padding:6px 6px;border-radius:9px}
+.kpi-story-grandchild:before{top:-12px;height:12px}
+.kpi-story-grandchild span{font-size:7px;line-height:1.2}
+.kpi-story-grandchild strong{font-size:14px;margin:2px 0}
+.kpi-story-grandchild small{font-size:6px}
+@media(max-width:900px){
+  .kpi-story-level1{gap:18px;padding:0 18px}
+  .kpi-story-grandchildren{grid-template-columns:repeat(auto-fit,minmax(85px,1fr))}
+}
+/* =========================================================
+   Wednesday Meeting Tree — Ultra Compact Fix
+   Paste at END of public/styles.css
+   ========================================================= */
+
+/* Prevent BF cards from stretching to the height of their BG branch */
+.kpi-story-children{
+  align-items:start !important;
+}
+
+.kpi-story-child-node{
+  align-self:start !important;
+  height:auto !important;
+}
+
+.kpi-story-child-node > .kpi-story-child{
+  height:auto !important;
+  min-height:56px !important;
+}
+
+/* Compact all story cards */
+.kpi-story-card{
+  min-height:56px !important;
+  padding:6px 8px !important;
+  border-radius:10px !important;
+}
+
+.kpi-story-card span{
+  font-size:8px !important;
+  line-height:1.25 !important;
+}
+
+.kpi-story-card strong{
+  font-size:18px !important;
+  margin:2px 0 !important;
+  line-height:1.05 !important;
+}
+
+.kpi-story-card small{
+  font-size:7px !important;
+  line-height:1.2 !important;
+}
+
+/* Root card */
+.kpi-story-root{
+  width:210px !important;
+  margin-bottom:34px !important;
+}
+
+.kpi-story-root strong{
+  font-size:22px !important;
+}
+
+/* Level 1 */
+.kpi-story-level1{
+  gap:36px !important;
+  padding:0 30px !important;
+}
+
+.kpi-story-node:before{
+  height:18px !important;
+  top:-18px !important;
+}
+
+.kpi-story-level1:before{
+  top:-18px !important;
+}
+
+.kpi-story-root:after{
+  height:18px !important;
+  bottom:-19px !important;
+}
+
+/* BF branches */
+.kpi-story-children{
+  gap:10px !important;
+  margin-top:26px !important;
+}
+
+.kpi-story-children:before{
+  top:-13px !important;
+}
+
+.kpi-story-children:after{
+  top:-26px !important;
+  height:13px !important;
+}
+
+.kpi-story-child:before{
+  top:-13px !important;
+  height:13px !important;
+}
+
+.kpi-story-child strong{
+  font-size:17px !important;
+}
+
+/* BG branches */
+.kpi-story-grandchildren{
+  grid-template-columns:repeat(auto-fit,minmax(95px,1fr)) !important;
+  gap:7px !important;
+  margin-top:24px !important;
+  align-items:start !important;
+}
+
+.kpi-story-grandchildren:before{
+  top:-12px !important;
+}
+
+.kpi-story-grandchildren:after{
+  top:-24px !important;
+  height:12px !important;
+}
+
+.kpi-story-grandchild{
+  min-height:48px !important;
+  padding:5px 6px !important;
+  border-radius:9px !important;
+}
+
+.kpi-story-grandchild:before{
+  top:-12px !important;
+  height:12px !important;
+}
+
+.kpi-story-grandchild span{
+  font-size:7px !important;
+}
+
+.kpi-story-grandchild strong{
+  font-size:15px !important;
+  margin:1px 0 !important;
+}
+
+.kpi-story-grandchild small{
+  font-size:6.5px !important;
+}
+
+/* Reduce outside whitespace */
+.meeting-kpis{
+  margin:8px 0 12px !important;
+  padding:4px 6px 10px !important;
+}
