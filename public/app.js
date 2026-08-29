@@ -41,6 +41,10 @@ function bind(){
 
  const printBtn=document.getElementById('printBtn');
  if(printBtn) printBtn.onclick=()=>window.print();
+ const exportSafetyPdfBtn=document.getElementById('exportSafetyPdfBtn');
+ if(exportSafetyPdfBtn) exportSafetyPdfBtn.onclick=exportSafetyReportPdf;
+ const exportExecutionPdfBtn=document.getElementById('exportExecutionPdfBtn');
+ if(exportExecutionPdfBtn) exportExecutionPdfBtn.onclick=exportExecutionReportPdf;
 
  bindWednesdayInfoPopups();
 
@@ -2178,8 +2182,23 @@ function renderDataPage(){
 
  const emergencyAnalytics=document.getElementById('emergencyAnalytics');
  const genericPageCharts=document.getElementById('genericPageCharts');
+ const safetyAnalytics=document.getElementById('safetyMasterAnalytics');
+ const executionAnalytics=document.getElementById('executionMasterAnalytics');
+ const isCorporateViolationReport=key==='safety'||key==='violationsCombined';
+ document.body.classList.toggle('vd-report-dark',isCorporateViolationReport);
 
- if(key==='emergency'){
+ if(safetyAnalytics) safetyAnalytics.style.display=key==='safety'?'block':'none';
+ if(executionAnalytics) executionAnalytics.style.display=key==='violationsCombined'?'block':'none';
+
+ if(key==='safety'){
+   if(emergencyAnalytics) emergencyAnalytics.style.display='none';
+   if(genericPageCharts) genericPageCharts.style.display='none';
+   renderSafetyMasterAnalytics(rows);
+ }else if(key==='violationsCombined'){
+   if(emergencyAnalytics) emergencyAnalytics.style.display='none';
+   if(genericPageCharts) genericPageCharts.style.display='none';
+   renderExecutionMasterAnalytics(rows);
+ }else if(key==='emergency'){
    if(emergencyAnalytics) emergencyAnalytics.style.display='block';
    if(genericPageCharts) genericPageCharts.style.display='none';
    renderEmergencyDashboard(S.pageBaseRows);
@@ -2206,6 +2225,203 @@ function renderDataPage(){
  document.getElementById('dataTable').innerHTML=tableHtml(rows.slice(0,350),S.columns);
 }
 
+
+function safetyCounts(rows,key){
+ const m=new Map();
+ rows.forEach(r=>{
+   const v=String(r[key]||'').trim()||'غير محدد';
+   m.set(v,(m.get(v)||0)+1);
+ });
+ return [...m.entries()].sort((a,b)=>b[1]-a[1]);
+}
+
+function renderSafetyMasterAnalytics(rows){
+ const topContractors=safetyCounts(rows,'contractor').slice(0,10);
+ const topViolations=safetyCounts(rows,'violation1').slice(0,10);
+ const topSupervisors=safetyCounts(rows,'supervisor').slice(0,10);
+ const topTypes=safetyCounts(rows,'type').slice(0,8);
+ const topEditors=safetyCounts(rows,'editor').slice(0,10);
+
+ const monthly={};
+ rows.forEach(r=>{
+   const d=parseDashboardDate(r.date);
+   if(!d)return;
+   const k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+   monthly[k]=(monthly[k]||0)+1;
+ });
+ const mkeys=Object.keys(monthly).sort();
+ const mlabels=mkeys.map(monthLabelAr);
+ const mvalues=mkeys.map(k=>monthly[k]);
+
+ const VD={navy:'#1c2868',blue:'#19b8e6',cyan:'#00a0c6',orange:'#f6a21a',ink:'#f5f9ff',muted:'#b8c9df'};
+ const palette=[VD.navy,VD.blue,VD.orange,VD.cyan,'#2f57a6','#ee8b19','#4e79a7','#59a14f','#af7aa1','#9c755f'];
+ const makeChart=(id,type,labels,data,opts={})=>{
+   if(S.charts[id])S.charts[id].destroy();
+   const el=document.getElementById(id); if(!el)return;
+   const isBar=type==='bar', isLine=type==='line', isDoughnut=type==='doughnut';
+   const bg=isLine?'rgba(0,127,186,.12)':labels.map((_,i)=>palette[i%palette.length]);
+   const border=isLine?VD.blue:labels.map((_,i)=>palette[i%palette.length]);
+   S.charts[id]=new Chart(el,{
+     type,
+     data:{labels,datasets:[{
+       label:'عدد المخالفات',data,
+       backgroundColor:bg,borderColor:border,
+       borderWidth:isLine?3:(isDoughnut?2:0),
+       borderRadius:isBar?9:0,borderSkipped:false,
+       pointRadius:isLine?4:0,pointHoverRadius:isLine?7:0,
+       pointBackgroundColor:isLine?'#fff':undefined,pointBorderColor:isLine?VD.blue:undefined,pointBorderWidth:isLine?2:0,
+       fill:isLine,tension:.34,barThickness:isBar?18:undefined,maxBarThickness:isBar?22:undefined,
+       hoverOffset:isDoughnut?8:undefined
+     }]},
+     options:{
+       responsive:true,maintainAspectRatio:false,indexAxis:opts.horizontal?'y':'x',cutout:isDoughnut?'66%':undefined,
+       interaction:{mode:isDoughnut?'nearest':'index',intersect:false},
+       layout:{padding:{top:10,right:12,bottom:5,left:10}},
+       plugins:{
+         legend:{display:isDoughnut,position:'bottom',rtl:true,labels:{font:{family:'Cairo',size:9},boxWidth:10,boxHeight:10,usePointStyle:true,padding:12,color:VD.ink}},
+         tooltip:{rtl:true,backgroundColor:VD.ink,titleFont:{family:'Cairo',size:11,weight:'700'},bodyFont:{family:'Cairo',size:10},padding:11,cornerRadius:10,displayColors:true,callbacks:{label:c=>' '+fmt(c.raw)+' مخالفة'}},
+         title:{display:false}
+       },
+       scales:isDoughnut?{}:{
+         x:{beginAtZero:true,grid:{display:!opts.horizontal,color:'rgba(255,255,255,.08)'},border:{display:false},ticks:{font:{family:'Cairo',size:9},color:VD.muted,maxRotation:isLine?0:30,minRotation:0}},
+         y:{beginAtZero:true,grid:{display:false},border:{display:false},ticks:{font:{family:'Cairo',size:9,weight:opts.horizontal?'600':'400'},color:VD.ink,autoSkip:false,callback:function(v){const t=this.getLabelForValue(v);return String(t).length>36?String(t).slice(0,36)+'…':t;}}}
+       }
+     }
+   });
+ };
+ makeChart('safetyTrendChart','line',mlabels,mvalues);
+ makeChart('safetyContractorChart','bar',topContractors.map(x=>x[0]),topContractors.map(x=>x[1]),{horizontal:true});
+ makeChart('safetyViolationChart','bar',topViolations.map(x=>x[0]),topViolations.map(x=>x[1]),{horizontal:true});
+ makeChart('safetySupervisorChart','bar',topSupervisors.map(x=>x[0]),topSupervisors.map(x=>x[1]),{horizontal:true});
+ makeChart('safetyTypeChart','doughnut',topTypes.map(x=>x[0]),topTypes.map(x=>x[1]));
+ makeChart('safetyEditorChart','bar',topEditors.map(x=>x[0]),topEditors.map(x=>x[1]),{horizontal:true});
+
+ const wo=safetyCounts(rows,'workOrder').filter(x=>x[1]>1).slice(0,12);
+ const rankHtml=(items,label)=>items.length?`<table><thead><tr><th>#</th><th>${label}</th><th>عدد المخالفات</th><th>النسبة</th></tr></thead><tbody>${items.map((x,i)=>`<tr><td><span class="safety-rank-no">${i+1}</span></td><td>${esc(x[0])}</td><td><b>${fmt(x[1])}</b></td><td>${rows.length?((x[1]/rows.length)*100).toFixed(1):'0.0'}%</td></tr>`).join('')}</tbody></table>`:'<div class="empty">لا توجد بيانات</div>';
+ const woRoot=document.getElementById('safetyRepeatedWorkOrders'); if(woRoot)woRoot.innerHTML=rankHtml(wo,'أمر العمل');
+ const cRoot=document.getElementById('safetyContractorRanking'); if(cRoot)cRoot.innerHTML=rankHtml(topContractors,'المقاول');
+}
+
+
+function renderExecutionMasterAnalytics(rows){
+ const topContractors=safetyCounts(rows,'contractor').slice(0,10);
+ const topViolations=safetyCounts(rows,'violation').slice(0,10);
+ const topSupervisors=safetyCounts(rows,'supervisor').filter(x=>x[0]!=='غير محدد').slice(0,10);
+ const topTypes=safetyCounts(rows,'type').slice(0,8);
+ const topSections=safetyCounts(rows,'violationSection').filter(x=>x[0]!=='غير محدد').slice(0,10);
+ const monthly={};
+ rows.forEach(r=>{const d=parseDashboardDate(r.date);if(!d)return;const k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');monthly[k]=(monthly[k]||0)+1});
+ const mkeys=Object.keys(monthly).sort(),mlabels=mkeys.map(monthLabelAr),mvalues=mkeys.map(k=>monthly[k]);
+ const VD={navy:'#1c2868',blue:'#19b8e6',cyan:'#00a0c6',orange:'#f6a21a',ink:'#f5f9ff',muted:'#b8c9df'};
+ const palette=[VD.blue,VD.orange,VD.cyan,'#4d7cff','#8f6cff','#40c98a','#f05a5a','#7ac7ff','#ffd166','#7e8aa6'];
+ const makeChart=(id,type,labels,data,opts={})=>{
+   if(S.charts[id])S.charts[id].destroy(); const el=document.getElementById(id);if(!el)return;
+   const isBar=type==='bar',isLine=type==='line',isDoughnut=type==='doughnut';
+   S.charts[id]=new Chart(el,{type,data:{labels,datasets:[{label:'عدد المخالفات',data,backgroundColor:isLine?'rgba(25,184,230,.18)':labels.map((_,i)=>palette[i%palette.length]),borderColor:isLine?VD.blue:labels.map((_,i)=>palette[i%palette.length]),borderWidth:isLine?3:(isDoughnut?2:0),borderRadius:isBar?9:0,borderSkipped:false,pointRadius:isLine?4:0,pointHoverRadius:isLine?7:0,pointBackgroundColor:isLine?'#fff':undefined,pointBorderColor:isLine?VD.blue:undefined,pointBorderWidth:isLine?2:0,fill:isLine,tension:.34,barThickness:isBar?18:undefined,maxBarThickness:isBar?22:undefined,hoverOffset:isDoughnut?8:undefined}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:opts.horizontal?'y':'x',cutout:isDoughnut?'66%':undefined,interaction:{mode:isDoughnut?'nearest':'index',intersect:false},layout:{padding:{top:10,right:12,bottom:5,left:10}},plugins:{legend:{display:isDoughnut,position:'bottom',rtl:true,labels:{font:{family:'Cairo',size:9},boxWidth:10,boxHeight:10,usePointStyle:true,padding:12,color:VD.ink}},tooltip:{rtl:true,backgroundColor:'#071e38',titleFont:{family:'Cairo',size:11,weight:'700'},bodyFont:{family:'Cairo',size:10},padding:11,cornerRadius:10,callbacks:{label:c=>' '+fmt(c.raw)+' مخالفة'}}},scales:isDoughnut?{}:{x:{beginAtZero:true,grid:{display:!opts.horizontal,color:'rgba(255,255,255,.08)'},border:{display:false},ticks:{font:{family:'Cairo',size:9},color:VD.muted,maxRotation:isLine?0:30,minRotation:0}},y:{beginAtZero:true,grid:{display:false},border:{display:false},ticks:{font:{family:'Cairo',size:9,weight:opts.horizontal?'600':'400'},color:VD.ink,autoSkip:false,callback:function(v){const t=this.getLabelForValue(v);return String(t).length>36?String(t).slice(0,36)+'…':t;}}}}}});
+ };
+ makeChart('executionTrendChart','line',mlabels,mvalues);
+ makeChart('executionContractorChart','bar',topContractors.map(x=>x[0]),topContractors.map(x=>x[1]),{horizontal:true});
+ makeChart('executionViolationChart','bar',topViolations.map(x=>x[0]),topViolations.map(x=>x[1]),{horizontal:true});
+ makeChart('executionSupervisorChart','bar',topSupervisors.map(x=>x[0]),topSupervisors.map(x=>x[1]),{horizontal:true});
+ makeChart('executionTypeChart','doughnut',topTypes.map(x=>x[0]),topTypes.map(x=>x[1]));
+ makeChart('executionSectionChart','bar',topSections.map(x=>x[0]),topSections.map(x=>x[1]),{horizontal:true});
+ const wo=safetyCounts(rows,'workOrder').filter(x=>x[0]!=='غير محدد'&&x[1]>1).slice(0,12);
+ const rankHtml=(items,label)=>items.length?`<table><thead><tr><th>#</th><th>${label}</th><th>عدد المخالفات</th><th>النسبة</th></tr></thead><tbody>${items.map((x,i)=>`<tr><td><span class="safety-rank-no">${i+1}</span></td><td>${esc(x[0])}</td><td><b>${fmt(x[1])}</b></td><td>${rows.length?((x[1]/rows.length)*100).toFixed(1):'0.0'}%</td></tr>`).join('')}</tbody></table>`:'<div class="empty">لا توجد بيانات</div>';
+ const w=document.getElementById('executionRepeatedWorkOrders');if(w)w.innerHTML=rankHtml(wo,'أمر العمل');
+ const c=document.getElementById('executionContractorRanking');if(c)c.innerHTML=rankHtml(topContractors,'المقاول');
+}
+
+function exportExecutionReportPdf(){
+ if(S.current!=='violationsCombined')return;
+ const rows=S.filtered||[];if(!rows.length){toast('لا توجد بيانات مطابقة للفلاتر لتصديرها');return;}
+ const win=window.open('','_blank');if(!win){toast('اسمح بالنوافذ المنبثقة لتصدير PDF');return;}
+ const filterParts=[];['f1','f2','f3','f4','f5'].forEach(id=>{const el=document.getElementById(id);if(!el||!el.value)return;const lab=document.getElementById('fl'+id.slice(1));filterParts.push(`${lab?.textContent||''}: ${el.value}`)});const q=document.getElementById('globalSearch')?.value?.trim();if(q)filterParts.push(`البحث: ${q}`);
+ const contractors=unique(rows.map(r=>r.contractor)).length,workOrders=unique(rows.map(r=>r.workOrder)).length,types=unique(rows.map(r=>r.type)).length;
+ const woCounts=safetyCounts(rows,'workOrder').filter(x=>x[0]!=='غير محدد'),repeated=woCounts.filter(x=>x[1]>1).length;
+ const topContractors=safetyCounts(rows,'contractor').slice(0,7),topViolations=safetyCounts(rows,'violation').slice(0,7),topSections=safetyCounts(rows,'violationSection').filter(x=>x[0]!=='غير محدد').slice(0,7),topWorkOrders=woCounts.filter(x=>x[1]>1).slice(0,7);
+ const maxOf=a=>Math.max(1,...a.map(x=>x[1]));const miniBars=(title,items)=>`<section class="summary-box"><h3>${esc(title)}</h3>${items.length?items.map(([name,n])=>`<div class="bar-row"><div class="bar-head"><span>${esc(name)}</span><b>${fmt(n)}</b></div><div class="bar-track"><i style="width:${Math.max(5,(n/maxOf(items))*100)}%"></i></div></div>`).join(''):'<div class="none">لا توجد بيانات</div>'}</section>`;
+ const chartIds=[['executionTrendChart','اتجاه مخالفات التنفيذ عبر الزمن'],['executionContractorChart','أعلى المقاولين تسجيلًا للمخالفات'],['executionViolationChart','أكثر أنواع المخالفات تكرارًا'],['executionSupervisorChart','المخالفات حسب مشرف الموقع'],['executionTypeChart','المخالفات حسب نوع أمر العمل'],['executionSectionChart','المخالفات حسب قسم المخالفة']];
+ const chartCards=chartIds.map(([id,title])=>{const c=document.getElementById(id);let src='';try{src=c?.toDataURL('image/png',1)||''}catch(e){}return src?`<section class="chart-card"><h3>${esc(title)}</h3><img src="${src}" alt="${esc(title)}"></section>`:''}).join('');
+ const listCols=[['date','تاريخ المخالفة'],['workOrder','أمر العمل'],['type','نوع أمر العمل'],['contractor','المقاول'],['violation','المخالفة'],['violationSection','قسم المخالفة'],['supervisor','مشرف الموقع'],['editor','محرر المخالفة'],['reason','السبب / الإفادة'],['link','الرابط']];
+ const tableRows=rows.map((r,idx)=>`<tr><td class="seq">${idx+1}</td>${listCols.map(([k])=>k==='link'?`<td class="link-cell">${r.link?`<a href="${esc(r.link)}" target="_blank" rel="noopener">فتح المخالفة</a>`:'-'}</td>`:`<td>${esc(r[k]||'')}</td>`).join('')}</tr>`).join('');
+ const now=new Date(),today=now.toLocaleString('ar-SA'),reportId='VD-EXE-'+now.getFullYear()+String(now.getMonth()+1).padStart(2,'0')+String(now.getDate()).padStart(2,'0')+'-'+String(now.getHours()).padStart(2,'0')+String(now.getMinutes()).padStart(2,'0'),logoUrl=location.origin+'/company-logo.png',appliedFilters=filterParts.length?esc(filterParts.join(' • ')):'جميع البيانات';
+ const totalPenalty=sum(rows,'penalty');
+ win.document.write(buildCorporateViolationsPdf({title:'تقرير مخالفات التنفيذ',subtitle:'تقرير تنفيذي احترافي لتحليل مخالفات التنفيذ ومناطق التركّز حسب الفلاتر المطبقة',eyebrow:'VISION DIMENSIONS • EXECUTION VIOLATIONS ANALYTICS',reportId,today,rows,workOrders,contractors,types,repeated,totalPenalty,appliedFilters,logoUrl,topContractors,topViolations,topWorkOrders,topSections,miniBars,chartCards,listCols,tableRows}));
+ win.document.close();
+}
+
+function buildCorporateViolationsPdf(o){
+ const penaltyKpi=o.totalPenalty?`<div class="kpi orange"><span>إجمالي الغرامات</span><b>${money(o.totalPenalty)}</b><small>حسب البيانات المفلترة</small></div>`:`<div class="kpi orange"><span>أوامر متكررة المخالفات</span><b>${fmt(o.repeated)}</b><small>أكثر من سجل</small></div>`;
+ return `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>${esc(o.title)} - ${o.reportId}</title><style>@page{size:A4 landscape;margin:8mm 8mm 11mm}*{box-sizing:border-box}html,body{margin:0;padding:0}body{font-family:Tahoma,Arial,sans-serif;color:#f5f9ff;background:#061a31;-webkit-print-color-adjust:exact;print-color-adjust:exact}h1,h2,h3,p{margin:0}.page{position:relative;min-height:185mm;background:radial-gradient(circle at 15% 18%,rgba(0,160,198,.22),transparent 27%),radial-gradient(circle at 88% 8%,rgba(246,162,26,.14),transparent 23%),linear-gradient(135deg,#061a31 0%,#082947 48%,#06385b 100%);padding:0 0 4mm}.page-break{break-after:page;page-break-after:always}.watermark{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:0}.watermark img{width:300px;opacity:.055;filter:grayscale(.1)}.page>*{position:relative;z-index:1}.top-stripe{height:7px;background:linear-gradient(90deg,#1c2868 0%,#00a0c6 55%,#f6a21a 100%);margin:-8mm -8mm 8px}.report-header{display:grid;grid-template-columns:105px 1fr 185px;gap:15px;align-items:center;border-bottom:1px solid rgba(255,255,255,.16);padding-bottom:8px}.logo-box{height:72px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.18);border-radius:14px;background:rgba(255,255,255,.96)}.logo-box img{max-width:88px;max-height:64px}.title-wrap{text-align:center}.eyebrow{font-size:7px;color:#58d9ff;letter-spacing:1.3px;font-weight:800}.title-wrap h1{font-size:20px;color:#fff;margin:3px 0}.title-wrap p,.meta{font-size:8px;color:#b8c9df}.company-name{font-size:8px;color:#ffd58f;font-weight:800;margin-top:4px}.meta{line-height:1.8;text-align:left}.meta b{color:#fff}.filters{margin:8px 0 9px;border:1px solid rgba(255,255,255,.14);background:rgba(4,22,42,.55);border-radius:9px;padding:7px 9px;font-size:8px;color:#d8e6f6}.filters b{color:#ffd58f}.section-label{display:flex;align-items:center;gap:7px;margin:9px 0 6px}.section-label i{width:7px;height:7px;border-radius:2px;background:#f6a21a}.section-label h2{font-size:11px;color:#fff}.section-label span{font-size:7px;color:#8fb0cb;margin-right:auto}.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}.kpi,.summary-box,.chart-card{border:1px solid rgba(255,255,255,.13);background:linear-gradient(180deg,rgba(13,50,82,.9),rgba(5,32,58,.92));box-shadow:0 8px 24px rgba(0,0,0,.16)}.kpi{position:relative;overflow:hidden;border-radius:10px;padding:8px 10px;min-height:60px}.kpi:after{content:"";position:absolute;right:0;top:0;bottom:0;width:4px;background:#19b8e6}.kpi.orange:after{background:#f6a21a}.kpi.navy:after{background:#5d78ff}.kpi span{display:block;font-size:7px;color:#b8c9df}.kpi b{display:block;font-size:18px;color:#fff;margin-top:4px}.kpi small{font-size:6.5px;color:#8fb0cb}.summary-grid{display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:8px;margin-top:8px}.summary-box{border-radius:10px;padding:8px;min-height:154px}.summary-box h3,.chart-card h3{font-size:8.5px;color:#fff;margin-bottom:7px;border-bottom:1px solid rgba(255,255,255,.1);padding-bottom:5px}.bar-row{margin:0 0 5px}.bar-head{display:flex;gap:7px;justify-content:space-between;font-size:6.6px}.bar-head span{max-width:84%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bar-head b{color:#58d9ff}.bar-track{height:4px;background:rgba(255,255,255,.08);border-radius:99px;margin-top:2px;overflow:hidden}.bar-track i{display:block;height:100%;background:linear-gradient(90deg,#1c2868,#19b8e6,#f6a21a);border-radius:99px}.charts-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.chart-card{border-radius:10px;padding:7px;height:82mm;break-inside:avoid}.chart-card img{width:100%;height:69mm;object-fit:contain}.section-head{display:flex;justify-content:space-between;align-items:end;margin:0 0 6px}.section-head h2{font-size:11px;color:#fff}.section-head span{font-size:7px;color:#b8c9df}.table-shell{background:rgba(255,255,255,.97);border-radius:10px;padding:5px;color:#16213f}table{width:100%;border-collapse:collapse;font-size:6.5px;table-layout:fixed;background:#fff}thead{display:table-header-group}th,td{border:1px solid #dfe5ec;padding:3.2px 2.8px;vertical-align:top;word-break:break-word;line-height:1.35}th{background:linear-gradient(180deg,#1c2868,#007fba);color:#fff;font-weight:700}th:first-child,.seq{width:20px;text-align:center}th:nth-last-child(1),.link-cell{width:55px;text-align:center}.link-cell a{display:inline-block;background:#e9f7fb;color:#006d9f;border:1px solid #a9dce9;border-radius:4px;padding:2px 4px;text-decoration:none;font-weight:700;white-space:nowrap}tbody tr:nth-child(even){background:#f6f9fc}tr{page-break-inside:avoid}.footer{position:fixed;bottom:0;left:0;right:0;height:8mm;border-top:1px solid rgba(255,255,255,.12);background:#061a31;display:flex;align-items:center;justify-content:space-between;padding:0 8mm;font-size:6px;color:#9fb4ca;z-index:3}.footer b{color:#fff}.table-note{font-size:6.5px;color:#b8c9df;margin:5px 0 0}.table-note b{color:#58d9ff}</style></head><body><div class="watermark"><img src="${o.logoUrl}"></div><div class="footer"><b>شركة أبعاد الرؤية للاستشارات الهندسية</b><span>${o.reportId}</span><span>تقرير آلي من لوحة المخالفات</span></div><main class="page page-break"><div class="top-stripe"></div><header class="report-header"><div class="logo-box"><img src="${o.logoUrl}"></div><div class="title-wrap"><div class="eyebrow">${o.eyebrow}</div><h1>${esc(o.title)}</h1><p>${esc(o.subtitle)}</p><div class="company-name">شركة أبعاد الرؤية للاستشارات الهندسية</div></div><div class="meta"><b>رقم التقرير:</b> ${o.reportId}<br><b>تاريخ الإنشاء:</b> ${esc(o.today)}<br><b>عدد السجلات:</b> ${fmt(o.rows.length)}</div></header><div class="filters"><b>نطاق التقرير والفلاتر:</b> ${o.appliedFilters}</div><div class="section-label"><i></i><h2>المؤشرات التنفيذية الرئيسية</h2><span>Executive KPIs</span></div><div class="kpis"><div class="kpi orange"><span>إجمالي المخالفات</span><b>${fmt(o.rows.length)}</b><small>حسب النطاق الحالي</small></div><div class="kpi"><span>أوامر العمل الفريدة</span><b>${fmt(o.workOrders)}</b></div><div class="kpi navy"><span>المقاولون</span><b>${fmt(o.contractors)}</b></div><div class="kpi"><span>أنواع أوامر العمل</span><b>${fmt(o.types)}</b></div>${penaltyKpi}</div><div class="section-label"><i></i><h2>ملخصات التصنيف</h2><span>Ranked summaries</span></div><div class="summary-grid">${o.miniBars('أعلى المقاولين بالمخالفات',o.topContractors)}${o.miniBars('أكثر أنواع المخالفات تكرارًا',o.topViolations)}${o.miniBars('أوامر العمل الأكثر تكرارًا',o.topWorkOrders)}</div></main><main class="page page-break"><div class="top-stripe"></div><header class="report-header"><div class="logo-box"><img src="${o.logoUrl}"></div><div class="title-wrap"><div class="eyebrow">VISUAL ANALYTICS</div><h1>التحليلات الرسومية</h1><p>الشارتات تعكس نفس الفلاتر المطبقة على التقرير</p></div><div class="meta"><b>رقم التقرير:</b> ${o.reportId}<br><b>السجلات:</b> ${fmt(o.rows.length)}</div></header><div class="charts-grid">${o.chartCards}</div></main><main class="page"><div class="top-stripe"></div><header class="report-header"><div class="logo-box"><img src="${o.logoUrl}"></div><div class="title-wrap"><div class="eyebrow">DETAILED VIOLATION REGISTER</div><h1>قائمة المخالفات حسب الفلاتر</h1><p>السجل التفصيلي وروابط المخالفات المتاحة</p></div><div class="meta"><b>عدد النتائج:</b> ${fmt(o.rows.length)}<br><b>رقم التقرير:</b> ${o.reportId}</div></header><div class="section-head"><h2>السجل التفصيلي للمخالفات</h2><span>${o.appliedFilters}</span></div><div class="table-shell"><table><thead><tr><th>#</th>${o.listCols.map(x=>`<th>${esc(x[1])}</th>`).join('')}</tr></thead><tbody>${o.tableRows}</tbody></table></div><div class="table-note">يمكن الضغط على <b>فتح المخالفة</b> عند توفر الرابط الأصلي.</div></main><script>window.onload=()=>setTimeout(()=>window.print(),900)<\/script></body></html>`;
+}
+
+function exportSafetyReportPdf(){
+ if(S.current!=='safety')return;
+ const rows=S.filtered||[];
+ if(!rows.length){toast('لا توجد بيانات مطابقة للفلاتر لتصديرها');return;}
+ const win=window.open('','_blank');
+ if(!win){toast('اسمح بالنوافذ المنبثقة لتصدير PDF');return;}
+
+ const filterParts=[];
+ ['f1','f2','f3','f4','f5'].forEach(id=>{
+   const el=document.getElementById(id); if(!el||!el.value)return;
+   const lab=document.getElementById('fl'+id.slice(1));
+   filterParts.push(`${lab?.textContent||''}: ${el.value}`);
+ });
+ const q=document.getElementById('globalSearch')?.value?.trim();
+ if(q)filterParts.push(`البحث: ${q}`);
+
+ const contractors=unique(rows.map(r=>r.contractor)).length;
+ const workOrders=unique(rows.map(r=>r.workOrder)).length;
+ const types=unique(rows.map(r=>r.type)).length;
+ const woCounts=safetyCounts(rows,'workOrder').filter(x=>x[0]!=='غير محدد');
+ const repeated=woCounts.filter(x=>x[1]>1).length;
+ const topContractors=safetyCounts(rows,'contractor').slice(0,7);
+ const topViolations=safetyCounts(rows,'violation1').slice(0,7);
+ const topSupervisors=safetyCounts(rows,'supervisor').slice(0,5);
+ const topWorkOrders=woCounts.filter(x=>x[1]>1).slice(0,7);
+ const topContractor=topContractors[0]||['-',0], topViolation=topViolations[0]||['-',0], topSupervisor=topSupervisors[0]||['-',0];
+ const maxOf=a=>Math.max(1,...a.map(x=>x[1]));
+ const miniBars=(title,items)=>`<section class="summary-box"><h3>${esc(title)}</h3>${items.length?items.map(([name,n])=>`<div class="bar-row"><div class="bar-head"><span>${esc(name)}</span><b>${fmt(n)}</b></div><div class="bar-track"><i style="width:${Math.max(5,(n/maxOf(items))*100)}%"></i></div></div>`).join(''):'<div class="none">لا توجد بيانات</div>'}</section>`;
+
+ const chartIds=[
+   ['safetyTrendChart','اتجاه المخالفات عبر الزمن'],['safetyContractorChart','أعلى المقاولين تسجيلًا للمخالفات'],
+   ['safetyViolationChart','أكثر أنواع المخالفات تكرارًا'],['safetySupervisorChart','المخالفات حسب مشرف الموقع'],
+   ['safetyTypeChart','المخالفات حسب نوع أمر العمل'],['safetyEditorChart','المخالفات حسب محرر المخالفة']
+ ];
+ const chartCards=chartIds.map(([id,title])=>{
+   const c=document.getElementById(id); let src='';
+   try{src=c?.toDataURL('image/png',1)||'';}catch(e){}
+   return src?`<section class="chart-card"><h3>${esc(title)}</h3><img src="${src}" alt="${esc(title)}"></section>`:'';
+ }).join('');
+
+ const listCols=[['date','تاريخ المخالفة'],['workOrder','أمر العمل'],['type','نوع أمر العمل'],['contractor','المقاول'],['supervisor','مشرف الموقع'],['editor','محرر المخالفة'],['violation1','المخالفة 1'],['violation2','المخالفة 2'],['reason','سبب المخالفة'],['link','الرابط']];
+ const tableRows=rows.map((r,idx)=>`<tr><td class="seq">${idx+1}</td>${listCols.map(([k])=>k==='link'?`<td class="link-cell">${r.link?`<a href="${esc(r.link)}" target="_blank" rel="noopener">فتح المخالفة</a>`:'-'}</td>`:`<td>${esc(r[k]||'')}</td>`).join('')}</tr>`).join('');
+ const now=new Date(), today=now.toLocaleString('ar-SA');
+ const reportId='VD-SAF-'+now.getFullYear()+String(now.getMonth()+1).padStart(2,'0')+String(now.getDate()).padStart(2,'0')+'-'+String(now.getHours()).padStart(2,'0')+String(now.getMinutes()).padStart(2,'0');
+ const logoUrl=location.origin+'/company-logo.png';
+ const appliedFilters=filterParts.length?esc(filterParts.join(' • ')):'جميع البيانات';
+ const concentration=rows.length?((topContractor[1]/rows.length)*100).toFixed(1):'0.0';
+
+ win.document.write(buildCorporateViolationsPdf({title:'تقرير مخالفات السلامة',subtitle:'تقرير تنفيذي احترافي لقراءة اتجاهات مخالفات السلامة ومناطق التركّز حسب الفلاتر المطبقة',eyebrow:'VISION DIMENSIONS • EXECUTIVE SAFETY ANALYTICS',reportId,today,rows,workOrders,contractors,types,repeated,totalPenalty:0,appliedFilters,logoUrl,topContractors,topViolations,topWorkOrders,topSections:topSupervisors,miniBars,chartCards,listCols,tableRows}));
+ win.document.close();
+ return;
+
+ win.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>تقرير مخالفات السلامة - ${reportId}</title><style>
+ @page{size:A4 landscape;margin:8mm 8mm 11mm}*{box-sizing:border-box}html,body{margin:0;padding:0}body{font-family:Tahoma,Arial,sans-serif;color:#16213f;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}h1,h2,h3,p{margin:0}.page{position:relative;min-height:185mm}.page-break{break-after:page;page-break-after:always}.watermark{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:-1}.watermark img{width:255px;opacity:.035;filter:grayscale(.15)}
+ .top-stripe{height:7px;background:linear-gradient(90deg,#1c2868 0%,#007fba 55%,#f6a21a 100%);margin:-8mm -8mm 8px}.report-header{display:grid;grid-template-columns:105px 1fr 185px;gap:15px;align-items:center;border-bottom:1px solid #dfe6ef;padding-bottom:8px}.logo-box{height:72px;display:flex;align-items:center;justify-content:center;border:1px solid #e4eaf2;border-radius:14px;background:#fff}.logo-box img{max-width:88px;max-height:64px}.title-wrap{text-align:center}.eyebrow{font-size:7px;color:#007fba;letter-spacing:1.3px;font-weight:800}.title-wrap h1{font-size:20px;color:#1c2868;margin:3px 0}.title-wrap p{font-size:8px;color:#667085}.company-name{font-size:8px;color:#1c2868;font-weight:800;margin-top:4px}.meta{font-size:7.5px;color:#667085;line-height:1.8;text-align:left}.meta b{color:#1c2868}.filters{margin:8px 0 9px;border:1px solid #dce8ef;background:linear-gradient(90deg,#f7fbfd,#fff9ee);border-radius:9px;padding:7px 9px;font-size:8px}.filters b{color:#1c2868}
+ .section-label{display:flex;align-items:center;gap:7px;margin:9px 0 6px}.section-label i{width:7px;height:7px;border-radius:2px;background:#007fba}.section-label h2{font-size:11px;color:#1c2868}.section-label span{font-size:7px;color:#98a2b3;margin-right:auto}.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}.kpi{position:relative;overflow:hidden;border:1px solid #e1e7ef;border-radius:10px;padding:8px 10px;background:#fff;min-height:60px}.kpi:after{content:"";position:absolute;right:0;top:0;bottom:0;width:4px;background:#007fba}.kpi.orange:after{background:#f6a21a}.kpi.navy:after{background:#1c2868}.kpi span{display:block;font-size:7px;color:#667085}.kpi b{display:block;font-size:19px;color:#1c2868;margin-top:4px}.kpi small{font-size:6.5px;color:#98a2b3}.insights{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:8px}.insight{border:1px solid #e1e7ef;border-radius:10px;padding:8px;background:#fff}.insight label{font-size:6.5px;color:#007fba;font-weight:800}.insight strong{display:block;font-size:9px;color:#1c2868;margin:4px 0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.insight p{font-size:6.8px;color:#667085;line-height:1.55}.summary-grid{display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:8px;margin-top:8px}.summary-box{border:1px solid #e1e7ef;border-radius:10px;padding:8px;background:rgba(255,255,255,.96);min-height:154px}.summary-box h3{font-size:8.5px;color:#1c2868;margin-bottom:7px;border-bottom:1px solid #eef2f6;padding-bottom:5px}.bar-row{margin:0 0 5px}.bar-head{display:flex;gap:7px;justify-content:space-between;align-items:center;font-size:6.6px}.bar-head span{max-width:84%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bar-head b{color:#007fba}.bar-track{height:4px;background:#edf2f5;border-radius:99px;margin-top:2px;overflow:hidden}.bar-track i{display:block;height:100%;background:linear-gradient(90deg,#1c2868,#007fba,#00a0c6);border-radius:99px}
+ .charts-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.chart-card{border:1px solid #e1e7ef;border-radius:10px;padding:7px;background:#fff;height:82mm;break-inside:avoid}.chart-card h3{font-size:8.5px;color:#1c2868;margin-bottom:4px;padding-bottom:4px;border-bottom:1px solid #f0f3f6}.chart-card img{width:100%;height:69mm;object-fit:contain}.section-head{display:flex;justify-content:space-between;align-items:end;margin:0 0 6px}.section-head h2{font-size:11px;color:#1c2868}.section-head span{font-size:7px;color:#667085}
+ table{width:100%;border-collapse:collapse;font-size:6.5px;table-layout:fixed;background:rgba(255,255,255,.97)}thead{display:table-header-group}th,td{border:1px solid #dfe5ec;padding:3.2px 2.8px;vertical-align:top;word-break:break-word;line-height:1.35}th{background:linear-gradient(180deg,#1c2868,#22377b);color:#fff;font-weight:700;font-size:6.4px}th:first-child,.seq{width:20px;text-align:center}th:nth-last-child(1),.link-cell{width:55px;text-align:center}.link-cell a{display:inline-block;background:#e9f7fb;color:#006d9f;border:1px solid #a9dce9;border-radius:4px;padding:2px 4px;text-decoration:none;font-weight:700;white-space:nowrap}tbody tr:nth-child(even){background:#f9fbfd}tr{page-break-inside:avoid}.footer{position:fixed;bottom:0;left:0;right:0;height:8mm;border-top:1px solid #dfe6ef;background:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 8mm;font-size:6px;color:#7b8798}.footer b{color:#1c2868}.footer .brandline{display:flex;align-items:center;gap:5px}.footer .dot{width:5px;height:5px;border-radius:50%;background:#f6a21a}.table-note{font-size:6.5px;color:#667085;margin:5px 0 0}.table-note b{color:#007fba}@media print{a{color:#006d9f!important;text-decoration:none!important}.page{min-height:auto}}
+ </style></head><body><div class="watermark"><img src="${logoUrl}"></div><div class="footer"><div class="brandline"><span class="dot"></span><b>شركة أبعاد الرؤية للاستشارات الهندسية</b></div><span>${reportId}</span><span>تقرير آلي من لوحة مخالفات السلامة</span></div>
+ <main class="page page-break"><div class="top-stripe"></div><header class="report-header"><div class="logo-box"><img src="${logoUrl}"></div><div class="title-wrap"><div class="eyebrow">VISION DIMENSIONS • EXECUTIVE SAFETY ANALYTICS</div><h1>تقرير مخالفات السلامة</h1><p>تقرير تنفيذي احترافي لقراءة اتجاهات المخالفات ومناطق التركّز حسب الفلاتر المطبقة</p><div class="company-name">شركة أبعاد الرؤية للاستشارات الهندسية</div></div><div class="meta"><b>رقم التقرير:</b> ${reportId}<br><b>تاريخ الإنشاء:</b> ${esc(today)}<br><b>عدد السجلات:</b> ${fmt(rows.length)}</div></header><div class="filters"><b>نطاق التقرير والفلاتر:</b> ${appliedFilters}</div>
+ <div class="section-label"><i></i><h2>المؤشرات التنفيذية الرئيسية</h2><span>Executive KPIs</span></div><div class="kpis"><div class="kpi orange"><span>إجمالي سجلات المخالفات</span><b>${fmt(rows.length)}</b><small>حسب النطاق الحالي</small></div><div class="kpi"><span>أوامر العمل الفريدة</span><b>${fmt(workOrders)}</b><small>أوامر بها مخالفات</small></div><div class="kpi navy"><span>المقاولون</span><b>${fmt(contractors)}</b><small>ضمن النتائج</small></div><div class="kpi"><span>أنواع أوامر العمل</span><b>${fmt(types)}</b><small>تنوع الأعمال</small></div><div class="kpi orange"><span>أوامر متكررة المخالفات</span><b>${fmt(repeated)}</b><small>أكثر من سجل</small></div></div>
+ <div class="section-label"><i></i><h2>أبرز القراءات</h2><span>Management insights</span></div><div class="insights"><div class="insight"><label>أعلى تركّز لدى مقاول</label><strong>${esc(topContractor[0])}</strong><p>${fmt(topContractor[1])} مخالفة تمثل ${concentration}% من نتائج التقرير الحالية.</p></div><div class="insight"><label>المخالفة الأكثر تكرارًا</label><strong>${esc(topViolation[0])}</strong><p>تم تسجيلها ${fmt(topViolation[1])} مرة ضمن النطاق المختار.</p></div><div class="insight"><label>أعلى مشرف موقع حسب السجلات</label><strong>${esc(topSupervisor[0])}</strong><p>مرتبط بـ ${fmt(topSupervisor[1])} سجل مخالفة في البيانات المفلترة.</p></div></div>
+ <div class="section-label"><i></i><h2>ملخصات التصنيف</h2><span>Ranked summaries</span></div><div class="summary-grid">${miniBars('أعلى المقاولين بالمخالفات',topContractors)}${miniBars('أكثر أنواع المخالفات تكرارًا',topViolations)}${miniBars('أوامر العمل الأكثر تكرارًا',topWorkOrders)}</div></main>
+ <main class="page page-break"><div class="top-stripe"></div><header class="report-header"><div class="logo-box"><img src="${logoUrl}"></div><div class="title-wrap"><div class="eyebrow">VISUAL ANALYTICS</div><h1>التحليلات الرسومية</h1><p>الشارتات أدناه تعكس نفس الفلاتر المطبقة على التقرير</p></div><div class="meta"><b>رقم التقرير:</b> ${reportId}<br><b>السجلات:</b> ${fmt(rows.length)}</div></header><div class="section-label"><i></i><h2>لوحة التحليل البصري</h2><span>Charts & trends</span></div><div class="charts-grid">${chartCards}</div></main>
+ <main class="page"><div class="top-stripe"></div><header class="report-header"><div class="logo-box"><img src="${logoUrl}"></div><div class="title-wrap"><div class="eyebrow">DETAILED VIOLATION REGISTER</div><h1>قائمة المخالفات حسب الفلاتر</h1><p>السجل التفصيلي مع رابط المخالفة الأصلي القابل للضغط</p></div><div class="meta"><b>عدد النتائج:</b> ${fmt(rows.length)}<br><b>رقم التقرير:</b> ${reportId}</div></header><div class="section-head"><h2>السجل التفصيلي للمخالفات</h2><span>${appliedFilters}</span></div><table><thead><tr><th>#</th>${listCols.map(x=>`<th>${esc(x[1])}</th>`).join('')}</tr></thead><tbody>${tableRows}</tbody></table><div class="table-note">يمكن الضغط على <b>فتح المخالفة</b> للوصول إلى الرابط الأصلي المسجل في الشيت.</div></main><script>window.onload=()=>setTimeout(()=>window.print(),900)<\/script></body></html>`);
+ win.document.close();
+}
 
 function renderPermitDelayKpis(rows){
  const total=rows.length;
@@ -2340,7 +2556,16 @@ function renderPageKpis(key,rows){
      add('إجمالي الغرامات على المقاول من مخالفات التنفيذ',money(sum(rows,'penalty')));
      add('مقاولون',unique(rows.map(r=>r.contractor)).length);
    }
-   if(key==='safety'||key==='executionViolations'){add('لم يرسل إيميل',rows.filter(r=>has(r.emailStatus,'لم يتم')).length);add('مقاولون',unique(rows.map(r=>r.contractor)).length)}
+   if(key==='safety'){
+     const uniqueWorkOrders=unique(rows.map(r=>r.workOrder)).length;
+     const contractors=unique(rows.map(r=>r.contractor)).length;
+     const supervisors=unique(rows.map(r=>r.supervisor)).length;
+     const editors=unique(rows.map(r=>r.editor)).length;
+     const workTypes=unique(rows.map(r=>r.type)).length;
+     const repeatedWorkOrders=Object.values(rows.reduce((o,r)=>{const k=String(r.workOrder||'').trim();if(k)o[k]=(o[k]||0)+1;return o},{})).filter(n=>n>1).length;
+     const twoViolations=rows.filter(r=>String(r.violation1||'').trim()&&String(r.violation2||'').trim()).length;
+     cards=[['إجمالي سجلات المخالفات',rows.length],['أوامر العمل الفريدة',uniqueWorkOrders],['المقاولون',contractors],['مشرفو المواقع',supervisors],['محررو المخالفات',editors],['أنواع أوامر العمل',workTypes],['أوامر عمل بمخالفات متكررة',repeatedWorkOrders],['سجلات تحتوي مخالفتين',twoViolations]];
+   }else if(key==='executionViolations'){add('لم يرسل إيميل',rows.filter(r=>has(r.emailStatus,'لم يتم')).length);add('مقاولون',unique(rows.map(r=>r.contractor)).length)}
    if(key==='minutes'){add('إجمالي الغرامات',money(sum(rows,'penalty')));add('تم رفع PDF',rows.filter(r=>has(r.uploadStatus,'PDF')).length)}
    if(key==='finance'){add('قيمة أوامر العمل',money(sum(rows,'workOrderValue')));add('القيمة النهائية',money(sum(rows,'netValue')));add('المستحق',money(sum(rows,'due')))}
    if(key==='emergency'){
@@ -2369,7 +2594,7 @@ function pickDimensions(key){
  const m={
  workorders:['section','status'],projects:['contractor','delay'],connections:['contractor','category'],permits:['permitStatus','contractor'],
  operations:['contractor','executionStatus'],closures:['section','payment'],assets:['group','approval'],emergency:['region','faultType'],
- tasks:['engineer','attachments'],attachments:['status','contractor'],safety:['contractor','violation'],
+ tasks:['engineer','attachments'],attachments:['status','contractor'],safety:['contractor','violation1'],
  executionViolations:['contractor','violationSection'],minutes:['contractor','minuteType'],violationsCombined:['contractor','date'],finance:['paymentStatus','type']
  }; return m[key]||['contractor','status'];
 }
@@ -2595,7 +2820,8 @@ function tableHtml(rows,cols){
  return `<table>${head}${body}</table>`;
 }
 function cell(k,v){
- const s=String(v||''); if(['status','executionStatus','delay','permitStatus','paymentStatus','approval','attachments','resolved','uploadStatus'].includes(k)){let cl=(has(s,'تم')||has(s,'Pass'))?'done':(has(s,'تأخير')||has(s,'لم')||has(s,'Fail'))?'bad':'';return `<span class="pill ${cl}">${esc(s)}</span>`} return esc(s);
+ const s=String(v||'');
+ if(k==='link'){const u=s.trim();return u?`<a class="table-link" href="${esc(u)}" target="_blank" rel="noopener">فتح المخالفة</a>`:'—'} if(['status','executionStatus','delay','permitStatus','paymentStatus','approval','attachments','resolved','uploadStatus'].includes(k)){let cl=(has(s,'تم')||has(s,'Pass'))?'done':(has(s,'تأخير')||has(s,'لم')||has(s,'Fail'))?'bad':'';return `<span class="pill ${cl}">${esc(s)}</span>`} return esc(s);
 }
 function kpiGroupClass(k){
  const l=String(k.label||''), p=String(k.page||'');

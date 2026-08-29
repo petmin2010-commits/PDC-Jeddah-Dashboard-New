@@ -911,37 +911,19 @@ html[data-theme="navy"] body .emergency-performance-table tbody tr:hover{
 .kpi-story-grandchild:before{content:"";position:absolute;top:-19px;left:50%;height:19px;width:2px;background:var(--story-color)}
 .kpi-story-grandchild span{font-size:9px}.kpi-story-grandchild strong{font-size:18px;color:var(--story-color)}.kpi-story-grandchild small{font-size:8px}
 @media(max-width:900px){.kpi-story-grandchildren{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}}
-
-
-/* V2.2.20 — Ultra-compact Wednesday KPI story cards */
-.kpi-story-card{padding:7px 8px;min-height:54px;border-radius:10px}
-.kpi-story-card span{font-size:8px;line-height:1.25}
-.kpi-story-card strong{font-size:17px;line-height:1.1;margin:2px 0}
-.kpi-story-card small{font-size:7px}
-.kpi-story-root{width:220px;margin-bottom:38px}
-.kpi-story-root strong{font-size:22px}
-.kpi-story-level1{gap:34px;padding:0 28px}
-.kpi-story-level1:before{top:-20px}
-.kpi-story-root:after{height:20px;bottom:-21px}
-.kpi-story-node:before{height:20px;top:-20px}
-.kpi-story-children{gap:10px;margin-top:28px}
-.kpi-story-children:before{top:-14px}
-.kpi-story-children:after{top:-28px;height:14px}
-.kpi-story-child{min-height:58px}
-.kpi-story-child:before{top:-14px;height:14px}
-.kpi-story-child strong{font-size:16px}
-.kpi-story-grandchildren{grid-template-columns:repeat(auto-fit,minmax(95px,1fr));gap:7px;margin-top:26px}
-.kpi-story-grandchildren:before{top:-12px}
-.kpi-story-grandchildren:after{top:-26px;height:14px}
-.kpi-story-grandchild{min-height:50px;padding:6px 6px;border-radius:9px}
-.kpi-story-grandchild:before{top:-12px;height:12px}
-.kpi-story-grandchild span{font-size:7px;line-height:1.2}
-.kpi-story-grandchild strong{font-size:14px;margin:2px 0}
-.kpi-story-grandchild small{font-size:6px}
-@media(max-width:900px){
-  .kpi-story-level1{gap:18px;padding:0 18px}
-  .kpi-story-grandchildren{grid-template-columns:repeat(auto-fit,minmax(85px,1fr))}
-}
+/* =========================================================
+   Safety Violations Master Report
+   ========================================================= */
+.nav-section-label{margin:10px 16px 4px;padding-top:9px;border-top:1px solid rgba(255,255,255,.12);font-size:10px;font-weight:800;color:rgba(255,255,255,.55);letter-spacing:.04em}
+.safety-master-analytics{margin-bottom:16px}
+.safety-report-actions{display:flex;align-items:center;justify-content:space-between;gap:14px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:12px;box-shadow:0 7px 20px rgba(38,45,74,.06)}
+.safety-report-actions span{font-size:8px;font-weight:800;color:var(--muted);letter-spacing:.08em}.safety-report-actions h3{font-size:14px;margin:2px 0 0}
+.safety-pdf-btn{border:0;border-radius:9px;background:#d92d20;color:#fff;padding:9px 14px;font-family:Cairo,sans-serif;font-size:10px;font-weight:800;cursor:pointer;white-space:nowrap;box-shadow:0 5px 14px rgba(217,45,32,.2)}
+.safety-pdf-btn:hover{filter:brightness(.96);transform:translateY(-1px)}
+.safety-master-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.safety-master-grid .panel{min-height:310px}.safety-master-grid canvas{width:100%!important;height:245px!important}
+.safety-rank-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}.safety-rank-table{overflow:auto;max-height:355px}.safety-rank-table table{width:100%;border-collapse:collapse}.safety-rank-table th,.safety-rank-table td{padding:7px 8px;border-bottom:1px solid var(--line);font-size:9px;text-align:right}.safety-rank-table th{position:sticky;top:0;background:var(--panel);z-index:1;color:var(--muted)}
+.table-link{display:inline-flex;align-items:center;justify-content:center;border:1px solid #b7cdf8;background:#eef4ff;color:#1859bd!important;border-radius:7px;padding:4px 8px;font-size:8px;font-weight:800;text-decoration:none!important;white-space:nowrap}
+@media(max-width:900px){.safety-master-grid,.safety-rank-grid{grid-template-columns:1fr}.safety-report-actions{align-items:flex-start;flex-direction:column}.safety-pdf-btn{width:100%}}
 /* =========================================================
    Wednesday Meeting Tree — Ultra Compact Fix
    Paste at END of public/styles.css
@@ -1085,3 +1067,151 @@ html[data-theme="navy"] body .emergency-performance-table tbody tr:hover{
   margin:8px 0 12px !important;
   padding:4px 6px 10px !important;
 }
+
+
+/* =========================================================
+   Safety Master Report V2 - cleaner executive visual design
+   ========================================================= */
+.safety-master-analytics{margin:4px 0 18px}
+.safety-report-actions{background:linear-gradient(135deg,#132b4f 0%,#1d3f70 100%);color:#fff;border:0!important;border-radius:14px!important;padding:14px 16px!important;box-shadow:0 10px 28px rgba(19,43,79,.16)}
+.safety-report-actions>div>span{color:#f97066!important;letter-spacing:.7px;font-weight:800}.safety-report-actions h3{color:#fff!important;font-size:14px!important}
+.safety-pdf-btn{background:#fff!important;color:#b42318!important;border:1px solid rgba(255,255,255,.7)!important;box-shadow:0 6px 18px rgba(0,0,0,.12)!important;padding:9px 15px!important;border-radius:9px!important}.safety-pdf-btn:hover{background:#fff5f4!important}
+.safety-master-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important;margin-top:12px}
+.safety-master-grid .panel{min-height:300px!important;border:1px solid #e4e7ec!important;border-radius:14px!important;box-shadow:0 6px 18px rgba(16,24,40,.055)!important;overflow:hidden}
+.safety-master-grid .panel:first-child{grid-column:1/-1;min-height:285px!important}
+.safety-master-grid canvas{height:235px!important}.safety-master-grid .panel:first-child canvas{height:210px!important}
+.safety-master-grid .panel-title{padding-bottom:9px;border-bottom:1px solid #f0f2f5}.safety-master-grid .panel-title span{font-size:8px;color:#d92d20!important;font-weight:800;letter-spacing:.65px}.safety-master-grid .panel-title h3{font-size:12px!important;color:#101828!important}
+.safety-rank-grid{gap:12px!important}.safety-rank-grid .panel{border:1px solid #e4e7ec!important;border-radius:14px!important;box-shadow:0 6px 18px rgba(16,24,40,.05)!important}
+.safety-rank-table table{border-collapse:separate!important;border-spacing:0}.safety-rank-table th{background:#f8fafc!important;color:#475467!important;font-size:8px!important}.safety-rank-table td{font-size:9px!important;color:#344054}.safety-rank-table tbody tr:hover{background:#fff6f5}.safety-rank-no{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;border-radius:99px;background:#fee4e2;color:#b42318;font-size:8px;font-weight:800}
+.table-link{display:inline-block!important;background:#eef4ff!important;color:#1849a9!important;border:1px solid #b2ccff!important;border-radius:6px!important;padding:3px 7px!important;text-decoration:none!important;font-weight:800!important;white-space:nowrap}.table-link:hover{background:#dbeafe!important}
+@media(max-width:900px){.safety-master-grid .panel:first-child{grid-column:auto}}
+
+
+/* =========================================================
+   Safety Master Report V3 - Vision Dimensions corporate theme
+   ========================================================= */
+:root{--vd-navy:#1c2868;--vd-blue:#007fba;--vd-cyan:#00a0c6;--vd-orange:#f6a21a;--vd-ink:#16213f}
+.safety-brand-hero{position:relative;overflow:hidden;background:linear-gradient(118deg,var(--vd-navy) 0%,#123b75 48%,var(--vd-blue) 100%)!important;border-radius:18px!important;padding:16px 18px!important}
+.safety-brand-hero:after{content:"";position:absolute;width:210px;height:210px;left:-70px;top:-95px;border-radius:50%;border:32px solid rgba(246,162,26,.15);pointer-events:none}
+.safety-brand-copy{display:flex;align-items:center;gap:14px;position:relative;z-index:1}.safety-brand-logo{width:72px;height:72px;object-fit:contain;background:#fff;border-radius:14px;padding:7px;box-shadow:0 8px 22px rgba(0,0,0,.16)}
+.safety-brand-copy>div>span{color:#ffd58f!important;font-size:8px!important;letter-spacing:.85px}.safety-brand-copy h3{font-size:14px!important;margin:2px 0 3px!important}.safety-brand-copy p{font-size:8px;margin:0;color:rgba(255,255,255,.78)}
+.safety-pdf-btn{position:relative;z-index:1;background:linear-gradient(135deg,#fff,#fff7e8)!important;color:var(--vd-navy)!important;border:1px solid rgba(255,255,255,.75)!important}.safety-pdf-btn:hover{box-shadow:0 9px 24px rgba(246,162,26,.22)!important;transform:translateY(-1px)}
+.safety-master-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.safety-master-grid .panel{position:relative;background:linear-gradient(180deg,#fff 0%,#fbfdff 100%);border:1px solid #e5eaf2!important;box-shadow:0 8px 24px rgba(28,40,104,.065)!important}
+.safety-master-grid .panel:before{content:"";position:absolute;right:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--vd-orange),var(--vd-blue));opacity:.9}.safety-master-grid .panel-title span{color:var(--vd-blue)!important}.safety-master-grid .panel-title h3{color:var(--vd-ink)!important}
+.safety-chart-wide{grid-column:1/-1!important}.safety-master-grid canvas{height:250px!important}.safety-chart-wide canvas{height:220px!important}
+.safety-rank-grid .panel{border-top:3px solid var(--vd-blue)!important}.safety-rank-table th{background:#f4f7fb!important;color:var(--vd-navy)!important}.safety-rank-no{background:#fff2d8!important;color:#a85f00!important}.safety-rank-table tbody tr:hover{background:#f1f9fd!important}
+.table-link{background:#eef9fc!important;color:#006d9f!important;border-color:#b9e4ee!important}.table-link:hover{background:#dcf3f8!important}
+@media(max-width:900px){.safety-brand-copy{align-items:flex-start}.safety-brand-logo{width:58px;height:58px}.safety-chart-wide{grid-column:auto!important}}
+
+/* =========================================================
+   V4 — Vision Dimensions dark corporate theme
+   Safety + Execution Violations master reports
+   ========================================================= */
+:root{
+  --vd-navy:#061a31;
+  --vd-deep:#082947;
+  --vd-blue:#007fba;
+  --vd-cyan:#19b8e6;
+  --vd-orange:#f6a21a;
+  --vd-soft:#b8c9df;
+}
+body.vd-report-dark main{
+  background:
+    radial-gradient(circle at 10% 8%,rgba(0,160,198,.18),transparent 24%),
+    radial-gradient(circle at 88% 4%,rgba(246,162,26,.12),transparent 18%),
+    linear-gradient(145deg,var(--vd-navy) 0%,var(--vd-deep) 58%,#06385b 100%);
+  color:#f5f9ff;
+}
+body.vd-report-dark main:before{
+  content:"";
+  position:fixed;
+  width:430px;height:430px;
+  left:22%;top:31%;
+  background:url('/company-logo.png') center/contain no-repeat;
+  opacity:.025;
+  pointer-events:none;
+  z-index:0;
+}
+body.vd-report-dark main>*{position:relative;z-index:1}
+body.vd-report-dark .section-title h1,
+body.vd-report-dark .section-title h2,
+body.vd-report-dark .page-title,
+body.vd-report-dark #dataTitle{color:#fff!important}
+body.vd-report-dark .section-title p,
+body.vd-report-dark .subtle,
+body.vd-report-dark .panel-title span{color:var(--vd-soft)!important}
+body.vd-report-dark .filters{
+  background:rgba(5,27,51,.70)!important;
+  border-color:rgba(255,255,255,.12)!important;
+  box-shadow:0 12px 28px rgba(0,0,0,.16)!important;
+}
+body.vd-report-dark .filter label{color:#c7d7e9!important}
+body.vd-report-dark .filter select,
+body.vd-report-dark .filter input,
+body.vd-report-dark .search input{
+  background:rgba(4,24,45,.82)!important;
+  border-color:rgba(255,255,255,.15)!important;
+  color:#fff!important;
+}
+body.vd-report-dark .filter select option{background:#082947;color:#fff}
+body.vd-report-dark .page-kpis{gap:10px}
+body.vd-report-dark .mini-kpi{
+  background:linear-gradient(145deg,rgba(10,45,76,.94),rgba(5,31,58,.96))!important;
+  border-color:rgba(255,255,255,.12)!important;
+  box-shadow:0 10px 28px rgba(0,0,0,.16)!important;
+  position:relative;overflow:hidden;
+}
+body.vd-report-dark .mini-kpi:after{content:"";position:absolute;inset:auto 0 0 0;height:3px;background:linear-gradient(90deg,var(--vd-blue),var(--vd-cyan),var(--vd-orange))}
+body.vd-report-dark .mini-kpi span{color:#b8c9df!important}
+body.vd-report-dark .mini-kpi strong{color:#fff!important}
+body.vd-report-dark .safety-master-analytics,
+body.vd-report-dark .execution-master-analytics{position:relative}
+body.vd-report-dark .safety-brand-hero{
+  background:
+    radial-gradient(circle at 8% 25%,rgba(246,162,26,.18),transparent 24%),
+    linear-gradient(118deg,#071b36 0%,#0b3862 52%,#006c9f 100%)!important;
+  border:1px solid rgba(255,255,255,.15)!important;
+  box-shadow:0 16px 38px rgba(0,0,0,.24)!important;
+}
+body.vd-report-dark .safety-master-grid .panel,
+body.vd-report-dark .safety-rank-grid .panel,
+body.vd-report-dark #dataTable.closest,
+body.vd-report-dark .page.active > .panel{
+  background:linear-gradient(180deg,rgba(11,47,79,.94),rgba(5,31,58,.96))!important;
+  border-color:rgba(255,255,255,.12)!important;
+  box-shadow:0 12px 30px rgba(0,0,0,.18)!important;
+}
+body.vd-report-dark .safety-master-grid .panel:before{background:linear-gradient(180deg,var(--vd-orange),var(--vd-cyan))!important}
+body.vd-report-dark .safety-master-grid .panel-title h3,
+body.vd-report-dark .safety-rank-grid .panel-title h3{color:#fff!important}
+body.vd-report-dark .safety-master-grid .panel-title span,
+body.vd-report-dark .safety-rank-grid .panel-title span{color:#59d7ff!important}
+body.vd-report-dark .safety-rank-grid .panel{border-top-color:var(--vd-orange)!important}
+body.vd-report-dark .safety-rank-table th{
+  background:#0b355a!important;color:#a9dcf0!important;border-bottom-color:rgba(255,255,255,.11)!important
+}
+body.vd-report-dark .safety-rank-table td{color:#edf6ff!important;border-bottom-color:rgba(255,255,255,.08)!important}
+body.vd-report-dark .safety-rank-table tbody tr:hover{background:rgba(25,184,230,.08)!important}
+body.vd-report-dark .safety-rank-no{background:rgba(246,162,26,.16)!important;color:#ffd27d!important;border:1px solid rgba(246,162,26,.24)}
+body.vd-report-dark .panel-head>b{background:rgba(25,184,230,.12)!important;color:#65dcff!important}
+body.vd-report-dark .table-wrap{border:1px solid rgba(255,255,255,.09);background:rgba(4,25,47,.55)}
+body.vd-report-dark table th{background:#0b355a!important;color:#bfe9f7!important;border-bottom-color:rgba(255,255,255,.13)!important}
+body.vd-report-dark table td{color:#e8f1fb!important;border-bottom-color:rgba(255,255,255,.075)!important}
+body.vd-report-dark table tbody tr:nth-child(even){background:rgba(255,255,255,.018)}
+body.vd-report-dark table tbody tr:hover{background:rgba(25,184,230,.075)}
+body.vd-report-dark .pill{background:rgba(25,184,230,.12);color:#75ddff}
+body.vd-report-dark .pill.bad{background:rgba(240,90,90,.15);color:#ff8f8f}
+body.vd-report-dark .pill.done{background:rgba(64,201,138,.14);color:#70e3ad}
+body.vd-report-dark .empty{color:#8fa8c2!important}
+body.vd-report-dark .safety-pdf-btn{
+  background:linear-gradient(135deg,#f6a21a,#ffbb47)!important;
+  color:#071b36!important;
+  border-color:rgba(255,255,255,.3)!important;
+  box-shadow:0 8px 24px rgba(246,162,26,.24)!important;
+}
+body.vd-report-dark .clear-btn{background:rgba(255,255,255,.07)!important;color:#dbe9f7!important;border-color:rgba(255,255,255,.12)!important}
+body.vd-report-dark .clear-btn.has-active{background:rgba(246,162,26,.13)!important;color:#ffd483!important;border-color:rgba(246,162,26,.25)!important}
+body.vd-report-dark .topbar{background:rgba(6,26,49,.88)!important;border-color:rgba(255,255,255,.09)!important;backdrop-filter:blur(12px)}
+body.vd-report-dark .topbar h2,body.vd-report-dark .topbar strong{color:#fff!important}
+body.vd-report-dark .topbar span{color:#a9bfd6!important}
+@media print{body.vd-report-dark main{background:#fff!important;color:#16213f!important}body.vd-report-dark main:before{display:none!important}}

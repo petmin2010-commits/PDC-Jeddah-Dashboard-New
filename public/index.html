@@ -35,6 +35,7 @@
       <button class="nav-item" data-page="emergency">⚠ <span>الطوارئ</span></button>
       <button class="nav-item" data-page="tasks">✦ <span>المهام والإفادات</span></button>
       <button class="nav-item" data-page="attachments">⌁ <span>المرفقات</span></button>
+      <div class="nav-section-label">التقارير</div>
       <button class="nav-item" data-page="safety">⚠ <span>مخالفات السلامة</span></button>
       <button class="nav-item" data-page="violationsCombined">⚠ <span>مخالفات التنفيذ</span></button>
       
@@ -323,6 +324,50 @@
 
         </div>
       </section>
+      <section id="safetyMasterAnalytics" class="safety-master-analytics" style="display:none">
+        <div class="safety-report-actions safety-brand-hero">
+          <div class="safety-brand-copy">
+            <img src="/company-logo.png" class="safety-brand-logo" alt="شعار أبعاد الرؤية">
+            <div><span>VISION DIMENSIONS • SAFETY MASTER REPORT</span><h3>شركة أبعاد الرؤية للاستشارات الهندسية — تقرير مخالفات السلامة</h3><p>لوحة تنفيذية تفاعلية تتحدث تلقائيًا حسب الفلاتر الحالية</p></div>
+          </div>
+          <button type="button" id="exportSafetyPdfBtn" class="safety-pdf-btn">⤓ تصدير تقرير PDF احترافي</button>
+        </div>
+        <div class="safety-master-grid">
+          <article class="panel safety-chart-wide"><div class="panel-title"><span>PERFORMANCE TREND</span><h3>اتجاه المخالفات عبر الزمن</h3></div><canvas id="safetyTrendChart"></canvas></article>
+          <article class="panel"><div class="panel-title"><span>CONTRACTOR EXPOSURE</span><h3>أعلى المقاولين تسجيلًا للمخالفات</h3></div><canvas id="safetyContractorChart"></canvas></article>
+          <article class="panel"><div class="panel-title"><span>VIOLATION PROFILE</span><h3>أكثر أنواع المخالفات تكرارًا</h3></div><canvas id="safetyViolationChart"></canvas></article>
+          <article class="panel"><div class="panel-title"><span>FIELD SUPERVISION</span><h3>المخالفات حسب مشرف الموقع</h3></div><canvas id="safetySupervisorChart"></canvas></article>
+          <article class="panel"><div class="panel-title"><span>WORK ORDER MIX</span><h3>المخالفات حسب نوع أمر العمل</h3></div><canvas id="safetyTypeChart"></canvas></article>
+          <article class="panel"><div class="panel-title"><span>VIOLATION EDITORS</span><h3>المخالفات حسب محرر المخالفة</h3></div><canvas id="safetyEditorChart"></canvas></article>
+        </div>
+        <div class="safety-rank-grid">
+          <article class="panel"><div class="panel-title"><span>REPEATED WORK ORDERS</span><h3>أوامر العمل الأكثر تكرارًا بالمخالفات</h3></div><div id="safetyRepeatedWorkOrders" class="safety-rank-table"></div></article>
+          <article class="panel"><div class="panel-title"><span>TOP CONTRACTORS</span><h3>ترتيب المقاولين حسب عدد المخالفات</h3></div><div id="safetyContractorRanking" class="safety-rank-table"></div></article>
+        </div>
+      </section>
+
+      <section id="executionMasterAnalytics" class="safety-master-analytics execution-master-analytics vd-report-theme" style="display:none">
+        <div class="safety-report-actions safety-brand-hero">
+          <div class="safety-brand-copy">
+            <img src="/company-logo.png" class="safety-brand-logo" alt="شعار أبعاد الرؤية">
+            <div><span>VISION DIMENSIONS • EXECUTION VIOLATIONS ANALYTICS</span><h3>تقرير مخالفات التنفيذ — ماستر</h3><p>لوحة تنفيذية لتحليل المخالفات حسب الفلاتر المطبقة</p></div>
+          </div>
+          <button type="button" id="exportExecutionPdfBtn" class="safety-pdf-btn">⤓ تصدير تقرير PDF احترافي</button>
+        </div>
+        <div class="safety-master-grid">
+          <article class="panel safety-chart-wide"><div class="panel-title"><span>PERFORMANCE TREND</span><h3>اتجاه مخالفات التنفيذ عبر الزمن</h3></div><canvas id="executionTrendChart"></canvas></article>
+          <article class="panel"><div class="panel-title"><span>CONTRACTOR EXPOSURE</span><h3>أعلى المقاولين تسجيلًا للمخالفات</h3></div><canvas id="executionContractorChart"></canvas></article>
+          <article class="panel"><div class="panel-title"><span>VIOLATION PROFILE</span><h3>أكثر أنواع مخالفات التنفيذ تكرارًا</h3></div><canvas id="executionViolationChart"></canvas></article>
+          <article class="panel"><div class="panel-title"><span>FIELD SUPERVISION</span><h3>المخالفات حسب مشرف الموقع</h3></div><canvas id="executionSupervisorChart"></canvas></article>
+          <article class="panel"><div class="panel-title"><span>WORK ORDER MIX</span><h3>المخالفات حسب نوع أمر العمل</h3></div><canvas id="executionTypeChart"></canvas></article>
+          <article class="panel"><div class="panel-title"><span>VIOLATION SECTIONS</span><h3>المخالفات حسب قسم المخالفة</h3></div><canvas id="executionSectionChart"></canvas></article>
+        </div>
+        <div class="safety-rank-grid">
+          <article class="panel"><div class="panel-title"><span>REPEATED WORK ORDERS</span><h3>أوامر العمل الأكثر تكرارًا بالمخالفات</h3></div><div id="executionRepeatedWorkOrders" class="safety-rank-table"></div></article>
+          <article class="panel"><div class="panel-title"><span>TOP CONTRACTORS</span><h3>ترتيب المقاولين حسب عدد المخالفات</h3></div><div id="executionContractorRanking" class="safety-rank-table"></div></article>
+        </div>
+      </section>
+
       <div id="genericPageCharts" class="charts two">
         <article class="panel"><div class="panel-title"><span>تحليل الصفحة</span><h3 id="chart1Title">التوزيع</h3></div><canvas id="pageChart1"></canvas></article>
         <article class="panel"><div class="panel-title"><span>تحليل الصفحة</span><h3 id="chart2Title">الحالات</h3></div><canvas id="pageChart2"></canvas></article>
