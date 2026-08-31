@@ -608,6 +608,24 @@ app.get('/api/health',(req,res)=>res.json({
   indexExists:fs.existsSync(INDEX_FILE)
 }));
 
+app.get('/api/monitor/summary',async(req,res)=>{
+  try{
+    // Lightweight endpoint for scheduled checks: reuses aggregate KPIs only.
+    const result=await getMonitorData();
+    res.set('Cache-Control','no-store');
+    res.json({
+      ok:true,
+      project:result.project,
+      updatedAt:result.updatedAt,
+      kpis:result.kpis,
+      monitoringMode:'summary'
+    });
+  }catch(e){
+    console.error(e);
+    res.status(500).json({ok:false,error:e.message||String(e)});
+  }
+});
+
 app.get('/api/monitor/full',async(req,res)=>{
   try{
     const result=await getFullMonitorData();
