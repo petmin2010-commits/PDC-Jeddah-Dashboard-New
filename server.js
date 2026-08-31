@@ -377,7 +377,76 @@ async function getPageData(pageKey){
   return {key:pageKey,title:cfg.title,updatedAt:now_(),rows,columns:cfg.fields.map(f=>({key:f[0],label:f[1]})),filterKeys:cfg.filters||[]};
 }
 
-const METHODS={getBootData,getSecondaryMasterKpis,getWorkOrderMasterEnrichment,getPageData,getWednesdayMeetingData,clearDashboardCache};
+
+function isDelayedLabel_(v){
+  const s=clean_(v).normalize('NFKD').replace(/[\u064B-\u065F\u0670]/g,'').replace(/[أإآ]/g,'ا').replace(/ى/g,'ي');
+  if(!s)return false;
+  if(s.includes('ضمن المدة')||s.includes('اوشك')||s.includes('اوشكت'))return false;
+  return s.includes('تاخير')||s.includes('متاخر');
+}
+
+async function getMonitorData(){
+  // Aggregate-only endpoint for remote KPI monitoring. No row-level data is exposed.
+  const rows=await readWorkOrdersBoot_();
+  const total=rows.length;
+  const completed=rows.filter(r=>isCompletedStatus_(r.status)).length;
+  const incomplete=Math.max(0,total-completed);
+  const projects=countExact_(rows,'section','مشاريع');
+  const connections=countExact_(rows,'section','توصيلات');
+  const operations=rows.filter(r=>contains_(r.section,'عمليات')).length;
+  const safetyViolations=sum_(rows,'safetyViolations');
+  const activeContractors=unique_(rows.map(r=>r.contractor)).length;
+  const responsibleEngineers=unique_(rows.map(r=>r.engineer)).length;
+
+  let delayedWorkOrders=0;
+  try{
+    const enrichment=await getWorkOrderMasterEnrichment();
+    delayedWorkOrders=enrichment.filter(r=>isDelayedLabel_(r.delay)).length;
+  }catch(e){
+    console.warn('Monitor delay enrichment skipped:',e.message||e);
+  }
+
+  const x=await getMasterExtras_();
+  const executionViolations=num_(x.executionViolations)+num_(x.minutes);
+  const attachmentsTotal=num_(x.attachmentsTotal);
+  const attachmentsUploaded=num_(x.attachmentsUploaded);
+  const emergencyTotal=num_(x.emergencyTotal);
+  const emergencyDone=num_(x.emergencyDone);
+  const tasksTotal=num_(x.tasksTotal);
+  const tasksResolved=num_(x.tasksResolved);
+
+  return {
+    ok:true,
+    project:APP.TITLE,
+    updatedAt:now_(),
+    kpis:{
+      totalWorkOrders:total,
+      completedWorkOrders:completed,
+      incompleteWorkOrders:incomplete,
+      completionRate:pct_(completed,total),
+      delayedWorkOrders,
+      delayedRate:pct_(delayedWorkOrders,total),
+      projects,
+      connections,
+      operations,
+      safetyViolations,
+      executionViolations,
+      activeContractors,
+      responsibleEngineers,
+      attachmentsTotal,
+      attachmentsUploaded,
+      attachmentsUploadRate:pct_(attachmentsUploaded,attachmentsTotal),
+      emergencyTotal,
+      emergencyDone,
+      emergencyCompletionRate:pct_(emergencyDone,emergencyTotal),
+      tasksTotal,
+      tasksResolved,
+      tasksResolutionRate:pct_(tasksResolved,tasksTotal)
+    }
+  };
+}
+
+const METHODS={getBootData,getSecondaryMasterKpis,getWorkOrderMasterEnrichment,getPageData,getWednesdayMeetingData,getMonitorData,clearDashboardCache};
 
 const app=express();
 const PUBLIC_DIR=path.join(__dirname,'public');
@@ -400,6 +469,17 @@ app.get('/api/health',(req,res)=>res.json({
   publicDirExists:fs.existsSync(PUBLIC_DIR),
   indexExists:fs.existsSync(INDEX_FILE)
 }));
+
+app.get('/api/monitor',async(req,res)=>{
+  try{
+    const result=await getMonitorData();
+    res.set('Cache-Control','no-store');
+    res.json(result);
+  }catch(e){
+    console.error(e);
+    res.status(500).json({ok:false,error:e.message||String(e)});
+  }
+});
 
 app.post('/api/rpc',async(req,res)=>{
   try{
