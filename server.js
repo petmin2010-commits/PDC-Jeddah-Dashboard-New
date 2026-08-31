@@ -1,6 +1,7 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const { google } = require('googleapis');
 const { DateTime } = require('luxon');
 const { APP } = require('./app-config');
@@ -446,7 +447,144 @@ async function getMonitorData(){
   };
 }
 
-const METHODS={getBootData,getSecondaryMasterKpis,getWorkOrderMasterEnrichment,getPageData,getWednesdayMeetingData,getMonitorData,clearDashboardCache};
+
+function monitorNumberish_(v){
+  const s=clean_(v);
+  if(!s)return null;
+  // Arabic/English formatted numbers, percentages and currency values.
+  const normalized=s
+    .replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d))
+    .replace(/,/g,'')
+    .replace(/٪/g,'%')
+    .replace(/%/g,'')
+    .replace(/[^0-9.\-]/g,'');
+  if(!normalized || normalized==='-' || normalized==='.' || normalized==='-.')return null;
+  const n=Number(normalized);
+  return Number.isFinite(n)?n:null;
+}
+
+function monitorTopValues_(rows,key,limit=12){
+  const counts=new Map();
+  for(const r of rows){
+    const v=clean_(r[key]); if(!v)continue;
+    counts.set(v,(counts.get(v)||0)+1);
+  }
+  return [...counts.entries()]
+    .sort((a,b)=>b[1]-a[1] || a[0].localeCompare(b[0],'ar'))
+    .slice(0,limit)
+    .map(([value,count])=>({value,count,rate:pct_(count,rows.length)}));
+}
+
+function monitorFieldProfile_(rows,field){
+  const [key,label]=field;
+  const vals=rows.map(r=>clean_(r[key]));
+  const nonEmpty=vals.filter(Boolean);
+  const uniqueCount=new Set(nonEmpty).size;
+  const nums=nonEmpty.map(monitorNumberish_).filter(v=>v!==null);
+  const numericRatio=nonEmpty.length?nums.length/nonEmpty.length:0;
+  const idLike=/^(workOrder|noticeNo|station|poNo|paymentNo|statementNo|sap|coordinates|link)$/i.test(key);
+  const out={
+    key,label,
+    nonEmpty:nonEmpty.length,
+    empty:rows.length-nonEmpty.length,
+    completenessRate:pct_(nonEmpty.length,rows.length),
+    uniqueCount,
+    topValues:monitorTopValues_(rows,key,12)
+  };
+  if(!idLike && nums.length && numericRatio>=0.6){
+    const sum=nums.reduce((a,b)=>a+b,0);
+    out.numeric={
+      count:nums.length,
+      sum:Math.round(sum*100)/100,
+      average:Math.round((sum/nums.length)*100)/100,
+      min:Math.min(...nums),
+      max:Math.max(...nums)
+    };
+  }
+  return out;
+}
+
+function monitorDuplicates_(rows,key){
+  if(!key)return {key:null,duplicateRows:0,duplicateValues:0};
+  const m=new Map();
+  for(const r of rows){const v=clean_(r[key]);if(v)m.set(v,(m.get(v)||0)+1)}
+  const d=[...m.entries()].filter(([,c])=>c>1);
+  return {
+    key,
+    duplicateRows:d.reduce((s,[,c])=>s+(c-1),0),
+    duplicateValues:d.length,
+    top:d.sort((a,b)=>b[1]-a[1]).slice(0,10).map(([value,count])=>({value,count}))
+  };
+}
+
+function monitorPageSummary_(pageKey,cfg,rows){
+  const fields=(cfg.fields||[]).map(f=>monitorFieldProfile_(rows,f));
+  const primary=(cfg.fields||[]).some(f=>f[0]==='workOrder')?'workOrder':
+    (cfg.fields||[]).some(f=>f[0]==='noticeNo')?'noticeNo':null;
+  const importantKeys=['contractor','engineer','section','status','delay','permit','permitStatus','executionStatus','stage','stageStatus','category','region','office','resolved','attachments','paymentStatus','sapStatus','approval','evaluation','emailStatus','uploadStatus','source','type'];
+  const breakdowns={};
+  for(const k of importantKeys){
+    if((cfg.fields||[]).some(f=>f[0]===k))breakdowns[k]=monitorTopValues_(rows,k,20);
+  }
+  return {
+    key:pageKey,
+    title:cfg.title,
+    sheet:cfg.sheet,
+    rowCount:rows.length,
+    fieldCount:(cfg.fields||[]).length,
+    duplicates:monitorDuplicates_(rows,primary),
+    breakdowns,
+    fields
+  };
+}
+
+async function getFullMonitorData(){
+  const executive=await getMonitorData();
+  const pages={};
+  const errors=[];
+  const keys=Object.keys(APP.PAGES);
+  for(const pageKey of keys){
+    const cfg=APP.PAGES[pageKey];
+    try{
+      const payload=await getPageData(pageKey);
+      const rows=Array.isArray(payload?.rows)?payload.rows:[];
+      pages[pageKey]=monitorPageSummary_(pageKey,cfg,rows);
+    }catch(e){
+      errors.push({page:pageKey,title:cfg.title,error:e.message||String(e)});
+      pages[pageKey]={key:pageKey,title:cfg.title,sheet:cfg.sheet,available:false,error:e.message||String(e)};
+    }
+  }
+
+  // High-level data-quality and change fingerprint for reliable automated comparisons.
+  let totalRows=0,totalEmptyCells=0,totalCells=0,totalDuplicateRows=0;
+  for(const p of Object.values(pages)){
+    if(!p || p.available===false)continue;
+    totalRows+=p.rowCount||0;
+    totalDuplicateRows+=p.duplicates?.duplicateRows||0;
+    for(const f of p.fields||[]){totalEmptyCells+=f.empty||0; totalCells+=(f.empty||0)+(f.nonEmpty||0)}
+  }
+  const compactForHash={kpis:executive.kpis,pages:Object.fromEntries(Object.entries(pages).map(([k,p])=>[k,{rowCount:p.rowCount,breakdowns:p.breakdowns,duplicates:p.duplicates}]))};
+  const fingerprint=crypto.createHash('sha256').update(JSON.stringify(compactForHash)).digest('hex').slice(0,24);
+  return {
+    ok:true,
+    project:APP.TITLE,
+    updatedAt:now_(),
+    fingerprint,
+    executive:executive.kpis,
+    coverage:{
+      configuredPages:keys.length,
+      availablePages:keys.length-errors.length,
+      unavailablePages:errors.length,
+      totalRowsAcrossPages:totalRows,
+      totalDuplicateRows,
+      emptyCellRate:pct_(totalEmptyCells,totalCells)
+    },
+    pages,
+    errors
+  };
+}
+
+const METHODS={getBootData,getSecondaryMasterKpis,getWorkOrderMasterEnrichment,getPageData,getWednesdayMeetingData,getMonitorData,getFullMonitorData,clearDashboardCache};
 
 const app=express();
 const PUBLIC_DIR=path.join(__dirname,'public');
@@ -469,6 +607,17 @@ app.get('/api/health',(req,res)=>res.json({
   publicDirExists:fs.existsSync(PUBLIC_DIR),
   indexExists:fs.existsSync(INDEX_FILE)
 }));
+
+app.get('/api/monitor/full',async(req,res)=>{
+  try{
+    const result=await getFullMonitorData();
+    res.set('Cache-Control','no-store');
+    res.json(result);
+  }catch(e){
+    console.error(e);
+    res.status(500).json({ok:false,error:e.message||String(e)});
+  }
+});
 
 app.get('/api/monitor',async(req,res)=>{
   try{
