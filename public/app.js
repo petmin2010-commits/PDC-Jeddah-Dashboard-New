@@ -2486,6 +2486,14 @@ function renderPermitDelayKpis(rows){
 }
 
 function renderPageKpis(key,rows){
+ const pageKpis=document.getElementById('pageKpis');
+ pageKpis.classList.toggle('emergency-kpi-board',key==='emergency');
+
+ if(key==='emergency'){
+   renderEmergencyKpis(rows,pageKpis);
+   return;
+ }
+
  let cards=[['إجمالي السجلات',rows.length]];
  const add=(l,v)=>cards.push([l,v]);
 
@@ -2588,7 +2596,112 @@ function renderPageKpis(key,rows){
  if(key==='violationsCombined'){
    cards=cards.filter(c=>c[0]!=='إجمالي السجلات');
  }
- document.getElementById('pageKpis').innerHTML=cards.slice(0,18).map(c=>`<article class="mini-kpi"><span>${esc(c[0])}</span><strong>${typeof c[1]==='string'?c[1]:fmt(c[1])}</strong></article>`).join('');
+ pageKpis.innerHTML=cards.slice(0,18).map(c=>`<article class="mini-kpi"><span>${esc(c[0])}</span><strong>${typeof c[1]==='string'?c[1]:fmt(c[1])}</strong></article>`).join('');
+}
+
+function renderEmergencyKpis(rows,root){
+ const filled=(r,key)=>String(r[key]||'').trim()!=='';
+ const uniq=key=>unique(rows.map(r=>r[key]).filter(v=>String(v||'').trim())).length;
+ const statusCount=value=>rows.filter(r=>exactStatus(r.status,value)).length;
+ const textCount=(key,value)=>rows.filter(r=>exactStatus(r[key],value)).length;
+ const validDurations=(fromKey,toKey)=>rows.map(r=>{
+   const from=parseDashboardDate(r[fromKey]);
+   const to=parseDashboardDate(r[toKey]);
+   if(!from||!to)return null;
+   const days=(to-from)/86400000;
+   return days>=0?days:null;
+ }).filter(v=>v!==null);
+ const avgDays=values=>values.length?(values.reduce((a,b)=>a+b,0)/values.length):null;
+ const durationText=values=>{
+   const avg=avgDays(values);
+   if(avg===null)return '—';
+   if(avg<1)return `${(avg*24).toFixed(1)} ساعة`;
+   return `${avg.toFixed(1)} يوم`;
+ };
+ const today=new Date();
+ const isSameDay=(a,b)=>a&&b&&a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();
+ const assignedToday=rows.filter(r=>isSameDay(parseDashboardDate(r.assignedDate),today)).length;
+ const assignedThisMonth=rows.filter(r=>{
+   const d=parseDashboardDate(r.assignedDate);
+   return d&&d.getFullYear()===today.getFullYear()&&d.getMonth()===today.getMonth();
+ }).length;
+ const sameDayCompleted=rows.filter(r=>isSameDay(parseDashboardDate(r.assignedDate),parseDashboardDate(r.endDate))).length;
+ const done=statusCount('منجز');
+ const notDone=statusCount('غير منجز');
+ const unclassifiedStatus=Math.max(0,rows.length-done-notDone);
+ const scheduled=textCount('emergencyType','مجدول');
+ const urgent=textCount('emergencyType','طارئ');
+ const unclassifiedEmergency=Math.max(0,rows.length-scheduled-urgent);
+ const archiveIsDone=row=>{
+   const value=String(row.archive||'').replace(/\s+/g,' ').trim();
+   if(!value)return false;
+   return !/(^|\s)(لا|لم|غير)(\s|$)|غير مكتمل|ناقص/.test(value);
+ };
+ const archived=rows.filter(archiveIsDone).length;
+ const notArchived=rows.length-archived;
+ const responseDurations=validDurations('assignedDate','startDate');
+ const executionDurations=validDurations('startDate','endDate');
+ const totalDurations=validDurations('assignedDate','endDate');
+ const groups=[
+   {title:'الحالة والإنجاز',tone:'status',cards:[
+     ['إجمالي الإشعارات',rows.length,'كامل النطاق المفلتر'],
+     ['الإشعارات الفريدة',uniq('noticeNo'),'حسب رقم المهمة / الإشعار'],
+     ['منجز',done,pct(done,rows.length)],
+     ['غير منجز',notDone,pct(notDone,rows.length)],
+     ['نسبة الإنجاز',pct(done,rows.length),'من إجمالي الإشعارات'],
+     ['حالة غير محددة',unclassifiedStatus,'تحتاج استكمال الحالة']
+   ]},
+   {title:'المتابعة الزمنية',tone:'time',cards:[
+     ['مسند اليوم',assignedToday,'حسب تاريخ الإسناد'],
+     ['مسند هذا الشهر',assignedThisMonth,'حسب تاريخ الإسناد'],
+     ['تمت مباشرة العمل',rows.filter(r=>filled(r,'startDate')).length,pct(rows.filter(r=>filled(r,'startDate')).length,rows.length)],
+     ['لم تبدأ بعد',rows.filter(r=>!filled(r,'startDate')).length,'لا يوجد تاريخ مباشرة'],
+     ['لها تاريخ انتهاء',rows.filter(r=>filled(r,'endDate')).length,pct(rows.filter(r=>filled(r,'endDate')).length,rows.length)],
+     ['إنجاز في نفس يوم الإسناد',sameDayCompleted,pct(sameDayCompleted,rows.length)],
+     ['متوسط زمن المباشرة',durationText(responseDurations),`${responseDurations.length} سجل صالح`],
+     ['متوسط مدة التنفيذ',durationText(executionDurations),`${executionDurations.length} سجل صالح`],
+     ['متوسط الإسناد حتى الانتهاء',durationText(totalDurations),`${totalDurations.length} سجل صالح`]
+   ]},
+   {title:'طبيعة البلاغ والأرشفة',tone:'type',cards:[
+     ['طارئ',urgent,pct(urgent,rows.length)],
+     ['مجدول',scheduled,pct(scheduled,rows.length)],
+     ['غير محدد مجدول/طارئ',unclassifiedEmergency,'تحتاج تصنيف'],
+     ['تمت أرشفة المستندات',archived,pct(archived,rows.length)],
+     ['لم تتم الأرشفة',notArchived,pct(notArchived,rows.length)],
+     ['نسبة الأرشفة',pct(archived,rows.length),'من إجمالي الإشعارات']
+   ]},
+   {title:'التغطية التشغيلية',tone:'coverage',cards:[
+     ['المحطات / المغذيات',uniq('station'),'قيم فريدة'],
+     ['أوصاف الأعمال',uniq('description'),'قيم فريدة'],
+     ['تصنيفات العمل',uniq('classification'),'قيم فريدة'],
+     ['الأنواع',uniq('type'),'قيم فريدة'],
+     ['الإدارات',uniq('administration'),'قيم فريدة'],
+     ['الدوائر',uniq('circuit'),'قيم فريدة'],
+     ['الأقسام',uniq('section'),'قيم فريدة'],
+     ['المواقع',uniq('location'),'قيم فريدة'],
+     ['الجهات الاستشارية',uniq('consultant'),'قيم فريدة'],
+     ['الاستشاريون',uniq('engineer'),'أسماء فريدة'],
+     ['المقاولون',uniq('contractor'),'قيم فريدة']
+   ]},
+   {title:'جودة واكتمال البيانات',tone:'quality',cards:[
+     ['بدون رقم إشعار',rows.filter(r=>!filled(r,'noticeNo')).length,'بيانات ناقصة'],
+     ['بدون محطة / مغذي',rows.filter(r=>!filled(r,'station')).length,'بيانات ناقصة'],
+     ['بدون تاريخ إسناد',rows.filter(r=>!filled(r,'assignedDate')).length,'بيانات ناقصة'],
+     ['بدون وصف عمل',rows.filter(r=>!filled(r,'description')).length,'بيانات ناقصة'],
+     ['بدون موقع',rows.filter(r=>!filled(r,'location')).length,'بيانات ناقصة'],
+     ['بدون اسم استشاري',rows.filter(r=>!filled(r,'engineer')).length,'بيانات ناقصة'],
+     ['بدون مقاول',rows.filter(r=>!filled(r,'contractor')).length,'بيانات ناقصة']
+   ]}
+ ];
+
+ root.innerHTML=groups.map(group=>`
+   <section class="emergency-kpi-group emergency-kpi-${group.tone}">
+     <div class="emergency-kpi-group-head"><h3>${esc(group.title)}</h3><span>${fmt(group.cards.length)} مؤشرات</span></div>
+     <div class="emergency-kpi-cards">
+       ${group.cards.map(card=>`<article class="mini-kpi emergency-mini-kpi"><span>${esc(card[0])}</span><strong>${typeof card[1]==='number'?fmt(card[1]):esc(card[1])}</strong><small>${esc(card[2]||'')}</small></article>`).join('')}
+     </div>
+   </section>
+ `).join('');
 }
 function pickDimensions(key){
  const m={
