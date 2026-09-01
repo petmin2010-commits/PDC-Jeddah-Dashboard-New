@@ -110,7 +110,7 @@ async function readConfiguredSheet_(cfg,cacheKey){
   }
   if(cacheKey==='permits')map.evaluation=19;
   if(cacheKey==='emergency'){
-    Object.assign(map,{noticeNo:1,assignedDate:3,startDate:4,endDate:5,description:6,classification:7,type:8,administration:9,circuit:10,section:11,emergencyType:12,location:13,consultant:14,engineer:15,contractor:16,contractorReceiver:17,pdcEngineer:18,status:20});
+    Object.assign(map,{noticeNo:1,assignedDate:3,startDate:4,endDate:5,description:6,classification:7,type:8,administration:9,circuit:10,section:11,emergencyType:12,location:13,consultant:14,engineer:15,contractor:16,contractorReceiver:17,pdcEngineer:18,status:20,archive:21});
   }
   let body=values.slice(headerRow);
   if(cacheKey==='permits'){

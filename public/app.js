@@ -814,6 +814,19 @@ function rowMatchesChartFilter(row,filter){
     return !exactStatus(row[filter.field],'تم التنفيذ');
   }
 
+  if(filter.mode==='blank'){
+    return !String(row[filter.field]??'').trim();
+  }
+
+  if(filter.mode==='emergency-archive-stage'){
+    if(!emergencyIsDone(row))return false;
+    const archive=normalizeEmergencyStage(row.archive);
+    const notReceived=normalizeEmergencyStage('لم يستلم من المقاول');
+    if(filter.value==='__received__')return archive!==notReceived;
+    if(filter.value==='__blank__')return !archive;
+    return archive===normalizeEmergencyStage(filter.value);
+  }
+
   return String(row[filter.field]??'').trim()===String(filter.value??'').trim();
 }
 
@@ -1635,6 +1648,15 @@ function emergencyStatusValue(row){
   return s || 'غير محدد';
 }
 
+function normalizeEmergencyStage(value){
+  return String(value||'')
+    .replace(/[\u064B-\u065F\u0670]/g,'')
+    .replace(/ـ/g,'')
+    .replace(/ال\s*PDC/gi,'PDC')
+    .replace(/\s+/g,'')
+    .toLocaleLowerCase('ar');
+}
+
 function renderEmergencyDashboard(baseRows){
   renderEmergencyStatusTree(
     applyChartFilters(baseRows,'emergencyStatusTree','emergency')
@@ -1697,70 +1719,103 @@ function renderEmergencyStatusTree(rows){
   const rate=(count,base)=>base?(count/base*100):0;
   const statusActive=activeChartFilter('emergencyStatusTree','emergency');
 
-  const documentCounts={};
-  completedRows.forEach(r=>{
-    // العمود V في ورقة «اشعارات الطوارئ» ممثل بالحقل archive.
-    const value=String(r.archive||'').replace(/\s+/g,' ').trim()||'الفراغات';
-    documentCounts[value]=(documentCounts[value]||0)+1;
-  });
-
-  const documentEntries=Object.entries(documentCounts)
-    .sort((a,b)=>{
-      if(a[0]==='الفراغات')return 1;
-      if(b[0]==='الفراغات')return -1;
-      return b[1]-a[1]||a[0].localeCompare(b[0],'ar');
-    });
+  // العمود V في ورقة «اشعارات الطوارئ» ممثل بالحقل archive.
+  const archiveCount=label=>{
+    const target=normalizeEmergencyStage(label);
+    return completedRows.filter(r=>normalizeEmergencyStage(r.archive)===target).length;
+  };
+  const notReceived=archiveCount('لم يستلم من المقاول');
+  const received=Math.max(0,completed-notReceived);
+  const consultantReview=archiveCount('قيد مراجعة الاستشاري');
+  const returnedContractor=archiveCount('معاد للمقاول بملاحظات');
+  const pdcReview=archiveCount('قيد مراجعة ال PDC');
+  const approvedPdc=archiveCount('تم الاعتماد من PDC');
+  const readyPdc=archiveCount('جاهز للرفع لـPDC');
+  const returnedConsultant=archiveCount('معاد للاستشاري بملاحظات');
+  const blankArchive=completedRows.filter(r=>!normalizeEmergencyStage(r.archive)).length;
 
   const statusCard=(label,value,tone)=>{
-    const selected=statusActive&&String(statusActive.value)===label;
-    return `<button type="button" class="emergency-tree-card emergency-tree-${tone} ${selected?'selected':''}" data-emergency-status="${esc(label)}">
+    const selected=statusActive&&statusActive.field==='status'&&String(statusActive.value)===label;
+    return `<button type="button" class="emergency-tree-card emergency-tree-${tone} ${selected?'selected':''}" data-tree-field="status" data-tree-value="${esc(label)}" data-tree-mode="exact" data-tree-label="حالة إشعار الطوارئ">
       <span>${esc(label)}</span>
       <strong>${fmt(value)}</strong>
       <small>${rate(value,total).toFixed(1)}% من إجمالي الإشعارات</small>
     </button>`;
   };
 
+  const archiveCard=(label,value,position,filterValue=label)=>{
+    const selected=statusActive&&statusActive.mode==='emergency-archive-stage'&&String(statusActive.value)===String(filterValue);
+    return `<button type="button" class="emergency-tree-card emergency-tree-doc-card ${position} ${selected?'selected':''}" data-tree-field="archive" data-tree-value="${esc(filterValue)}" data-tree-mode="emergency-archive-stage" data-tree-label="حالة المستندات">
+      <span>${esc(label)}</span>
+      <strong>${fmt(value)}</strong>
+      <small>${rate(value,completed).toFixed(1)}% من المنجز</small>
+    </button>`;
+  };
+
   root.innerHTML=`
     <div class="emergency-tree-canvas">
+      <svg class="emergency-tree-lines" viewBox="0 0 1160 1040" aria-hidden="true" focusable="false">
+        <defs>
+          <marker id="emergencyGreenArrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0 L10 5 L0 10 Z" class="tree-arrow-green"/></marker>
+          <marker id="emergencyOrangeArrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0 L10 5 L0 10 Z" class="tree-arrow-orange"/></marker>
+        </defs>
+
+        <path class="tree-status-line" d="M580 105 V135 M140 135 H1020 M140 135 V165 M580 135 V165 M1020 135 V165"/>
+        <path class="tree-doc-line" d="M1020 270 V300 H580 V325 M580 367 V390 M250 390 H910 M250 390 V410 M910 390 V410"/>
+
+        <rect class="tree-loop-box" x="60" y="392" width="1020" height="285" rx="30"/>
+        <rect class="tree-loop-box" x="60" y="527" width="1020" height="405" rx="30"/>
+
+        <path class="tree-flow-green" marker-end="url(#emergencyGreenArrow)" d="M390 462 H770"/>
+        <path class="tree-flow-green" marker-end="url(#emergencyGreenArrow)" d="M910 515 V545"/>
+        <path class="tree-flow-orange" marker-end="url(#emergencyOrangeArrow)" d="M770 580 H390"/>
+        <path class="tree-flow-orange" marker-end="url(#emergencyOrangeArrow)" d="M250 545 V515"/>
+
+        <path class="tree-flow-green" marker-end="url(#emergencyGreenArrow)" d="M910 650 V680"/>
+        <path class="tree-flow-orange" marker-end="url(#emergencyOrangeArrow)" d="M770 715 H390"/>
+        <path class="tree-flow-orange tree-return-flow" marker-end="url(#emergencyOrangeArrow)" d="M390 748 C545 730 620 625 770 625"/>
+        <path class="tree-flow-green" marker-end="url(#emergencyGreenArrow)" d="M910 785 V815"/>
+        <path class="tree-flow-green" marker-end="url(#emergencyGreenArrow)" d="M910 920 V950"/>
+
+        <path class="tree-quality-line" d="M210 982 C435 982 570 462 770 462"/>
+        <text class="tree-loop-label" x="78" y="420">دورة ملاحظات المقاول</text>
+        <text class="tree-loop-label" x="78" y="555">دورة ملاحظات الاستشاري</text>
+        <text class="tree-arrow-label" x="580" y="448">عند الاستلام</text>
+        <text class="tree-arrow-label tree-arrow-label-orange" x="590" y="716">إعادة للمراجعة</text>
+      </svg>
+
       <article class="emergency-tree-card emergency-tree-root">
         <span>إجمالي إشعارات الطوارئ</span>
         <strong>${fmt(total)}</strong>
         <small>100% من إجمالي الإشعارات</small>
       </article>
 
-      ${blankStatus?`<div class="emergency-tree-warning">الفراغات في حالة التنفيذ: <b>${fmt(blankStatus)}</b></div>`:''}
+      <button type="button" class="emergency-tree-warning ${statusActive&&statusActive.mode==='blank'?'selected':''}" data-tree-field="status" data-tree-value="" data-tree-mode="blank" data-tree-label="حالة التنفيذ"><b>!</b><span>حالة التنفيذ فارغة</span><strong>${fmt(blankStatus)}</strong></button>
 
-      <div class="emergency-tree-branches">
-        <section class="emergency-tree-branch emergency-tree-completed">
-          ${statusCard('منجز',completed,'success')}
-          <div class="emergency-tree-docs-wrap">
-            <div class="emergency-tree-docs-title">تقسيم المنجز حسب العمود V «حالة المستندات»</div>
-            <div class="emergency-tree-docs">
-              ${documentEntries.length?documentEntries.map(([label,count])=>`
-                <article class="emergency-tree-card emergency-tree-doc-card">
-                  <span>${esc(label)}</span>
-                  <strong>${fmt(count)}</strong>
-                  <small>${rate(count,completed).toFixed(1)}% من المنجز</small>
-                </article>`).join(''):
-                '<article class="emergency-tree-card emergency-tree-doc-card"><span>لا توجد حالات مستندات</span><strong>0</strong><small>0.0% من المنجز</small></article>'}
-            </div>
-          </div>
-        </section>
+      <div class="tree-status tree-status-pending">${statusCard('لم يتم البدء',notStarted,'pending')}</div>
+      <div class="tree-status tree-status-running">${statusCard('جاري التنفيذ',running,'running')}</div>
+      <div class="tree-status tree-status-completed">${statusCard('منجز',completed,'success')}</div>
 
-        <section class="emergency-tree-branch">
-          ${statusCard('جاري التنفيذ',running,'running')}
-        </section>
+      <div class="emergency-tree-docs-title">دورة المستندات — العمود V</div>
+      ${archiveCard('لم يستلم من المقاول',notReceived,'tree-doc-not-received')}
+      ${archiveCard('مستلم من المقاول',received,'tree-doc-received','__received__')}
+      ${archiveCard('معاد للمقاول بملاحظات',returnedContractor,'tree-doc-returned-contractor')}
+      ${archiveCard('قيد مراجعة الاستشاري',consultantReview,'tree-doc-consultant-review')}
+      ${archiveCard('معاد للاستشاري بملاحظات',returnedConsultant,'tree-doc-returned-consultant')}
+      ${archiveCard('قيد مراجعة ال PDC',pdcReview,'tree-doc-pdc-review')}
+      ${archiveCard('تم الاعتماد من PDC',approvedPdc,'tree-doc-pdc-approved')}
+      ${archiveCard('جاهز للرفع لـPDC',readyPdc,'tree-doc-pdc-ready')}
 
-        <section class="emergency-tree-branch">
-          ${statusCard('لم يتم البدء',notStarted,'pending')}
-        </section>
-      </div>
+      <button type="button" class="emergency-tree-card emergency-tree-archive-warning ${statusActive&&statusActive.value==='__blank__'?'selected':''}" data-tree-field="archive" data-tree-value="__blank__" data-tree-mode="emergency-archive-stage" data-tree-label="حالة المستندات">
+        <span>الفراغات</span><strong>${fmt(blankArchive)}</strong><small>تنبيه جودة بيانات</small>
+      </button>
     </div>`;
 
-  root.querySelectorAll('[data-emergency-status]').forEach(card=>{
+  root.querySelectorAll('[data-tree-field]').forEach(card=>{
     card.onclick=()=>toggleChartFilter(
-      'emergencyStatusTree','status',card.dataset.emergencyStatus,
-      'حالة إشعار الطوارئ','exact',card.dataset.emergencyStatus
+      'emergencyStatusTree',card.dataset.treeField,card.dataset.treeValue,
+      card.dataset.treeLabel,card.dataset.treeMode,
+      card.querySelector('span')?.textContent||card.dataset.treeValue
     );
   });
 }
@@ -2266,12 +2321,15 @@ function renderDataPage(){
    });
  }
 
+ const emergencyTreeSection=document.getElementById('emergencyTreeSection');
  const emergencyAnalytics=document.getElementById('emergencyAnalytics');
  const genericPageCharts=document.getElementById('genericPageCharts');
  const safetyAnalytics=document.getElementById('safetyMasterAnalytics');
  const executionAnalytics=document.getElementById('executionMasterAnalytics');
  const isCorporateViolationReport=key==='safety'||key==='violationsCombined';
  document.body.classList.toggle('vd-report-dark',isCorporateViolationReport);
+
+ if(emergencyTreeSection) emergencyTreeSection.style.display=key==='emergency'?'block':'none';
 
  if(safetyAnalytics) safetyAnalytics.style.display=key==='safety'?'block':'none';
  if(executionAnalytics) executionAnalytics.style.display=key==='violationsCombined'?'block':'none';
