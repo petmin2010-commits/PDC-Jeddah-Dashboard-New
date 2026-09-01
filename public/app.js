@@ -1636,6 +1636,10 @@ function emergencyStatusValue(row){
 }
 
 function renderEmergencyDashboard(baseRows){
+  renderEmergencyStatusTree(
+    applyChartFilters(baseRows,'emergencyStatusTree','emergency')
+  );
+
   renderEmergencyMonthlyChart(
     applyChartFilters(baseRows,'emergencyMonthlyChart','emergency')
   );
@@ -1677,6 +1681,88 @@ function renderEmergencyDashboard(baseRows){
     'contractor',
     'المقاول'
   );
+}
+
+function renderEmergencyStatusTree(rows){
+  const root=document.getElementById('emergencyStatusTree');
+  if(!root)return;
+
+  const total=rows.length;
+  const countStatus=value=>rows.filter(r=>exactStatus(r.status,value)).length;
+  const completedRows=rows.filter(r=>exactStatus(r.status,'منجز'));
+  const completed=completedRows.length;
+  const running=countStatus('جاري التنفيذ');
+  const notStarted=countStatus('لم يتم البدء');
+  const blankStatus=rows.filter(r=>!String(r.status||'').trim()).length;
+  const rate=(count,base)=>base?(count/base*100):0;
+  const statusActive=activeChartFilter('emergencyStatusTree','emergency');
+
+  const documentCounts={};
+  completedRows.forEach(r=>{
+    // العمود V في ورقة «اشعارات الطوارئ» ممثل بالحقل archive.
+    const value=String(r.archive||'').replace(/\s+/g,' ').trim()||'الفراغات';
+    documentCounts[value]=(documentCounts[value]||0)+1;
+  });
+
+  const documentEntries=Object.entries(documentCounts)
+    .sort((a,b)=>{
+      if(a[0]==='الفراغات')return 1;
+      if(b[0]==='الفراغات')return -1;
+      return b[1]-a[1]||a[0].localeCompare(b[0],'ar');
+    });
+
+  const statusCard=(label,value,tone)=>{
+    const selected=statusActive&&String(statusActive.value)===label;
+    return `<button type="button" class="emergency-tree-card emergency-tree-${tone} ${selected?'selected':''}" data-emergency-status="${esc(label)}">
+      <span>${esc(label)}</span>
+      <strong>${fmt(value)}</strong>
+      <small>${rate(value,total).toFixed(1)}% من إجمالي الإشعارات</small>
+    </button>`;
+  };
+
+  root.innerHTML=`
+    <div class="emergency-tree-canvas">
+      <article class="emergency-tree-card emergency-tree-root">
+        <span>إجمالي إشعارات الطوارئ</span>
+        <strong>${fmt(total)}</strong>
+        <small>100% من إجمالي الإشعارات</small>
+      </article>
+
+      ${blankStatus?`<div class="emergency-tree-warning">الفراغات في حالة التنفيذ: <b>${fmt(blankStatus)}</b></div>`:''}
+
+      <div class="emergency-tree-branches">
+        <section class="emergency-tree-branch emergency-tree-completed">
+          ${statusCard('منجز',completed,'success')}
+          <div class="emergency-tree-docs-wrap">
+            <div class="emergency-tree-docs-title">تقسيم المنجز حسب العمود V «حالة المستندات»</div>
+            <div class="emergency-tree-docs">
+              ${documentEntries.length?documentEntries.map(([label,count])=>`
+                <article class="emergency-tree-card emergency-tree-doc-card">
+                  <span>${esc(label)}</span>
+                  <strong>${fmt(count)}</strong>
+                  <small>${rate(count,completed).toFixed(1)}% من المنجز</small>
+                </article>`).join(''):
+                '<article class="emergency-tree-card emergency-tree-doc-card"><span>لا توجد حالات مستندات</span><strong>0</strong><small>0.0% من المنجز</small></article>'}
+            </div>
+          </div>
+        </section>
+
+        <section class="emergency-tree-branch">
+          ${statusCard('جاري التنفيذ',running,'running')}
+        </section>
+
+        <section class="emergency-tree-branch">
+          ${statusCard('لم يتم البدء',notStarted,'pending')}
+        </section>
+      </div>
+    </div>`;
+
+  root.querySelectorAll('[data-emergency-status]').forEach(card=>{
+    card.onclick=()=>toggleChartFilter(
+      'emergencyStatusTree','status',card.dataset.emergencyStatus,
+      'حالة إشعار الطوارئ','exact',card.dataset.emergencyStatus
+    );
+  });
 }
 
 function emergencyMonthLabel(key){
