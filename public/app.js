@@ -1653,6 +1653,7 @@ function normalizeEmergencyStage(value){
     .replace(/[\u064B-\u065F\u0670]/g,'')
     .replace(/ـ/g,'')
     .replace(/ال\s*PDC/gi,'PDC')
+    .replace(/^معاد[هة]?(?=\s*ل)/,'معاد')
     .replace(/\s+/g,'')
     .toLocaleLowerCase('ar');
 }
@@ -1727,11 +1728,11 @@ function renderEmergencyStatusTree(rows){
   const notReceived=archiveCount('لم يستلم من المقاول');
   const received=Math.max(0,completed-notReceived);
   const consultantReview=archiveCount('قيد مراجعة الاستشاري');
-  const returnedContractor=archiveCount('معاد للمقاول بملاحظات');
+  const returnedContractor=archiveCount('معاده للمقاول بملاحظات');
   const pdcReview=archiveCount('قيد مراجعة ال PDC');
   const approvedPdc=archiveCount('تم الاعتماد من PDC');
   const readyPdc=archiveCount('جاهز للرفع لـPDC');
-  const returnedConsultant=archiveCount('معاد للاستشاري بملاحظات');
+  const returnedConsultant=archiveCount('معاده للاستشاري بملاحظات');
   const blankArchive=completedRows.filter(r=>!normalizeEmergencyStage(r.archive)).length;
 
   const statusCard=(label,value,tone)=>{
@@ -1799,9 +1800,9 @@ function renderEmergencyStatusTree(rows){
       <div class="emergency-tree-docs-title">دورة المستندات — العمود V</div>
       ${archiveCard('لم يستلم من المقاول',notReceived,'tree-doc-not-received')}
       ${archiveCard('مستلم من المقاول',received,'tree-doc-received','__received__')}
-      ${archiveCard('معاد للمقاول بملاحظات',returnedContractor,'tree-doc-returned-contractor')}
+      ${archiveCard('معاده للمقاول بملاحظات',returnedContractor,'tree-doc-returned-contractor')}
       ${archiveCard('قيد مراجعة الاستشاري',consultantReview,'tree-doc-consultant-review')}
-      ${archiveCard('معاد للاستشاري بملاحظات',returnedConsultant,'tree-doc-returned-consultant')}
+      ${archiveCard('معاده للاستشاري بملاحظات',returnedConsultant,'tree-doc-returned-consultant')}
       ${archiveCard('قيد مراجعة ال PDC',pdcReview,'tree-doc-pdc-review')}
       ${archiveCard('تم الاعتماد من PDC',approvedPdc,'tree-doc-pdc-approved')}
       ${archiveCard('جاهز للرفع لـPDC',readyPdc,'tree-doc-pdc-ready')}
