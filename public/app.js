@@ -2580,10 +2580,12 @@ function renderPageKpis(key,rows){
      const done=rows.filter(r=>exactStatus(r.status,'منجز')).length;
      const running=rows.filter(r=>exactStatus(r.status,'جاري التنفيذ')).length;
      const notStarted=rows.filter(r=>exactStatus(r.status,'لم يتم البدء')).length;
+     const blankStatus=rows.filter(r=>!String(r.status||'').trim()).length;
 
      add('منجز',done);
      add('جاري التنفيذ',running);
      add('لم يتم البدء',notStarted);
+     add('الفراغات',blankStatus);
      add('نسبة الإنجاز',pct(done,rows.length));
      add('الأحياء / المواقع',unique(rows.map(r=>r.location)).length);
      add('المقاولون',unique(rows.map(r=>r.contractor)).length);
@@ -2627,8 +2629,9 @@ function renderEmergencyKpis(rows,root){
  }).length;
  const sameDayCompleted=rows.filter(r=>isSameDay(parseDashboardDate(r.assignedDate),parseDashboardDate(r.endDate))).length;
  const done=statusCount('منجز');
- const notDone=statusCount('غير منجز');
- const unclassifiedStatus=Math.max(0,rows.length-done-notDone);
+ const running=statusCount('جاري التنفيذ');
+ const notStarted=statusCount('لم يتم البدء');
+ const blankStatus=rows.filter(r=>!filled(r,'status')).length;
  const scheduled=textCount('emergencyType','مجدول');
  const urgent=textCount('emergencyType','طارئ');
  const unclassifiedEmergency=Math.max(0,rows.length-scheduled-urgent);
@@ -2647,9 +2650,11 @@ function renderEmergencyKpis(rows,root){
      ['إجمالي الإشعارات',rows.length,'كامل النطاق المفلتر'],
      ['الإشعارات الفريدة',uniq('noticeNo'),'حسب رقم المهمة / الإشعار'],
      ['منجز',done,pct(done,rows.length)],
-     ['غير منجز',notDone,pct(notDone,rows.length)],
+     ['جاري التنفيذ',running,pct(running,rows.length)],
+     ['لم يتم البدء',notStarted,pct(notStarted,rows.length)],
+     ['الفراغات',blankStatus,pct(blankStatus,rows.length)],
      ['نسبة الإنجاز',pct(done,rows.length),'من إجمالي الإشعارات'],
-     ['حالة غير محددة',unclassifiedStatus,'تحتاج استكمال الحالة']
+     ['إجمالي غير المنجز',running+notStarted+blankStatus,'جاري التنفيذ + لم يبدأ + الفراغات']
    ]},
    {title:'المتابعة الزمنية',tone:'time',cards:[
      ['مسند اليوم',assignedToday,'حسب تاريخ الإسناد'],
