@@ -827,6 +827,16 @@ function rowMatchesChartFilter(row,filter){
     return archive===normalizeEmergencyStage(filter.value);
   }
 
+  if(filter.mode==='emergency-type-description'){
+    try{
+      const [type,description]=JSON.parse(filter.value);
+      return exactStatus(row.emergencyType,type) &&
+        cleanEmergencyTreeValue(row.description)===cleanEmergencyTreeValue(description);
+    }catch(e){
+      return false;
+    }
+  }
+
   return String(row[filter.field]??'').trim()===String(filter.value??'').trim();
 }
 
@@ -1658,9 +1668,17 @@ function normalizeEmergencyStage(value){
     .toLocaleLowerCase('ar');
 }
 
+function cleanEmergencyTreeValue(value){
+  return String(value||'').replace(/\s+/g,' ').trim();
+}
+
 function renderEmergencyDashboard(baseRows){
   renderEmergencyStatusTree(
     applyChartFilters(baseRows,'emergencyStatusTree','emergency')
+  );
+
+  renderEmergencyTypeTree(
+    applyChartFilters(baseRows,'emergencyTypeTree','emergency')
   );
 
   renderEmergencyMonthlyChart(
@@ -1817,6 +1835,80 @@ function renderEmergencyStatusTree(rows){
       'emergencyStatusTree',card.dataset.treeField,card.dataset.treeValue,
       card.dataset.treeLabel,card.dataset.treeMode,
       card.querySelector('span')?.textContent||card.dataset.treeValue
+    );
+  });
+}
+
+function renderEmergencyTypeTree(rows){
+  const root=document.getElementById('emergencyTypeTree');
+  if(!root)return;
+
+  const total=rows.length;
+  const rate=(count,base)=>base?(count/base*100):0;
+  const active=activeChartFilter('emergencyTypeTree','emergency');
+  const types=[
+    {label:'طارئ',tone:'urgent'},
+    {label:'مجدول',tone:'scheduled'}
+  ];
+  const knownTypes=new Set(types.map(x=>x.label));
+  const unclassified=rows.filter(r=>!knownTypes.has(cleanEmergencyTreeValue(r.emergencyType))).length;
+
+  const descriptionEntries=type=>{
+    const typeRows=rows.filter(r=>exactStatus(r.emergencyType,type));
+    const counts=new Map();
+    typeRows.forEach(r=>{
+      const value=cleanEmergencyTreeValue(r.description);
+      counts.set(value,(counts.get(value)||0)+1);
+    });
+    return {
+      rows:typeRows,
+      entries:[...counts.entries()].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],'ar'))
+    };
+  };
+
+  const typeBranch=({label,tone})=>{
+    const data=descriptionEntries(label);
+    const typeSelected=active&&active.field==='emergencyType'&&active.mode==='exact'&&String(active.value)===label;
+    return `<section class="emergency-type-branch emergency-type-${tone}">
+      <button type="button" class="emergency-tree-card emergency-type-card ${typeSelected?'selected':''}" data-type-field="emergencyType" data-type-value="${esc(label)}" data-type-mode="exact" data-type-display="${esc(label)}">
+        <span>${esc(label)}</span>
+        <strong>${fmt(data.rows.length)}</strong>
+        <small>${rate(data.rows.length,total).toFixed(1)}% من إجمالي الإشعارات</small>
+      </button>
+      <div class="emergency-description-tree">
+        <div class="emergency-description-title">وصف العمل — العمود G</div>
+        <div class="emergency-description-list">
+          ${data.entries.length?data.entries.map(([description,count])=>{
+            const filterValue=JSON.stringify([label,description]);
+            const selected=active&&active.mode==='emergency-type-description'&&String(active.value)===filterValue;
+            const shown=description||'الفراغات في وصف العمل';
+            return `<button type="button" class="emergency-tree-card emergency-description-card ${!description?'description-blank':''} ${selected?'selected':''}" data-type-field="description" data-type-value="${esc(filterValue)}" data-type-mode="emergency-type-description" data-type-display="${esc(label+' — '+shown)}">
+              <span>${esc(shown)}</span><strong>${fmt(count)}</strong><small>${rate(count,data.rows.length).toFixed(1)}% من ${esc(label)}</small>
+            </button>`;
+          }).join(''):'<article class="emergency-tree-card emergency-description-card is-empty"><span>لا توجد إشعارات</span><strong>٠</strong><small>0.0%</small></article>'}
+        </div>
+      </div>
+    </section>`;
+  };
+
+  root.innerHTML=`
+    <div class="emergency-type-tree-canvas">
+      <article class="emergency-tree-card emergency-type-root">
+        <span>إجمالي إشعارات الطوارئ</span>
+        <strong>${fmt(total)}</strong>
+        <small>100% من إجمالي الإشعارات</small>
+      </article>
+      ${unclassified?`<div class="emergency-type-quality-warning"><b>!</b> غير مصنف في العمود M: <strong>${fmt(unclassified)}</strong></div>`:''}
+      <div class="emergency-type-branches">
+        ${types.map(typeBranch).join('')}
+      </div>
+    </div>`;
+
+  root.querySelectorAll('[data-type-field]').forEach(card=>{
+    card.onclick=()=>toggleChartFilter(
+      'emergencyTypeTree',card.dataset.typeField,card.dataset.typeValue,
+      card.dataset.typeMode==='emergency-type-description'?'النوع ووصف العمل':'نوع الإشعار',
+      card.dataset.typeMode,card.dataset.typeDisplay
     );
   });
 }

@@ -662,6 +662,34 @@ button.emergency-tree-card:hover{transform:translateY(-2px);box-shadow:0 14px 30
 .tree-loop-label{fill:#dc6810;font:700 14px Cairo,Tahoma,Arial,sans-serif;direction:rtl;text-anchor:end}
 .tree-arrow-label{fill:var(--muted);font:600 10px Cairo,Tahoma,Arial,sans-serif;text-anchor:middle;direction:rtl}.tree-arrow-label-orange{fill:#dc6810;font-weight:800}
 @media(max-width:1280px){.emergency-tree-canvas{margin-right:0}}
+
+.emergency-type-story-panel{overflow:hidden}
+.emergency-type-tree{overflow-x:auto;padding:8px 4px 18px}
+.emergency-type-tree-canvas{position:relative;min-width:1000px;padding:0 28px 20px;direction:rtl;text-align:center;--type-urgent:#e66e16;--type-scheduled:#2878e8;--type-line:#8068dc}
+.emergency-type-root{width:390px;margin:0 auto 62px;border-left:5px solid #2878e8}
+.emergency-type-root strong{color:#2467d7;font-size:31px}
+.emergency-type-root:after{content:"";position:absolute;bottom:-32px;left:50%;width:2px;height:32px;background:var(--type-line)}
+.emergency-type-quality-warning{position:absolute;top:20px;right:28px;display:flex;align-items:center;gap:7px;padding:8px 12px;border:1px solid #f3a4ad;border-radius:14px;background:color-mix(in srgb,#fff1f3 88%,var(--panel));color:#c63247;font-size:9px;font-weight:800}
+.emergency-type-quality-warning b{display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:#f04444;color:#fff;font-size:14px}.emergency-type-quality-warning strong{font-size:17px}
+.emergency-type-branches{position:relative;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:84px;align-items:start}
+.emergency-type-branches:before{content:"";position:absolute;top:-32px;right:25%;left:25%;height:2px;background:var(--type-line)}
+.emergency-type-branch{position:relative;min-width:0}
+.emergency-type-branch:before{content:"";position:absolute;top:-32px;left:50%;width:2px;height:32px;background:var(--type-line)}
+.emergency-type-card{width:min(360px,100%);margin:0 auto}
+.emergency-type-urgent .emergency-type-card{border-left:5px solid var(--type-urgent)}.emergency-type-urgent .emergency-type-card strong{color:var(--type-urgent)}
+.emergency-type-scheduled .emergency-type-card{border-left:5px solid var(--type-scheduled)}.emergency-type-scheduled .emergency-type-card strong{color:var(--type-scheduled)}
+.emergency-description-tree{position:relative;margin-top:48px;padding-top:1px}
+.emergency-description-tree:before{content:"";position:absolute;top:-48px;left:50%;width:2px;height:48px;background:currentColor;opacity:.75}
+.emergency-type-urgent .emergency-description-tree{color:var(--type-urgent)}.emergency-type-scheduled .emergency-description-tree{color:var(--type-scheduled)}
+.emergency-description-title{position:relative;z-index:2;display:inline-grid;place-items:center;min-width:190px;height:35px;padding:0 14px;border:1px solid currentColor;border-radius:99px;background:var(--panel);font-size:9px;font-weight:800}
+.emergency-description-list{position:relative;display:flex;flex-direction:column;gap:10px;margin-top:18px;padding-right:30px}
+.emergency-description-list:before{content:"";position:absolute;right:10px;top:0;bottom:0;width:2px;background:currentColor;opacity:.72}
+.emergency-description-card{position:relative;width:100%;height:auto;min-height:80px;border-left:4px solid currentColor;text-align:center}
+.emergency-description-card:before{content:"";position:absolute;right:-21px;top:50%;width:21px;height:2px;background:currentColor;opacity:.72}
+.emergency-description-card span{font-size:9px;max-width:100%;overflow-wrap:anywhere}.emergency-description-card strong{font-size:21px}
+.emergency-description-card.description-blank{color:#d23b4e;border-color:#e64d5f}.emergency-description-card.description-blank strong,.emergency-description-card.description-blank span{color:#d23b4e}
+.emergency-description-card.is-empty{opacity:.62}
+@media(max-width:1100px){.emergency-type-tree-canvas{padding-right:18px;padding-left:18px}.emergency-type-branches{gap:55px}}
 .emergency-charts-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
 .emergency-charts-grid .emergency-wide{grid-column:1/-1}
 .emergency-chart-wrap{height:285px;position:relative}.emergency-chart-wrap.wide{height:300px}.emergency-chart-wrap.tall{height:360px}
