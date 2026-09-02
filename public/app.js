@@ -1,5 +1,5 @@
 
-const S={booted:false,boot:null,masterRows:[],masterKpis:[],page:null,raw:[],filtered:[],columns:[],filterKeys:[],charts:{},current:'master',pageCache:{},chartFilters:{},pageBaseRows:[],masterBaseRows:[],meeting:null,meetingRows:[]};
+const S={booted:false,boot:null,masterRows:[],masterKpis:[],page:null,raw:[],filtered:[],columns:[],filterKeys:[],charts:{},current:'master',pageCache:{},pageLoading:{},chartFilters:{},pageBaseRows:[],masterBaseRows:[],meeting:null,meetingRows:[]};
 const LABELS={
  region:'الإدارة / المنطقة',section:'القسم',contractor:'المقاول',engineer:'المهندس',status:'الحالة',
  delay:'التأخير',executionStatus:'حالة التنفيذ',permit:'التصريح',permitStatus:'حالة التصريح',
@@ -86,6 +86,9 @@ function init(x){
 
  // ثم بقية المؤشرات من الأوراق الأخرى بدون تعطيل المستخدم.
  setTimeout(loadSecondaryMasterKpis, 250);
+
+ // جهّز صفحة الطوارئ في الخلفية حتى تكون الشجرتان جاهزتين عند فتح التاب.
+ setTimeout(()=>requestPageData('emergency',true), 500);
 }
 
 function loadMasterEnrichment(){
@@ -199,10 +202,58 @@ function openPage(key){
    openWednesdayMeeting();
    return;
  }
- document.getElementById('pageTitle').textContent=(S.boot.pageMeta[key]?.title||key);
+ const pageTitle=(S.boot.pageMeta[key]?.title||key);
+ document.getElementById('pageTitle').textContent=pageTitle;
  if(S.pageCache[key]){loadPagePayload(S.pageCache[key]);return}
+ showPageLoadingState(key,pageTitle);
  showBoot(true);
- google.script.run.withSuccessHandler(p=>{S.pageCache[key]=p;loadPagePayload(p);showBoot(false)}).withFailureHandler(fail).getPageData(key);
+ requestPageData(key,false);
+}
+
+function requestPageData(key,background){
+ if(S.pageCache[key]){
+   if(!background&&S.current===key)loadPagePayload(S.pageCache[key]);
+   return;
+ }
+ if(S.pageLoading[key])return;
+ S.pageLoading[key]=true;
+ google.script.run
+   .withSuccessHandler(p=>{
+     delete S.pageLoading[key];
+     S.pageCache[key]=p;
+     if(S.current===key){loadPagePayload(p);showBoot(false)}
+   })
+   .withFailureHandler(e=>{
+     delete S.pageLoading[key];
+     if(S.current===key)fail(e);
+   })
+   .getPageData(key);
+}
+
+function showPageLoadingState(key,title){
+ const dataTitle=document.getElementById('dataTitle');
+ const dataCount=document.getElementById('dataCount');
+ const dataTable=document.getElementById('dataTable');
+ const pageKpis=document.getElementById('pageKpis');
+ if(dataTitle)dataTitle.textContent=title;
+ if(dataCount)dataCount.textContent='جاري التحميل...';
+ if(dataTable)dataTable.innerHTML='<div class="empty">جاري تحميل البيانات...</div>';
+ if(pageKpis)pageKpis.innerHTML='<article class="mini-kpi"><span>حالة الصفحة</span><strong>جاري التحميل</strong></article>';
+
+ const emergencyTreeSection=document.getElementById('emergencyTreeSection');
+ const emergencyAnalytics=document.getElementById('emergencyAnalytics');
+ const genericPageCharts=document.getElementById('genericPageCharts');
+ const isEmergency=key==='emergency';
+ if(emergencyTreeSection)emergencyTreeSection.style.display=isEmergency?'block':'none';
+ if(emergencyAnalytics)emergencyAnalytics.style.display='none';
+ if(genericPageCharts)genericPageCharts.style.display=isEmergency?'none':'grid';
+
+ if(isEmergency){
+   const statusTree=document.getElementById('emergencyStatusTree');
+   const typeTree=document.getElementById('emergencyTypeTree');
+   if(statusTree)statusTree.innerHTML='<div class="empty">جاري تحميل شجرة حالات الطوارئ...</div>';
+   if(typeTree)typeTree.innerHTML='<div class="empty">جاري تحميل شجرة النوع ووصف العمل...</div>';
+ }
 }
 
 

@@ -21,6 +21,7 @@ loadEnvFile();
 const PORT = Number(process.env.PORT || 3000);
 const SPREADSHEET_ID = process.env.SPREADSHEET_ID || '';
 const memoryCache = new Map();
+const valuesInFlight = new Map();
 
 function credentialsFromEnv(){
   if(process.env.GOOGLE_SERVICE_ACCOUNT_JSON){
@@ -45,10 +46,16 @@ function assertConfig(){
 function qSheet(name){ return `'${String(name).replace(/'/g,"''")}'`; }
 
 async function valuesGet(range){
-  assertConfig();
-  const sheets=await getSheets();
-  const r=await sheets.spreadsheets.values.get({spreadsheetId:SPREADSHEET_ID, range, valueRenderOption:'FORMATTED_VALUE'});
-  return r.data.values || [];
+  if(valuesInFlight.has(range))return valuesInFlight.get(range);
+  const pending=(async()=>{
+    assertConfig();
+    const sheets=await getSheets();
+    const r=await sheets.spreadsheets.values.get({spreadsheetId:SPREADSHEET_ID, range, valueRenderOption:'FORMATTED_VALUE'});
+    return r.data.values || [];
+  })();
+  valuesInFlight.set(range,pending);
+  try{return await pending}
+  finally{valuesInFlight.delete(range)}
 }
 
 function cacheGet(key){
@@ -100,7 +107,10 @@ async function getWorkOrderMasterEnrichment(){
 async function readConfiguredSheet_(cfg,cacheKey){
   const key='PDC_V3_'+cacheKey;
   if(cacheKey!=='workorders'){const hit=cacheGet(key);if(hit)return hit}
-  const values=await valuesGet(`${qSheet(cfg.sheet)}!A:${cacheKey==='workorders'?'BD':'AZ'}`);
+  // صفحة الطوارئ تعتمد فقط على الأعمدة حتى V. حصر النطاق هنا يقلل
+  // حجم استجابة Google Sheets ووقت فتح التاب بصورة ملحوظة.
+  const endColumn=cacheKey==='workorders'?'BD':cacheKey==='emergency'?'V':'AZ';
+  const values=await valuesGet(`${qSheet(cfg.sheet)}!A:${endColumn}`);
   const headerRow=cfg.headerRow||1;
   if(values.length<headerRow)return [];
   const headers=(values[headerRow-1]||[]).map(clean_);
