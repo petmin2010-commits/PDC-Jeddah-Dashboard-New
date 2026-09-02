@@ -143,7 +143,7 @@ function bindWednesdayInfoPopups(){
      if(text)text.innerHTML=`
        <div class="meeting-method-list">
          <p><b>التنفيذ:</b> العمود R. يُعتبر الأمر منفذًا فقط إذا كانت القيمة «تم التنفيذ».</p>
-         <p><b>متأخر تنفيذ / ضمن المدة:</b> للأوامر غير المنفذة، من حالة التأخير.</p>
+         <p><b>شجرة لم يتم التنفيذ:</b> تُقسم تلقائيًا حسب الحالات الفعلية الموجودة في العمود BC.</p>
          <p><b>متأخر إغلاق:</b> الأمر منفذ + مرحلة التنفيذ تحتوي «الإغلاق» + حالة المرحلة ليست «تم الانتهاء».</p>
          <p><b>المقاول:</b> العمود G.</p>
          <p><b>نوع العمل:</b> العمود P.</p>
@@ -151,7 +151,7 @@ function bindWednesdayInfoPopups(){
          <p><b>جهة التنفيذ / المكتب:</b> العمود U.</p>
          <p><b>حالة التصاريح:</b> تعتمد كليًا على العمود AO (حالة التصريح من بلدي). جميع القيم المختلفة في AO تظهر تلقائيًا في الجدول والرسم، بما فيها «انتهاء التنسيق - رفض»، وأي حالة جديدة مستقبلًا تظهر تلقائيًا.</p>
          <p><b>شريحة أيام التأخير:</b> العمود BE مباشرة.</p>
-         <p><b>حالة المستندات:</b> العمود BF، ويُحتسب فقط لأوامر العمل التي تم تنفيذها (R = تم التنفيذ). وعند حالة "تم الاستلام من المقاول" يتم تقسيمها تلقائيًا حسب القيم الموجودة في العمود BG.</p>
+         <p><b>شجرة تم التنفيذ:</b> تبدأ من العمود AK إلى «مستلم 155 للمقاول» و«غير مستلم 155 للمقاول». فرع «غير مستلم 155 للمقاول» ينقسم حسب BF إلى «تم الاستلام من المقاول» و«لم يتم الاستلام من المقاول»، ثم «تم الاستلام من المقاول» ينقسم تلقائيًا حسب الحالات الموجودة في BG.</p>
        </div>`;
      if(modal){
        modal.classList.add('show');
@@ -195,7 +195,7 @@ function openPage(key){
    configureMasterFilters();applyMasterFilters();return;
  }
  if(isMeeting){
-   document.getElementById('pageTitle').textContent='اجتماع الأربعاء';
+   document.getElementById('pageTitle').textContent='اجتماع الخميس';
    openWednesdayMeeting();
    return;
  }
@@ -331,34 +331,30 @@ function renderWednesdayMeeting(){
  const incompleteRows=rows.filter(r=>statusNorm(r.executionRaw)==='لم يتم التنفيذ');
  const stoppedRows=rows.filter(r=>['موقوف/محول','متوقف/محول'].includes(statusNorm(r.executionRaw)));
 
- // فروع "تم التنفيذ" تعتمد على BF، ثم يتم تفصيل المستندات المستلمة ديناميكيًا حسب BG.
- const receivedRows=completedRows.filter(r=>statusNorm(r.docsStatus)==='تم الاستلام من المقاول');
- const docsReceived=receivedRows.length;
- const docsNotReceived=completedRows.filter(r=>statusNorm(r.docsStatus)==='لم يتم الاستلام من المقاول').length;
- const docsSubEntries=meetingCountBy(receivedRows,'docsSubStatus');
- const receivedPct=n=>docsReceived?((n/docsReceived)*100).toFixed(1)+'% من المستلم':'0.0% من المستلم';
- const docsSubHtml=docsSubEntries.length
-   ? docsSubEntries.map(([label,count])=>`<article class="kpi-story-card kpi-story-grandchild"><span>${esc(label)}</span><strong>${fmt(count)}</strong><small>${receivedPct(count)}</small></article>`).join('')
-   : '<article class="kpi-story-card kpi-story-grandchild"><span>غير محدد</span><strong>0</strong><small>0.0% من المستلم</small></article>';
+ // شجرة الاجتماع:
+ // 1) تم التنفيذ -> AK (مستلم 155 للمقاول / غير مستلم 155 للمقاول)
+ // 2) غير مستلم 155 للمقاول -> BF (تم الاستلام من المقاول / لم يتم الاستلام من المقاول)
+ // 3) تم الاستلام من المقاول -> الحالات الفعلية في BG
+ // 4) لم يتم التنفيذ -> الحالات الفعلية في BC
+ const akReceivedRows=completedRows.filter(r=>statusNorm(r.contractor155Status)==='مستلم 155 للمقاول');
+ const akNotReceivedRows=completedRows.filter(r=>statusNorm(r.contractor155Status)==='غير مستلم 155 للمقاول');
 
- // فروع "لم يتم التنفيذ" تعتمد مباشرة على العمود AB (موقف التأخير) فقط.
- // أي حالة تحتوي على تأخير/متأخر تُحسب "متأخر عن المدة" مهما كان مستوى أو عدد أيام التأخير.
- // "ضمن المدة" و"أوشك/أوشكت على الانتهاء" تُحسب كلها "ضمن المدة".
- const delayNorm=v=>statusNorm(v)
-   .normalize('NFKD').replace(/[\u064B-\u065F\u0670]/g,'')
-   .replace(/[أإآ]/g,'ا').replace(/ى/g,'ي');
- const isWithinDelay=v=>{
-   const d=delayNorm(v);
-   return d.includes('ضمن المدة')||d.includes('اوشك')||d.includes('اوشكت');
- };
- const isDelayedDelay=v=>{
-   const d=delayNorm(v);
-   if(isWithinDelay(v))return false;
-   return d.includes('تاخير')||d.includes('متاخر');
- };
- const incompleteWithin=incompleteRows.filter(r=>isWithinDelay(r.delayStatus)).length;
- const incompleteDelayed=incompleteRows.filter(r=>isDelayedDelay(r.delayStatus)).length;
+ const bfReceivedRows=akNotReceivedRows.filter(r=>statusNorm(r.docsStatus)==='تم الاستلام من المقاول');
+ const bfNotReceivedRows=akNotReceivedRows.filter(r=>statusNorm(r.docsStatus)==='لم يتم الاستلام من المقاول');
+ const bgEntries=meetingCountBy(bfReceivedRows,'docsSubStatus');
+ const bcEntries=meetingCountBy(incompleteRows,'nonExecutionStatus');
+
+ const parentPct=(n,parent,label)=>parent?`${meetingPct(n,parent)}% من ${label}`:`0.0% من ${label}`;
  const pct=n=>meetingPct(n,total)+'% من الإجمالي';
+
+ const bgHtml=bgEntries.length
+   ? bgEntries.map(([label,count])=>`<article class="kpi-story-card kpi-story-greatgrandchild"><span>${esc(label)}</span><strong>${fmt(count)}</strong><small>${parentPct(count,bfReceivedRows.length,'المستلم من المقاول')}</small></article>`).join('')
+   : '<article class="kpi-story-card kpi-story-greatgrandchild"><span>غير محدد</span><strong>0</strong><small>0.0% من المستلم من المقاول</small></article>';
+
+ const bcHtml=bcEntries.length
+   ? bcEntries.map(([label,count])=>`<article class="kpi-story-card kpi-story-child"><span>${esc(label)}</span><strong>${fmt(count)}</strong><small>${parentPct(count,incompleteRows.length,'لم يتم التنفيذ')}</small></article>`).join('')
+   : '<article class="kpi-story-card kpi-story-child"><span>غير محدد</span><strong>0</strong><small>0.0% من لم يتم التنفيذ</small></article>';
+
  const kroot=document.getElementById('meetingKpis');
  if(kroot)kroot.innerHTML=`
   <div class="kpi-story">
@@ -367,19 +363,22 @@ function renderWednesdayMeeting(){
     <section class="kpi-story-node completed">
      <article class="kpi-story-card"><span>تم التنفيذ</span><strong>${fmt(completedRows.length)}</strong><small>${pct(completedRows.length)}</small></article>
      <div class="kpi-story-children">
-      <div class="kpi-story-child-node received-docs">
-       <article class="kpi-story-card kpi-story-child"><span>تم استلام مستندات المقاول</span><strong>${fmt(docsReceived)}</strong><small>${pct(docsReceived)}</small></article>
-       <div class="kpi-story-grandchildren">${docsSubHtml}</div>
+      <article class="kpi-story-card kpi-story-child"><span>مستلم 155 للمقاول</span><strong>${fmt(akReceivedRows.length)}</strong><small>${parentPct(akReceivedRows.length,completedRows.length,'تم التنفيذ')}</small></article>
+      <div class="kpi-story-child-node ak-not-received">
+       <article class="kpi-story-card kpi-story-child"><span>غير مستلم 155 للمقاول</span><strong>${fmt(akNotReceivedRows.length)}</strong><small>${parentPct(akNotReceivedRows.length,completedRows.length,'تم التنفيذ')}</small></article>
+       <div class="kpi-story-grandchildren">
+        <div class="kpi-story-grandchild-node bf-received">
+         <article class="kpi-story-card kpi-story-grandchild"><span>تم الاستلام من المقاول</span><strong>${fmt(bfReceivedRows.length)}</strong><small>${parentPct(bfReceivedRows.length,akNotReceivedRows.length,'غير مستلم 155')}</small></article>
+         <div class="kpi-story-greatgrandchildren">${bgHtml}</div>
+        </div>
+        <article class="kpi-story-card kpi-story-grandchild"><span>لم يتم الاستلام من المقاول</span><strong>${fmt(bfNotReceivedRows.length)}</strong><small>${parentPct(bfNotReceivedRows.length,akNotReceivedRows.length,'غير مستلم 155')}</small></article>
+       </div>
       </div>
-      <article class="kpi-story-card kpi-story-child"><span>لم يتم استلام مستندات المقاول</span><strong>${fmt(docsNotReceived)}</strong><small>${pct(docsNotReceived)}</small></article>
      </div>
     </section>
     <section class="kpi-story-node incomplete">
      <article class="kpi-story-card"><span>لم يتم التنفيذ</span><strong>${fmt(incompleteRows.length)}</strong><small>${pct(incompleteRows.length)}</small></article>
-     <div class="kpi-story-children">
-      <article class="kpi-story-card kpi-story-child"><span>ضمن المدة</span><strong>${fmt(incompleteWithin)}</strong><small>${pct(incompleteWithin)}</small></article>
-      <article class="kpi-story-card kpi-story-child"><span>متأخر عن المدة</span><strong>${fmt(incompleteDelayed)}</strong><small>${pct(incompleteDelayed)}</small></article>
-     </div>
+     <div class="kpi-story-children kpi-story-bc-children">${bcHtml}</div>
     </section>
     <section class="kpi-story-node stopped">
      <article class="kpi-story-card"><span>موقوف/محول</span><strong>${fmt(stoppedRows.length)}</strong><small>${pct(stoppedRows.length)}</small></article>

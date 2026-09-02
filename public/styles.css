@@ -1301,3 +1301,23 @@ body.vd-report-dark .topbar{background:rgba(6,26,49,.88)!important;border-color:
 body.vd-report-dark .topbar h2,body.vd-report-dark .topbar strong{color:#fff!important}
 body.vd-report-dark .topbar span{color:#a9bfd6!important}
 @media print{body.vd-report-dark main{background:#fff!important;color:#16213f!important}body.vd-report-dark main:before{display:none!important}}
+
+/* Thursday meeting tree V8 — AK > BF > BG and BC branches */
+.kpi-story-grandchild-node{position:relative;min-width:0;align-self:start}
+.kpi-story-grandchild-node>.kpi-story-grandchild{height:auto}
+.kpi-story-greatgrandchildren{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(88px,1fr));
+  gap:7px;
+  margin-top:24px;
+  position:relative;
+  align-items:start;
+}
+.kpi-story-greatgrandchildren:before{content:"";position:absolute;top:-12px;right:8%;left:8%;height:2px;background:var(--story-color)}
+.kpi-story-greatgrandchildren:after{content:"";position:absolute;top:-24px;left:50%;height:12px;width:2px;background:var(--story-color)}
+.kpi-story-greatgrandchild{min-height:46px!important;padding:5px 6px!important;border-right:3px solid var(--story-color)}
+.kpi-story-greatgrandchild:before{content:"";position:absolute;top:-12px;left:50%;height:12px;width:2px;background:var(--story-color)}
+.kpi-story-greatgrandchild span{font-size:7px!important}
+.kpi-story-greatgrandchild strong{font-size:14px!important;color:var(--story-color);margin:1px 0!important}
+.kpi-story-greatgrandchild small{font-size:6.5px!important}
+.kpi-story-bc-children{grid-template-columns:repeat(auto-fit,minmax(105px,1fr))!important}
