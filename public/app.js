@@ -198,7 +198,7 @@ function openPage(key){
    configureMasterFilters();applyMasterFilters();return;
  }
  if(isMeeting){
-   document.getElementById('pageTitle').textContent='اجتماع الخميس';
+   document.getElementById('pageTitle').textContent='اجتماع الـ PDC';
    openWednesdayMeeting();
    return;
  }
@@ -437,6 +437,26 @@ function renderWednesdayMeeting(){
    </div>
   </div>`;
 
+ // مؤشرات اجتماع الـ PDC المختصرة — أسفل الشجرة وقبل الجداول والشارتات.
+ // الشروط هنا مطابقة مباشرة للأعمدة المطلوبة: R / AB / BF، ومتوسط التأخير من Z وAA.
+ const abExcluded=new Set(['تم التنفيذ','أوشكت المدة على الانتهاء','ضمن المدة']);
+ const delayedExecutionByAB=rows.filter(r=>!abExcluded.has(statusNorm(r.delayStatus))).length;
+ const withinByAB=rows.filter(r=>statusNorm(r.delayStatus)==='ضمن المدة').length;
+ const docsNotReceivedByBF=rows.filter(r=>statusNorm(r.docsStatus)==='لم يتم الاستلام من المقاول').length;
+ const executedByR=rows.filter(r=>statusNorm(r.executionRaw)==='تم التنفيذ').length;
+ const completionPct=total?(executedByR/total*100):0;
+ const avgDelayZA=total?(rows.reduce((sum,r)=>sum+Number(r.delayDays||0),0)/total):0;
+ const summaryRoot=document.getElementById('meetingSummaryKpis');
+ if(summaryRoot)summaryRoot.innerHTML=`
+   <article class="meeting-summary-card tone-blue"><strong>${fmt(total)}</strong><span>إجمالي أوامر العمل</span></article>
+   <article class="meeting-summary-card tone-purple"><strong>${fmt(executedByR)}</strong><span>متأخر إغلاق</span></article>
+   <article class="meeting-summary-card tone-orange"><strong>${fmt(withinByAB)}</strong><span>قيد التنفيذ ضمن المدة</span></article>
+   <article class="meeting-summary-card tone-red"><strong>${fmt(delayedExecutionByAB)}</strong><span>متأخر تنفيذ</span></article>
+   <article class="meeting-summary-card tone-docs"><strong>${fmt(docsNotReceivedByBF)}</strong><span>مستندات لم تُسلّم من المقاول</span></article>
+   <article class="meeting-summary-card tone-green"><strong>${completionPct.toFixed(1)}%</strong><span>نسبة إنجاز التنفيذ</span></article>
+   <article class="meeting-summary-card tone-yellow"><strong>${avgDelayZA.toFixed(1)}</strong><span>متوسط أيام التأخير</span></article>
+   <article class="meeting-summary-card tone-green"><strong>${fmt(executedByR)}</strong><span>أُنجز التنفيذ</span></article>`;
+
  const execLabels=['أُنجز التنفيذ','متأخر تنفيذ','قيد التنفيذ ضمن المدة','أخرى'];
  const execValues=[
    completed,delayed,within,
@@ -502,7 +522,7 @@ function renderWednesdayMeeting(){
    borderWidth:2,borderColor:'#fff'
  }],{legend:true});
 
- const docsEntries=meetingCountBy(executedRows,'docsStatus');
+ const docsEntries=meetingCountBy(executedRows,'docsSubStatus');
  meetingDrawChart('wmDocsChart','doughnut',docsEntries.map(x=>x[0]),[{
    data:docsEntries.map(x=>x[1]),
    backgroundColor:['#2878e8','#e4505b','#18aa7d','#f0a126','#7657d7','#667ca8'],
