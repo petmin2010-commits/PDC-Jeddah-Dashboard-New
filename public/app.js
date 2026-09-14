@@ -387,8 +387,8 @@ function renderWednesdayMeeting(){
  // 2) غير مستلم 155 للمقاول -> BF (تم الاستلام من المقاول / لم يتم الاستلام من المقاول)
  // 3) تم الاستلام من المقاول -> الحالات الفعلية في BG
  // 4) لم يتم التنفيذ -> الحالات الفعلية في BC
- const akReceivedRows=completedRows.filter(r=>statusNorm(r.contractor155Status)==='مستلم 155 للمقاول');
- const akNotReceivedRows=completedRows.filter(r=>statusNorm(r.contractor155Status)==='غير مستلم 155 للمقاول');
+ const akReceivedRows=completedRows.filter(r=>statusNorm(r.contractor155Status)==='نعم');
+ const akNotReceivedRows=completedRows.filter(r=>statusNorm(r.contractor155Status)==='لا');
 
  const bfReceivedRows=akNotReceivedRows.filter(r=>statusNorm(r.docsStatus)==='تم الاستلام من المقاول');
  const bfNotReceivedRows=akNotReceivedRows.filter(r=>statusNorm(r.docsStatus)==='لم يتم الاستلام من المقاول');
