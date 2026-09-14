@@ -439,9 +439,9 @@ function renderWednesdayMeeting(){
 
  // مؤشرات اجتماع الـ PDC المختصرة — أسفل الشجرة وقبل الجداول والشارتات.
  // الشروط هنا مطابقة مباشرة للأعمدة المطلوبة: R / AB / BF، ومتوسط التأخير من Z وAA.
- const abExcluded=new Set(['تم التنفيذ','أوشكت المدة على الانتهاء','ضمن المدة']);
- const delayedExecutionByAB=rows.filter(r=>!abExcluded.has(statusNorm(r.delayStatus))).length;
- const withinByAB=rows.filter(r=>statusNorm(r.delayStatus)==='ضمن المدة').length;
+ const allMeetingRows=Array.isArray(S.meetingRows)?S.meetingRows:[];
+ const delayedExecutionByAB=allMeetingRows.filter(r=>String(r.delayStatus||'').includes('تأخير')).length;
+ const withinByAB=allMeetingRows.filter(r=>{const s=String(r.delayStatus||'').trim();return s==='ضمن المدة'||s==='أوشكت المدة على الانتهاء';}).length;
  const docsNotReceivedByBF=rows.filter(r=>statusNorm(r.docsStatus)==='لم يتم الاستلام من المقاول').length;
  const executedByR=rows.filter(r=>statusNorm(r.executionRaw)==='تم التنفيذ').length;
  const completionPct=total?(executedByR/total*100):0;

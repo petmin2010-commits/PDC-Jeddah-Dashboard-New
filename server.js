@@ -276,7 +276,7 @@ function meetingPermitStatus_(v){
 }
 
 async function getWednesdayMeetingData(){
-  const key='PDC_WEDNESDAY_MEETING_V7';
+  const key='PDC_WEDNESDAY_MEETING_V8';
   const hit=cacheGet(key);
   if(hit)return hit;
 
@@ -313,8 +313,19 @@ async function getWednesdayMeetingData(){
   };
 
 
+  // مؤشرات AB تُحسب من كامل صفوف الورقة، حتى لو كان رقم أمر العمل فارغًا،
+  // حتى تطابق نتيجة فلتر العمود AB في الشيت حرفيًا.
+  const sourceRows=values.slice(1,1+APP.MAX_ROWS);
+  const abKpis={
+    withinDuration:sourceRows.filter(r=>{
+      const s=clean_(r[ix.delayStatus]);
+      return s==='ضمن المدة'||s==='أوشكت المدة على الانتهاء';
+    }).length,
+    delayedExecution:sourceRows.filter(r=>clean_(r[ix.delayStatus]).includes('تأخير')).length
+  };
+
   const rows=[];
-  values.slice(1,1+APP.MAX_ROWS).forEach((r,i)=>{
+  sourceRows.forEach((r,i)=>{
     const workOrder=cleanWorkOrder_(r[ix.workOrder]);
     if(!workOrder)return;
 
@@ -375,7 +386,7 @@ async function getWednesdayMeetingData(){
     rows.push(obj);
   });
 
-  const payload={updatedAt:now_(),rows};
+  const payload={updatedAt:now_(),rows,abKpis};
   cachePut(key,payload,120);
   return payload;
 }
