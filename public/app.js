@@ -47,6 +47,7 @@ function bind(){
  if(exportExecutionPdfBtn) exportExecutionPdfBtn.onclick=exportExecutionReportPdf;
 
  bindWednesdayInfoPopups();
+ bindMeetingCalculationHelp();
 
  const themeSelect=document.getElementById('themeSelect');
  if(themeSelect) themeSelect.onchange=()=>setDashboardTheme(themeSelect.value,true);
@@ -380,56 +381,57 @@ function renderWednesdayMeeting(){
  // المستوى الأول يعتمد فقط على حالة التنفيذ الأصلية من العمود R.
  const completedRows=rows.filter(r=>statusNorm(r.executionRaw)==='تم التنفيذ');
  const incompleteRows=rows.filter(r=>statusNorm(r.executionRaw)==='لم يتم التنفيذ');
- const stoppedRows=rows.filter(r=>['موقوف/محول','متوقف/محول'].includes(statusNorm(r.executionRaw)));
-
- // شجرة الاجتماع:
- // 1) تم التنفيذ -> AK (مستلم 155 للمقاول / غير مستلم 155 للمقاول)
- // 2) غير مستلم 155 للمقاول -> BF (تم الاستلام من المقاول / لم يتم الاستلام من المقاول)
- // 3) تم الاستلام من المقاول -> الحالات الفعلية في BG
- // 4) لم يتم التنفيذ -> الحالات الفعلية في BC
- const akReceivedRows=completedRows.filter(r=>statusNorm(r.contractor155Status)==='نعم');
- const akNotReceivedRows=completedRows.filter(r=>statusNorm(r.contractor155Status)==='لا');
-
- const bfReceivedRows=akNotReceivedRows.filter(r=>statusNorm(r.docsStatus)==='تم الاستلام من المقاول');
- const bfNotReceivedRows=akNotReceivedRows.filter(r=>statusNorm(r.docsStatus)==='لم يتم الاستلام من المقاول');
- const bgEntries=meetingCountBy(bfReceivedRows,'docsSubStatus');
- const bcEntries=meetingCountBy(incompleteRows,'nonExecutionStatus');
-
- const parentPct=(n,parent,label)=>parent?`${meetingPct(n,parent)}% من ${label}`:`0.0% من ${label}`;
+ const stoppedRows=rows.filter(r=>{
+   const x=statusNorm(r.executionRaw);
+   return x==='موقوف/محول'||x==='متوقف/محول'||x==='موقوف'||x==='محول'||x==='متوقف';
+ });
  const pct=n=>meetingPct(n,total)+'% من الإجمالي';
 
- const bgHtml=bgEntries.length
-   ? bgEntries.map(([label,count])=>`<article class="kpi-story-card kpi-story-greatgrandchild"><span>${esc(label)}</span><strong>${fmt(count)}</strong><small>${parentPct(count,bfReceivedRows.length,'المستلم من المقاول')}</small></article>`).join('')
-   : '<article class="kpi-story-card kpi-story-greatgrandchild"><span>غير محدد</span><strong>0</strong><small>0.0% من المستلم من المقاول</small></article>';
+ // AK: نعم = مستلم 155، لا = غير مستلم 155 — بنفس تطبيع مكة.
+ const akNorm=v=>statusNorm(v).replace(/[أإآ]/g,'ا');
+ const akReceivedRows=completedRows.filter(r=>akNorm(r.contractor155Status)==='نعم');
+ const akNotReceivedRows=completedRows.filter(r=>akNorm(r.contractor155Status)==='لا');
 
+ // BF يطبق على فرع "غير مستلم 155 للمقاول" فقط.
+ const bfReceivedRows=akNotReceivedRows.filter(r=>statusNorm(r.docsStatus)==='تم الاستلام من المقاول');
+ const bfNotReceivedRows=akNotReceivedRows.filter(r=>statusNorm(r.docsStatus)==='لم يتم الاستلام من المقاول');
+
+ // BG تفصيل حالة المستندات تحت BF = تم الاستلام من المقاول.
+ const bgEntries=meetingCountBy(bfReceivedRows,'docsSubStatus');
+ const bgHtml=bgEntries.length
+   ? bgEntries.map(([label,count])=>`<article class="kpi-story-card kpi-story-greatgrandchild"><span>${esc(label)}</span><strong>${fmt(count)}</strong><small>${pct(count)}</small></article>`).join('')
+   : '<article class="kpi-story-card kpi-story-greatgrandchild"><span>غير محدد</span><strong>0</strong><small>0.0%</small></article>';
+
+ // BC: حالات أوامر العمل غير المنفذة.
+ const bcEntries=meetingCountBy(incompleteRows,'nonExecutionStatus');
  const bcHtml=bcEntries.length
-   ? bcEntries.map(([label,count])=>`<article class="kpi-story-card kpi-story-child"><span>${esc(label)}</span><strong>${fmt(count)}</strong><small>${parentPct(count,incompleteRows.length,'لم يتم التنفيذ')}</small></article>`).join('')
-   : '<article class="kpi-story-card kpi-story-child"><span>غير محدد</span><strong>0</strong><small>0.0% من لم يتم التنفيذ</small></article>';
+   ? bcEntries.map(([label,count])=>`<article class="kpi-story-card kpi-story-child"><span>${esc(label)}</span><strong>${fmt(count)}</strong><small>${pct(count)}</small></article>`).join('')
+   : '<article class="kpi-story-card kpi-story-child"><span>غير محدد</span><strong>0</strong><small>0.0%</small></article>';
 
  const kroot=document.getElementById('meetingKpis');
  if(kroot)kroot.innerHTML=`
-  <div class="kpi-story">
+  <div class="kpi-story target-tree">
    <article class="kpi-story-card kpi-story-root"><span>إجمالي أوامر العمل</span><strong>${fmt(total)}</strong><small>100% من إجمالي الأوامر</small></article>
    <div class="kpi-story-level1">
     <section class="kpi-story-node completed">
      <article class="kpi-story-card"><span>تم التنفيذ</span><strong>${fmt(completedRows.length)}</strong><small>${pct(completedRows.length)}</small></article>
-     <div class="kpi-story-children">
-      <article class="kpi-story-card kpi-story-child"><span>مستلم 155 للمقاول</span><strong>${fmt(akReceivedRows.length)}</strong><small>${parentPct(akReceivedRows.length,completedRows.length,'تم التنفيذ')}</small></article>
+     <div class="kpi-story-children ak-level">
+      <article class="kpi-story-card kpi-story-child"><span>مستلم 155 للمقاول</span><strong>${fmt(akReceivedRows.length)}</strong><small>${pct(akReceivedRows.length)}</small></article>
       <div class="kpi-story-child-node ak-not-received">
-       <article class="kpi-story-card kpi-story-child"><span>غير مستلم 155 للمقاول</span><strong>${fmt(akNotReceivedRows.length)}</strong><small>${parentPct(akNotReceivedRows.length,completedRows.length,'تم التنفيذ')}</small></article>
-       <div class="kpi-story-grandchildren">
+       <article class="kpi-story-card kpi-story-child"><span>غير مستلم 155 للمقاول</span><strong>${fmt(akNotReceivedRows.length)}</strong><small>${pct(akNotReceivedRows.length)}</small></article>
+       <div class="kpi-story-grandchildren bf-level">
         <div class="kpi-story-grandchild-node bf-received">
-         <article class="kpi-story-card kpi-story-grandchild"><span>تم الاستلام من المقاول</span><strong>${fmt(bfReceivedRows.length)}</strong><small>${parentPct(bfReceivedRows.length,akNotReceivedRows.length,'غير مستلم 155')}</small></article>
-         <div class="kpi-story-greatgrandchildren">${bgHtml}</div>
+         <article class="kpi-story-card kpi-story-grandchild"><span>تم الاستلام من المقاول</span><strong>${fmt(bfReceivedRows.length)}</strong><small>${pct(bfReceivedRows.length)}</small></article>
+         <div class="kpi-story-greatgrandchildren bg-level">${bgHtml}</div>
         </div>
-        <article class="kpi-story-card kpi-story-grandchild"><span>لم يتم الاستلام من المقاول</span><strong>${fmt(bfNotReceivedRows.length)}</strong><small>${parentPct(bfNotReceivedRows.length,akNotReceivedRows.length,'غير مستلم 155')}</small></article>
+        <article class="kpi-story-card kpi-story-grandchild"><span>لم يتم الاستلام من المقاول</span><strong>${fmt(bfNotReceivedRows.length)}</strong><small>${pct(bfNotReceivedRows.length)}</small></article>
        </div>
       </div>
      </div>
     </section>
     <section class="kpi-story-node incomplete">
      <article class="kpi-story-card"><span>لم يتم التنفيذ</span><strong>${fmt(incompleteRows.length)}</strong><small>${pct(incompleteRows.length)}</small></article>
-     <div class="kpi-story-children kpi-story-bc-children">${bcHtml}</div>
+     <div class="kpi-story-children bc-level">${bcHtml}</div>
     </section>
     <section class="kpi-story-node stopped">
      <article class="kpi-story-card"><span>موقوف/محول</span><strong>${fmt(stoppedRows.length)}</strong><small>${pct(stoppedRows.length)}</small></article>
@@ -3283,6 +3285,66 @@ function isReady155(v){
 function money(v){return new Intl.NumberFormat('ar-SA',{notation:'compact',maximumFractionDigits:1}).format(Number(v||0))+' ر.س'}
 function sum(rows,k){return rows.reduce((s,r)=>s+(Number(String(r[k]||'').replace(/,/g,'').replace(/[^\d.-]/g,''))||0),0)}
 function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+
+
+/* Calculation help for the PDC meeting tab — aligned with the Makkah help style */
+function bindMeetingCalculationHelp(){
+ const modal=document.getElementById('meetingInfoModal');
+ const modalTitle=document.getElementById('meetingInfoTitle');
+ const modalText=document.getElementById('meetingInfoText');
+ const page=document.getElementById('meetingPage');
+ if(!modal||!modalText||!page)return;
+
+ if(!document.getElementById('meetingCalcHelpRuntimeStyle')){
+   const style=document.createElement('style');
+   style.id='meetingCalcHelpRuntimeStyle';
+   style.textContent=`
+     #meetingPage .has-calc-help{position:relative!important}
+     #meetingPage .calc-help-btn{position:absolute;top:6px;left:6px;z-index:9999;width:21px;height:21px;border-radius:50%;padding:0;border:1px solid rgba(47,111,178,.45);background:#fff;color:#2f6fb2;font:800 11px/1 Arial,sans-serif;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 8px rgba(26,73,120,.18);opacity:.95}
+     #meetingPage .calc-help-btn:hover,#meetingPage .calc-help-btn:focus{transform:scale(1.08);background:#eaf3ff;outline:none}
+     #meetingPage .calc-help-chart{top:8px;left:8px;width:23px;height:23px;font-size:12px}
+     @media print{#meetingPage .calc-help-btn{display:none!important}}
+   `;
+   document.head.appendChild(style);
+ }
+
+ const cleanText=v=>String(v||'').replace(/\s+/g,' ').trim();
+ const openHelp=(title,help)=>{
+   if(modalTitle)modalTitle.textContent='ماذا يعني هذا الرقم؟ — '+title;
+   modalText.textContent=help;
+   modal.classList.add('show');
+   modal.setAttribute('aria-hidden','false');
+ };
+ const addButton=(host,title,help,kind)=>{
+   if(!host||host.querySelector(':scope > .calc-help-btn'))return;
+   host.classList.add('has-calc-help');
+   const btn=document.createElement('button');
+   btn.type='button';
+   btn.className='calc-help-btn calc-help-'+kind;
+   btn.textContent='!';
+   btn.title='ما معنى هذا الرقم وكيف تم حسابه؟';
+   btn.setAttribute('aria-label','شرح معنى وحساب '+title);
+   btn.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();openHelp(title,help)});
+   host.appendChild(btn);
+ };
+ const decorate=()=>{
+   page.querySelectorAll('article.kpi-story-card,article.meeting-summary-card').forEach(el=>{
+     const label=cleanText(el.querySelector(':scope > span')?.textContent)||'هذا المؤشر';
+     const help=el.classList.contains('kpi-story-card')
+       ? `«${label}» هو عدد الحالات التي وصلت إلى هذه المرحلة من الشجرة. النسبة الصغيرة توضح حصة هذا الفرع من إجمالي أوامر العمل وفق منهجية شجرة اجتماع الـ PDC، وتتغير الأرقام تلقائيًا مع الفلاتر.`
+       : `«${label}» مؤشر مختصر محسوب من بيانات اجتماع الـ PDC وفق الشرط الموضح في منهجية الاجتماع، ويتغير تلقائيًا مع البيانات والفلاتر ذات الصلة.`;
+     addButton(el,label,help,'card');
+   });
+   page.querySelectorAll('canvas').forEach(canvas=>{
+     const host=canvas.closest('.panel')||canvas.parentElement;
+     const title=cleanText(host?.querySelector('.panel-title h3,h3')?.textContent)||'هذا الشارت';
+     addButton(host,title,`شارت «${title}» يجمع أوامر العمل الظاهرة حسب التصنيف الخاص به ويعرض توزيع الحالات. أي فلتر في اجتماع الـ PDC يطبق أولًا ثم يعاد حساب الشارت تلقائيًا.`,'chart');
+   });
+ };
+ decorate();
+ const observer=new MutationObserver(()=>requestAnimationFrame(decorate));
+ observer.observe(page,{childList:true,subtree:true});
+}
 
 /* =========================
    THEME PICKER — 12 THEMES

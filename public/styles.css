@@ -1321,14 +1321,27 @@ body.vd-report-dark .topbar span{color:#a9bfd6!important}
 .kpi-story-greatgrandchild strong{font-size:14px!important;color:var(--story-color);margin:1px 0!important}
 .kpi-story-greatgrandchild small{font-size:6.5px!important}
 .kpi-story-bc-children{grid-template-columns:repeat(auto-fit,minmax(105px,1fr))!important}
+\n\n/* PDC meeting summary KPI cards — 4 x 2, matching the supplied Excel-style design */\n.meeting-summary-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));direction:ltr;margin:8px 0 22px;border-top:0;gap:14px 0}\n.meeting-summary-card{--k:#2477e8;direction:rtl;min-height:60px;background:#f3f3f3;border:2px solid var(--k);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:6px 10px;box-shadow:none}\n.meeting-summary-card strong{font-size:21px;line-height:1.05;color:var(--k);font-weight:800;font-variant-numeric:tabular-nums}\n.meeting-summary-card span{font-size:10px;line-height:1.35;color:#111827;font-weight:800;margin-top:6px}\n.meeting-summary-card.tone-blue{--k:#2477e8}.meeting-summary-card.tone-purple{--k:#8b35b5}.meeting-summary-card.tone-orange{--k:#ff7a16}.meeting-summary-card.tone-red{--k:#d71920}\n.meeting-summary-card.tone-docs{--k:#ff7a16}.meeting-summary-card.tone-green{--k:#00ad52}.meeting-summary-card.tone-yellow{--k:#d6a300}\n@media(max-width:900px){.meeting-summary-kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.meeting-summary-card{min-height:64px}}\n@media(max-width:520px){.meeting-summary-kpis{grid-template-columns:1fr}}\n
 
-
-/* PDC meeting summary KPI cards — 4 x 2, matching the supplied Excel-style design */
-.meeting-summary-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));direction:ltr;margin:8px 0 22px;border-top:0;gap:14px 0}
-.meeting-summary-card{--k:#2477e8;direction:rtl;min-height:60px;background:#f3f3f3;border:2px solid var(--k);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:6px 10px;box-shadow:none}
-.meeting-summary-card strong{font-size:21px;line-height:1.05;color:var(--k);font-weight:800;font-variant-numeric:tabular-nums}
-.meeting-summary-card span{font-size:10px;line-height:1.35;color:#111827;font-weight:800;margin-top:6px}
-.meeting-summary-card.tone-blue{--k:#2477e8}.meeting-summary-card.tone-purple{--k:#8b35b5}.meeting-summary-card.tone-orange{--k:#ff7a16}.meeting-summary-card.tone-red{--k:#d71920}
-.meeting-summary-card.tone-docs{--k:#ff7a16}.meeting-summary-card.tone-green{--k:#00ad52}.meeting-summary-card.tone-yellow{--k:#d6a300}
-@media(max-width:900px){.meeting-summary-kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.meeting-summary-card{min-height:64px}}
-@media(max-width:520px){.meeting-summary-kpis{grid-template-columns:1fr}}
+/* PDC meeting tree — target hierarchy AK > BF > BG / BC (matched to Makkah) */
+.target-tree{min-width:1180px}
+.target-tree .kpi-story-level1{grid-template-columns:1.25fr 1.65fr .9fr;gap:54px;padding:0 34px;align-items:start}
+.target-tree .kpi-story-card{min-height:52px!important;padding:5px 7px!important}
+.target-tree .kpi-story-card span{font-size:7.5px!important}
+.target-tree .kpi-story-card strong{font-size:16px!important}
+.target-tree .kpi-story-card small{font-size:6.5px!important}
+.target-tree .kpi-story-root{width:190px!important}
+.target-tree .kpi-story-root strong{font-size:20px!important}
+.target-tree .kpi-story-children{gap:9px!important;margin-top:24px!important}
+.target-tree .incomplete .bc-level{grid-template-columns:repeat(auto-fit,minmax(72px,1fr));gap:7px!important}
+.target-tree .incomplete .bc-level .kpi-story-child{min-width:0}
+.target-tree .kpi-story-grandchildren{grid-template-columns:repeat(2,1fr)!important;gap:8px!important;margin-top:22px!important}
+.target-tree .kpi-story-grandchild-node{position:relative;min-width:0}
+.target-tree .kpi-story-greatgrandchildren{display:grid;grid-template-columns:repeat(auto-fit,minmax(68px,1fr));gap:6px;margin-top:22px;position:relative}
+.target-tree .kpi-story-greatgrandchildren:before{content:"";position:absolute;top:-11px;right:7%;left:7%;height:2px;background:var(--story-color)}
+.target-tree .kpi-story-greatgrandchildren:after{content:"";position:absolute;top:-22px;left:50%;height:11px;width:2px;background:var(--story-color)}
+.target-tree .kpi-story-greatgrandchild{min-height:46px!important;border-right:3px solid var(--story-color)}
+.target-tree .kpi-story-greatgrandchild:before{content:"";position:absolute;top:-11px;left:50%;height:11px;width:2px;background:var(--story-color)}
+.target-tree .kpi-story-greatgrandchild span{font-size:6.5px!important}
+.target-tree .kpi-story-greatgrandchild strong{font-size:14px!important;color:var(--story-color)}
+.target-tree .kpi-story-greatgrandchild small{font-size:6px!important}
