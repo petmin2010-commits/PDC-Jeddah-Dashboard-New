@@ -303,9 +303,11 @@ async function getWednesdayMeetingData(){
     daysSince:col(['عدد الايام منذ الاسناد','عدد الأيام منذ الإسناد'],25),
     duration:col(['المدة uds','المدة'],26),
     delayStatus:27, // العمود AB مباشرة: موقف التأخير
+    contractor155Status:36, // العمود AK مباشرة: نعم / لا
     permitStatus:col(['حالة التصريح من بلدي','حالة التصريح'],40),
     advice:col(['إفادة الاستشاري','افادة الاستشاري'],53),
     stage:col(['مرحلة التنفيذ'],54),
+    nonExecutionStatus:54, // العمود BC مباشرة: حالات أوامر العمل غير المنفذة
     stageStatus:col(['حالة المرحلة'],55),
     delayBucket:col(['شريحة ايام التاخير','شريحة أيام التأخير'],56),
     docsStatus:57, // العمود BF مباشرة: حالة استلام مستندات المقاول
@@ -369,6 +371,8 @@ async function getWednesdayMeetingData(){
       delayedExecution:executionStatus==='متأخر تنفيذ',
       delayedClosure,
       delayStatus,
+      contractor155Status:clean_(r[ix.contractor155Status])||'غير محدد',
+      nonExecutionStatus:clean_(r[ix.nonExecutionStatus])||'غير محدد',
       delayDays,
       delayBucket:clean_(r[ix.delayBucket])||'غير محدد',
       permitStatus,
@@ -380,7 +384,7 @@ async function getWednesdayMeetingData(){
     };
     obj._search=[
       obj.workOrder,obj.contractor,obj.region,obj.office,obj.section,obj.category,
-      obj.workType,obj.executionStatus,obj.delayStatus,obj.permitStatus,obj.docsStatus,obj.docsSubStatus,
+      obj.workType,obj.executionStatus,obj.delayStatus,obj.contractor155Status,obj.nonExecutionStatus,obj.permitStatus,obj.docsStatus,obj.docsSubStatus,
       obj.stage,obj.stageStatus,obj.advice
     ].join(' ').toLowerCase();
     rows.push(obj);
