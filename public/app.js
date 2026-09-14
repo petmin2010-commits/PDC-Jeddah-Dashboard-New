@@ -442,7 +442,7 @@ function renderWednesdayMeeting(){
  const allMeetingRows=Array.isArray(S.meetingRows)?S.meetingRows:[];
  const delayedExecutionByAB=allMeetingRows.filter(r=>String(r.delayStatus||'').includes('تأخير')).length;
  const withinByAB=allMeetingRows.filter(r=>{const s=String(r.delayStatus||'').trim();return s==='ضمن المدة'||s==='أوشكت المدة على الانتهاء';}).length;
- const docsNotReceivedByBF=rows.filter(r=>statusNorm(r.docsStatus)==='لم يتم الاستلام من المقاول').length;
+ const docsNotReceivedByBG=allMeetingRows.filter(r=>statusNorm(r.executionRaw)==='تم التنفيذ'&&statusNorm(r.docsSubStatus)==='لم تُسلّم من المقاول').length;
  const executedByR=rows.filter(r=>statusNorm(r.executionRaw)==='تم التنفيذ').length;
  const completionPct=total?(executedByR/total*100):0;
  const avgDelayZA=total?(rows.reduce((sum,r)=>sum+Number(r.delayDays||0),0)/total):0;
@@ -452,7 +452,7 @@ function renderWednesdayMeeting(){
    <article class="meeting-summary-card tone-purple"><strong>${fmt(executedByR)}</strong><span>متأخر إغلاق</span></article>
    <article class="meeting-summary-card tone-orange"><strong>${fmt(withinByAB)}</strong><span>قيد التنفيذ ضمن المدة</span></article>
    <article class="meeting-summary-card tone-red"><strong>${fmt(delayedExecutionByAB)}</strong><span>متأخر تنفيذ</span></article>
-   <article class="meeting-summary-card tone-docs"><strong>${fmt(docsNotReceivedByBF)}</strong><span>مستندات لم تُسلّم من المقاول</span></article>
+   <article class="meeting-summary-card tone-docs"><strong>${fmt(docsNotReceivedByBG)}</strong><span>مستندات لم تُسلّم من المقاول</span></article>
    <article class="meeting-summary-card tone-green"><strong>${completionPct.toFixed(1)}%</strong><span>نسبة إنجاز التنفيذ</span></article>
    <article class="meeting-summary-card tone-yellow"><strong>${avgDelayZA.toFixed(1)}</strong><span>متوسط أيام التأخير</span></article>
    <article class="meeting-summary-card tone-green"><strong>${fmt(executedByR)}</strong><span>أُنجز التنفيذ</span></article>`;
