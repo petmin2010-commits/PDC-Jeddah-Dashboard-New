@@ -492,7 +492,7 @@ function renderWednesdayMeeting(){
    return sets;
  };
 
- const offices=meetingGroupSummary(rows,'office',20);
+ const offices=meetingGroupSummary(rows,'officeSummary',20);
  meetingDrawChart('wmOfficeChart','bar',offices.map(x=>x.name),
    meetingSummaryDatasets(offices),{horizontal:true,legend:true,stacked:true,totals:offices.map(x=>x.total)});
 
@@ -531,7 +531,7 @@ function renderWednesdayMeeting(){
    borderWidth:2,borderColor:'#fff'
  }],{legend:true});
 
- renderMeetingSummaryTable('wmOfficeTable',meetingGroupSummary(rows,'office'));
+ renderMeetingSummaryTable('wmOfficeTable',meetingGroupSummary(rows,'officeSummary'));
  renderMeetingSummaryTable('wmCategoryTable',meetingGroupSummary(rows,'category'),{showClosure:false});
  renderMeetingSummaryTable('wmContractorTable',meetingGroupSummary(rows,'contractor',30));
  renderMeetingWorkTypeTable('wmWorkTypeTable',rows);

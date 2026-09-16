@@ -281,7 +281,7 @@ async function getWednesdayMeetingData(){
   if(hit)return hit;
 
   const cfg=APP.PAGES.workorders;
-  const values=await valuesGet(`${qSheet(cfg.sheet)}!A:BG`);
+  const values=await valuesGet(`${qSheet(cfg.sheet)}!A:BH`);
   if(!values.length)return {updatedAt:now_(),rows:[]};
 
   const headers=(values[0]||[]).map(clean_);
@@ -311,7 +311,8 @@ async function getWednesdayMeetingData(){
     stageStatus:col(['حالة المرحلة'],55),
     delayBucket:col(['شريحة ايام التاخير','شريحة أيام التأخير'],56),
     docsStatus:57, // العمود BF مباشرة: حالة استلام مستندات المقاول
-    docsSubStatus:58 // العمود BG مباشرة: تفصيل المستندات المستلمة
+    docsSubStatus:58, // العمود BG مباشرة: تفصيل المستندات المستلمة
+    officeSummary:59 // العمود BH مباشرة: المكتب - خاص بجدول وشارت المكتب في تاب الاجتماع
   };
 
 
@@ -361,6 +362,7 @@ async function getWednesdayMeetingData(){
       contractor:clean_(r[ix.contractor])||'غير محدد',
       region:clean_(r[ix.region])||'غير محدد',
       office:clean_(r[ix.office])||clean_(r[ix.region])||'غير محدد',
+      officeSummary:clean_(r[ix.officeSummary])||'غير محدد',
       section:clean_(r[ix.section])||'غير محدد',
       category,
       workType:clean_(r[ix.workType])||'غير محدد',
