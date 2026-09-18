@@ -1897,7 +1897,6 @@ function renderEmergencyStatusTree(rows){
         <path class="tree-flow-orange" marker-end="url(#emergencyOrangeArrow)" d="M250 545 V515"/>
 
         <path class="tree-flow-green" marker-end="url(#emergencyGreenArrow)" d="M910 650 V680"/>
-        <path class="tree-flow-orange" marker-end="url(#emergencyOrangeArrow)" d="M770 715 H390"/>
         <path class="tree-flow-orange tree-return-flow" marker-end="url(#emergencyOrangeArrow)" d="M770 860 C650 860 560 790 390 748"/>
         <path class="tree-flow-green" marker-end="url(#emergencyGreenArrow)" d="M910 785 V815"/>
         <path class="tree-flow-green" marker-end="url(#emergencyGreenArrow)" d="M910 920 V950"/>
