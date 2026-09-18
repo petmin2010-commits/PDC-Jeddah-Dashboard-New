@@ -1,4 +1,4 @@
-﻿
+
 const S={booted:false,boot:null,masterRows:[],masterKpis:[],page:null,raw:[],filtered:[],columns:[],filterKeys:[],charts:{},current:'master',pageCache:{},pageLoading:{},chartFilters:{},pageBaseRows:[],masterBaseRows:[],meeting:null,meetingRows:[]};
 const LABELS={
  region:'الإدارة / المنطقة',section:'القسم',contractor:'المقاول',engineer:'المهندس',status:'الحالة',
@@ -1898,7 +1898,7 @@ function renderEmergencyStatusTree(rows){
 
         <path class="tree-flow-green" marker-end="url(#emergencyGreenArrow)" d="M910 650 V680"/>
         <path class="tree-flow-orange" marker-end="url(#emergencyOrangeArrow)" d="M770 715 H390"/>
-        <path class="tree-flow-orange tree-return-flow" marker-end="url(#emergencyOrangeArrow)" d="M390 748 C545 730 620 625 770 625"/>
+        <path class="tree-flow-orange tree-return-flow" marker-end="url(#emergencyOrangeArrow)" d="M770 860 C650 860 560 790 390 748"/>
         <path class="tree-flow-green" marker-end="url(#emergencyGreenArrow)" d="M910 785 V815"/>
         <path class="tree-flow-green" marker-end="url(#emergencyGreenArrow)" d="M910 920 V950"/>
 
