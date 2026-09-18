@@ -1769,7 +1769,16 @@ function renderEmergencyDashboard(baseRows){
     'circuit',10,'الدائرة',false
   );
 
-  renderEmergencyCategoricalChart(
+    renderEmergencyCategoricalChart('emergencyClassificationChart','doughnut',applyChartFilters(baseRows,'emergencyClassificationChart','emergency'),'classification',15,'تصنيف العمل',false);
+  renderEmergencyCategoricalChart('emergencyWorkTypeChart','bar',applyChartFilters(baseRows,'emergencyWorkTypeChart','emergency'),'type',20,'النوع',true);
+  renderEmergencyCategoricalChart('emergencyAdministrationChart','doughnut',applyChartFilters(baseRows,'emergencyAdministrationChart','emergency'),'administration',15,'الإدارة',false);
+  renderEmergencyCategoricalChart('emergencySectionChart','bar',applyChartFilters(baseRows,'emergencySectionChart','emergency'),'section',20,'القسم',true);
+  renderEmergencyCategoricalChart('emergencyScheduleTypeChart','doughnut',applyChartFilters(baseRows,'emergencyScheduleTypeChart','emergency'),'emergencyType',10,'مجدول / طارئ',false);
+  renderEmergencyCategoricalChart('emergencyConsultantChart','bar',applyChartFilters(baseRows,'emergencyConsultantChart','emergency'),'consultant',20,'الاستشاري',true);
+  renderEmergencyCategoricalChart('emergencyEngineerChart','bar',applyChartFilters(baseRows,'emergencyEngineerChart','emergency'),'engineer',30,'اسم الاستشاري',true);
+  renderEmergencyCategoricalChart('emergencyArchiveChart','bar',applyChartFilters(baseRows,'emergencyArchiveChart','emergency'),'archive',20,'حالة المستندات',true);
+
+renderEmergencyCategoricalChart(
     'emergencyFaultChart','bar',
     applyChartFilters(baseRows,'emergencyFaultChart','emergency'),
     'description',20,'وصف العمل',true
