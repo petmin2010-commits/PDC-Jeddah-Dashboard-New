@@ -649,7 +649,7 @@ button.emergency-tree-card:hover{transform:translateY(-2px);box-shadow:0 14px 30
 .tree-doc-returned-contractor{left:110px;top:545px;border-color:var(--tree-orange)}
 .tree-doc-consultant-review{left:770px;top:545px}
 .tree-doc-returned-consultant{left:110px;top:680px;border-color:var(--tree-orange)}
-.tree-doc-pdc-review{left:770px;top:680px}.tree-doc-pdc-approved{left:770px;top:815px}.tree-doc-pdc-ready{left:770px;top:950px}
+.tree-doc-pdc-ready{left:770px;top:680px}.tree-doc-pdc-review{left:770px;top:815px}.tree-doc-pdc-approved{left:770px;top:950px}
 .tree-doc-returned-contractor strong,.tree-doc-returned-consultant strong{color:var(--tree-orange)}
 .emergency-tree-archive-warning{position:absolute;left:0;top:950px;width:210px;height:90px;border:2px solid var(--tree-danger);color:var(--tree-danger)}
 .emergency-tree-archive-warning span,.emergency-tree-archive-warning strong{color:var(--tree-danger)}
