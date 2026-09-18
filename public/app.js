@@ -1,4 +1,4 @@
-
+﻿
 const S={booted:false,boot:null,masterRows:[],masterKpis:[],page:null,raw:[],filtered:[],columns:[],filterKeys:[],charts:{},current:'master',pageCache:{},pageLoading:{},chartFilters:{},pageBaseRows:[],masterBaseRows:[],meeting:null,meetingRows:[]};
 const LABELS={
  region:'الإدارة / المنطقة',section:'القسم',contractor:'المقاول',engineer:'المهندس',status:'الحالة',
@@ -1801,11 +1801,25 @@ function renderEmergencyStatusTree(rows){
   if(!root)return;
 
   const total=rows.length;
-  const countStatus=value=>rows.filter(r=>exactStatus(r.status,value)).length;
+
+  // المستوى الرئيسي يقرأ تلقائياً كل القيم غير الفارغة الموجودة في العمود U (status).
+  const statusCounts=new Map();
+  rows.forEach(r=>{
+    const label=String(r.status||'').replace(/\s+/g,' ').trim();
+    if(label)statusCounts.set(label,(statusCounts.get(label)||0)+1);
+  });
+
+  // نحافظ على ترتيب الحالات الأساسية أولاً، ثم أي حالات إضافية تظهر تلقائياً.
+  const preferredStatusOrder=['لم يتم البدء','جاري التنفيذ','منجز'];
+  const statusEntries=[...statusCounts.entries()].sort((a,b)=>{
+    const ai=preferredStatusOrder.indexOf(a[0]);
+    const bi=preferredStatusOrder.indexOf(b[0]);
+    if(ai!==-1 || bi!==-1) return (ai===-1?999:ai)-(bi===-1?999:bi);
+    return String(a[0]).localeCompare(String(b[0]),'ar');
+  });
+
   const completedRows=rows.filter(r=>exactStatus(r.status,'منجز'));
   const completed=completedRows.length;
-  const running=countStatus('جاري التنفيذ');
-  const notStarted=countStatus('لم يتم البدء');
   const blankStatus=rows.filter(r=>!String(r.status||'').trim()).length;
   const rate=(count,base)=>base?(count/base*100):0;
   const statusActive=activeChartFilter('emergencyStatusTree','emergency');
@@ -1843,6 +1857,26 @@ function renderEmergencyStatusTree(rows){
     </button>`;
   };
 
+  const statusTone=label=>{
+    if(exactStatus(label,'منجز'))return 'success';
+    if(exactStatus(label,'جاري التنفيذ'))return 'running';
+    if(exactStatus(label,'لم يتم البدء'))return 'pending';
+    return 'running';
+  };
+
+  const statusWidth=280;
+  const statusCenters=statusEntries.map((_,i)=>{
+    if(statusEntries.length<=1)return 580;
+    return 140+(880*i/(statusEntries.length-1));
+  });
+  const statusBranches=statusCenters.map(x=>`M${x} 135 V165`).join(' ');
+  const completedIndex=statusEntries.findIndex(([label])=>exactStatus(label,'منجز'));
+  const completedX=completedIndex>=0?statusCenters[completedIndex]:1020;
+  const statusHtml=statusEntries.map(([label,count],i)=>{
+    const left=Math.max(0,Math.min(880,statusCenters[i]-statusWidth/2));
+    return `<div class="tree-status" style="left:${left.toFixed(1)}px">${statusCard(label,count,statusTone(label))}</div>`;
+  }).join('');
+
   root.innerHTML=`
     <div class="emergency-tree-canvas">
       <svg class="emergency-tree-lines" viewBox="0 0 1160 1040" aria-hidden="true" focusable="false">
@@ -1851,8 +1885,8 @@ function renderEmergencyStatusTree(rows){
           <marker id="emergencyOrangeArrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0 L10 5 L0 10 Z" class="tree-arrow-orange"/></marker>
         </defs>
 
-        <path class="tree-status-line" d="M580 105 V135 M140 135 H1020 M140 135 V165 M580 135 V165 M1020 135 V165"/>
-        <path class="tree-doc-line" d="M1020 270 V300 H580 V325 M580 367 V390 M250 390 H910 M250 390 V410 M910 390 V410"/>
+        <path class="tree-status-line" d="M580 105 V135 M140 135 H1020 ${statusBranches}"/>
+        <path class="tree-doc-line" d="M${completedX} 270 V300 H580 V325 M580 367 V390 M250 390 H910 M250 390 V410 M910 390 V410"/>
 
         <rect class="tree-loop-box" x="60" y="392" width="1020" height="285" rx="30"/>
         <rect class="tree-loop-box" x="60" y="527" width="1020" height="405" rx="30"/>
@@ -1883,9 +1917,7 @@ function renderEmergencyStatusTree(rows){
 
       <button type="button" class="emergency-tree-warning ${statusActive&&statusActive.mode==='blank'?'selected':''}" data-tree-field="status" data-tree-value="" data-tree-mode="blank" data-tree-label="حالة التنفيذ"><b>!</b><span>حالة التنفيذ فارغة</span><strong>${fmt(blankStatus)}</strong></button>
 
-      <div class="tree-status tree-status-pending">${statusCard('لم يتم البدء',notStarted,'pending')}</div>
-      <div class="tree-status tree-status-running">${statusCard('جاري التنفيذ',running,'running')}</div>
-      <div class="tree-status tree-status-completed">${statusCard('منجز',completed,'success')}</div>
+      ${statusHtml}
 
       <div class="emergency-tree-docs-title">دورة المستندات — العمود V</div>
       ${archiveCard('لم يستلم من المقاول',notReceived,'tree-doc-not-received')}
@@ -1910,7 +1942,6 @@ function renderEmergencyStatusTree(rows){
     );
   });
 }
-
 function renderEmergencyTypeTree(rows){
   const root=document.getElementById('emergencyTypeTree');
   if(!root)return;
@@ -3372,3 +3403,4 @@ function showBoot(x){
 }
 function fail(e){showBoot(false);toast('خطأ: '+(e?.message||e))}
 function toast(t){const x=document.getElementById('toast');x.textContent=t;x.classList.add('show');setTimeout(()=>x.classList.remove('show'),3500)}
+
