@@ -419,3 +419,235 @@
 </div>
 </body>
 </html>
+/* =========================================================
+   UNIVERSAL REPORT V2
+   ========================================================= */
+
+@media print {
+
+  @page {
+    size: A4 landscape;
+    margin: 8mm;
+  }
+
+  /* مساحة التقرير */
+  body.vd-report-print-mode .page.active {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  /* رأس التقرير أصغر وأكثر احترافية */
+  body.vd-report-print-mode .vd-universal-report-header {
+    padding: 4mm !important;
+    margin-bottom: 5mm !important;
+    border-radius: 8px !important;
+  }
+
+  body.vd-report-print-mode .vd-report-brand img {
+    width: 38px !important;
+    height: 38px !important;
+  }
+
+  body.vd-report-print-mode .vd-report-title {
+    padding: 2mm 0 !important;
+  }
+
+  body.vd-report-print-mode .vd-report-title h1 {
+    font-size: 18px !important;
+    margin: 1mm 0 !important;
+  }
+
+  body.vd-report-print-mode .vd-report-title p,
+  body.vd-report-print-mode .vd-report-title b {
+    font-size: 8px !important;
+  }
+
+  body.vd-report-print-mode .vd-report-meta {
+    gap: 2mm !important;
+  }
+
+  body.vd-report-print-mode .vd-report-meta > div {
+    padding: 1.5mm 3mm !important;
+  }
+
+  body.vd-report-print-mode .vd-report-filters {
+    margin-top: 2mm !important;
+    padding-top: 2mm !important;
+  }
+
+  /* =========================================
+     KPI sections
+     ========================================= */
+
+  body.vd-report-print-mode #pageKpis,
+  body.vd-report-print-mode .kpi-grid,
+  body.vd-report-print-mode .master-kpis,
+  body.vd-report-print-mode .emergency-kpi-grid,
+  body.vd-report-print-mode .emergency-mini-kpis {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0,1fr)) !important;
+    gap: 2.5mm !important;
+  }
+
+  body.vd-report-print-mode .kpi,
+  body.vd-report-print-mode .master-kpi,
+  body.vd-report-print-mode .emergency-mini-kpi {
+    min-height: 0 !important;
+    height: auto !important;
+    padding: 3mm !important;
+    margin: 0 !important;
+    border-radius: 7px !important;
+    box-shadow: none !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  body.vd-report-print-mode .emergency-mini-kpi .value,
+  body.vd-report-print-mode .kpi .value,
+  body.vd-report-print-mode .master-kpi .value {
+    font-size: 17px !important;
+  }
+
+  /* =========================================
+     الأقسام
+     ========================================= */
+
+  body.vd-report-print-mode .emergency-kpi-section {
+    margin: 0 0 4mm !important;
+    padding: 3mm !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  body.vd-report-print-mode .emergency-kpi-section-head {
+    margin-bottom: 2mm !important;
+  }
+
+  /* =========================================
+     Charts: اثنان في الصف
+     ========================================= */
+
+  body.vd-report-print-mode .charts,
+  body.vd-report-print-mode .charts-grid,
+  body.vd-report-print-mode .analytics-grid,
+  body.vd-report-print-mode #emergencyAnalytics {
+    display: grid !important;
+    grid-template-columns: repeat(2,minmax(0,1fr)) !important;
+    gap: 4mm !important;
+    align-items: start !important;
+  }
+
+  body.vd-report-print-mode .panel {
+    min-width: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 3mm !important;
+    box-shadow: none !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  body.vd-report-print-mode .panel-title h3 {
+    font-size: 11px !important;
+  }
+
+  body.vd-report-print-mode .panel-title span {
+    font-size: 7px !important;
+  }
+
+  /* صور Chart.js */
+  body.vd-report-print-mode .vd-print-canvas-image {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 62mm !important;
+    object-fit: contain !important;
+    margin: 2mm auto 0 !important;
+  }
+
+  /* =========================================
+     الأشجار الكبيرة
+     ========================================= */
+
+  body.vd-report-print-mode #emergencyTreeSection,
+  body.vd-report-print-mode #emergencyStatusTree,
+  body.vd-report-print-mode #emergencyTypeTree {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  body.vd-report-print-mode #emergencyTreeSection .panel {
+    width: 100% !important;
+    grid-column: 1 / -1 !important;
+  }
+
+  /*
+    لا نسمح للشجرة بالتمدد عبر صفحتين.
+    يتم تصغيرها بصريًا عند الحاجة.
+  */
+  body.vd-report-print-mode #emergencyStatusTree,
+  body.vd-report-print-mode #emergencyTypeTree {
+    transform-origin: top center !important;
+    max-width: 100% !important;
+  }
+
+  /* =========================================
+     Summary tables
+     ========================================= */
+
+  body.vd-report-print-mode .table-wrap {
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  body.vd-report-print-mode table {
+    width: 100% !important;
+    table-layout: auto !important;
+    font-size: 6.8px !important;
+  }
+
+  body.vd-report-print-mode thead {
+    display: table-header-group !important;
+  }
+
+  body.vd-report-print-mode tfoot {
+    display: table-footer-group !important;
+  }
+
+  body.vd-report-print-mode tr {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  body.vd-report-print-mode th,
+  body.vd-report-print-mode td {
+    padding: 1.2mm !important;
+    line-height: 1.35 !important;
+  }
+
+  /* =========================================
+     البيانات التفصيلية = ملحق
+     ========================================= */
+
+  body.vd-report-print-mode #dataTable {
+    page-break-before: always !important;
+    break-before: page !important;
+  }
+
+  body.vd-report-print-mode #dataTable table {
+    font-size: 5.5px !important;
+  }
+
+  body.vd-report-print-mode #dataTable th,
+  body.vd-report-print-mode #dataTable td {
+    padding: .8mm !important;
+  }
+
+  /* إلغاء ارتفاعات الشاشة */
+  body.vd-report-print-mode [style*="height"],
+  body.vd-report-print-mode [style*="min-height"] {
+    min-height: 0 !important;
+  }
+}

@@ -1583,3 +1583,901 @@ body.vd-report-dark .topbar span{color:#a9bfd6!important}
     box-shadow:none !important;
   }
 }
+/* =========================================================
+   UNIVERSAL REPORT V2
+   ========================================================= */
+
+@media print {
+
+  @page {
+    size: A4 landscape;
+    margin: 8mm;
+  }
+
+  /* مساحة التقرير */
+  body.vd-report-print-mode .page.active {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  /* رأس التقرير أصغر وأكثر احترافية */
+  body.vd-report-print-mode .vd-universal-report-header {
+    padding: 4mm !important;
+    margin-bottom: 5mm !important;
+    border-radius: 8px !important;
+  }
+
+  body.vd-report-print-mode .vd-report-brand img {
+    width: 38px !important;
+    height: 38px !important;
+  }
+
+  body.vd-report-print-mode .vd-report-title {
+    padding: 2mm 0 !important;
+  }
+
+  body.vd-report-print-mode .vd-report-title h1 {
+    font-size: 18px !important;
+    margin: 1mm 0 !important;
+  }
+
+  body.vd-report-print-mode .vd-report-title p,
+  body.vd-report-print-mode .vd-report-title b {
+    font-size: 8px !important;
+  }
+
+  body.vd-report-print-mode .vd-report-meta {
+    gap: 2mm !important;
+  }
+
+  body.vd-report-print-mode .vd-report-meta > div {
+    padding: 1.5mm 3mm !important;
+  }
+
+  body.vd-report-print-mode .vd-report-filters {
+    margin-top: 2mm !important;
+    padding-top: 2mm !important;
+  }
+
+  /* =========================================
+     KPI sections
+     ========================================= */
+
+  body.vd-report-print-mode #pageKpis,
+  body.vd-report-print-mode .kpi-grid,
+  body.vd-report-print-mode .master-kpis,
+  body.vd-report-print-mode .emergency-kpi-grid,
+  body.vd-report-print-mode .emergency-mini-kpis {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0,1fr)) !important;
+    gap: 2.5mm !important;
+  }
+
+  body.vd-report-print-mode .kpi,
+  body.vd-report-print-mode .master-kpi,
+  body.vd-report-print-mode .emergency-mini-kpi {
+    min-height: 0 !important;
+    height: auto !important;
+    padding: 3mm !important;
+    margin: 0 !important;
+    border-radius: 7px !important;
+    box-shadow: none !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  body.vd-report-print-mode .emergency-mini-kpi .value,
+  body.vd-report-print-mode .kpi .value,
+  body.vd-report-print-mode .master-kpi .value {
+    font-size: 17px !important;
+  }
+
+  /* =========================================
+     الأقسام
+     ========================================= */
+
+  body.vd-report-print-mode .emergency-kpi-section {
+    margin: 0 0 4mm !important;
+    padding: 3mm !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  body.vd-report-print-mode .emergency-kpi-section-head {
+    margin-bottom: 2mm !important;
+  }
+
+  /* =========================================
+     Charts: اثنان في الصف
+     ========================================= */
+
+  body.vd-report-print-mode .charts,
+  body.vd-report-print-mode .charts-grid,
+  body.vd-report-print-mode .analytics-grid,
+  body.vd-report-print-mode #emergencyAnalytics {
+    display: grid !important;
+    grid-template-columns: repeat(2,minmax(0,1fr)) !important;
+    gap: 4mm !important;
+    align-items: start !important;
+  }
+
+  body.vd-report-print-mode .panel {
+    min-width: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 3mm !important;
+    box-shadow: none !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  body.vd-report-print-mode .panel-title h3 {
+    font-size: 11px !important;
+  }
+
+  body.vd-report-print-mode .panel-title span {
+    font-size: 7px !important;
+  }
+
+  /* صور Chart.js */
+  body.vd-report-print-mode .vd-print-canvas-image {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 62mm !important;
+    object-fit: contain !important;
+    margin: 2mm auto 0 !important;
+  }
+
+  /* =========================================
+     الأشجار الكبيرة
+     ========================================= */
+
+  body.vd-report-print-mode #emergencyTreeSection,
+  body.vd-report-print-mode #emergencyStatusTree,
+  body.vd-report-print-mode #emergencyTypeTree {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  body.vd-report-print-mode #emergencyTreeSection .panel {
+    width: 100% !important;
+    grid-column: 1 / -1 !important;
+  }
+
+  /*
+    لا نسمح للشجرة بالتمدد عبر صفحتين.
+    يتم تصغيرها بصريًا عند الحاجة.
+  */
+  body.vd-report-print-mode #emergencyStatusTree,
+  body.vd-report-print-mode #emergencyTypeTree {
+    transform-origin: top center !important;
+    max-width: 100% !important;
+  }
+
+  /* =========================================
+     Summary tables
+     ========================================= */
+
+  body.vd-report-print-mode .table-wrap {
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  body.vd-report-print-mode table {
+    width: 100% !important;
+    table-layout: auto !important;
+    font-size: 6.8px !important;
+  }
+
+  body.vd-report-print-mode thead {
+    display: table-header-group !important;
+  }
+
+  body.vd-report-print-mode tfoot {
+    display: table-footer-group !important;
+  }
+
+  body.vd-report-print-mode tr {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  body.vd-report-print-mode th,
+  body.vd-report-print-mode td {
+    padding: 1.2mm !important;
+    line-height: 1.35 !important;
+  }
+
+  /* =========================================
+     البيانات التفصيلية = ملحق
+     ========================================= */
+
+  body.vd-report-print-mode #dataTable {
+    page-break-before: always !important;
+    break-before: page !important;
+  }
+
+  body.vd-report-print-mode #dataTable table {
+    font-size: 5.5px !important;
+  }
+
+  body.vd-report-print-mode #dataTable th,
+  body.vd-report-print-mode #dataTable td {
+    padding: .8mm !important;
+  }
+
+  /* إلغاء ارتفاعات الشاشة */
+  body.vd-report-print-mode [style*="height"],
+  body.vd-report-print-mode [style*="min-height"] {
+    min-height: 0 !important;
+  }
+}
+/* =========================================================
+   VISION DIMENSIONS — REPORT V2 FINAL LAYOUT
+   ========================================================= */
+
+/* نافذة اختيار نوع التقرير */
+.vd-report-export-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, .58);
+  backdrop-filter: blur(4px);
+}
+
+.vd-report-export-modal.open {
+  display: flex;
+}
+
+.vd-report-export-dialog {
+  position: relative;
+  direction: rtl;
+  width: min(620px, 94vw);
+  padding: 30px;
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, .25);
+  text-align: center;
+}
+
+.vd-report-export-close {
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 50%;
+  background: #f1f5f9;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.vd-report-export-icon {
+  margin-bottom: 8px;
+  font-size: 42px;
+}
+
+.vd-report-export-dialog h2 {
+  margin: 0 0 8px;
+  font-size: 24px;
+}
+
+.vd-report-export-dialog > p {
+  margin: 0 0 22px;
+  color: #64748b;
+}
+
+.vd-report-export-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.vd-report-option {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-height: 105px;
+  padding: 18px;
+  border: 1px solid #dbe3ec;
+  border-radius: 16px;
+  background: #fff;
+  text-align: right;
+  cursor: pointer;
+}
+
+.vd-report-option:hover {
+  border-color: #94a3b8;
+  background: #f8fafc;
+}
+
+.vd-report-option.primary {
+  border-color: #0f766e;
+  background: #f0fdfa;
+}
+
+.vd-report-option strong {
+  font-size: 17px;
+}
+
+.vd-report-option span {
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.vd-report-print-note {
+  margin-top: 18px;
+  padding: 12px 15px;
+  border-radius: 12px;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+/* التقرير لا يظهر على الشاشة */
+#vdReportV2 {
+  display: none;
+}
+
+
+/* =========================================================
+   PRINT
+   ========================================================= */
+
+@media print {
+
+  @page {
+    size: A4 landscape;
+    margin: 7mm;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+  }
+
+  /*
+    إخفاء الداشبورد الأصلي بالكامل.
+    التقرير الجديد مستقل عنه.
+  */
+  body.vd-report-v2-mode .app,
+  body.vd-report-v2-mode .sidebar,
+  body.vd-report-v2-mode .topbar,
+  body.vd-report-v2-mode #filterBar,
+  body.vd-report-v2-mode .page,
+  body.vd-report-v2-mode .vd-report-export-modal,
+  body.vd-report-v2-mode #vdUniversalReportHeader {
+    display: none !important;
+  }
+
+  body.vd-report-v2-mode #vdReportV2 {
+    display: block !important;
+    direction: rtl !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+    color: #172033 !important;
+  }
+
+
+  /* =====================================================
+     الصفحة الأساسية
+     ===================================================== */
+
+  #vdReportV2 .vd-report-v2-page {
+    position: relative;
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 180mm;
+    margin: 0;
+    padding: 0 0 9mm;
+    overflow: hidden;
+
+    break-after: page;
+    page-break-after: always;
+  }
+
+  #vdReportV2 .vd-report-v2-page:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+
+  /* =====================================================
+     رأس كل صفحة
+     ===================================================== */
+
+  #vdReportV2 .vd-report-section-header {
+    display: flex !important;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 8mm;
+
+    margin: 0 0 5mm;
+    padding: 0 0 3mm;
+
+    border-bottom: 1px solid #dbe3ec;
+  }
+
+  #vdReportV2 .vd-report-section-header > div {
+    min-width: 0;
+  }
+
+  #vdReportV2 .vd-report-section-header span {
+    display: block;
+    margin-bottom: 1mm;
+    color: #64748b;
+    font-size: 6.5pt;
+    letter-spacing: .7px;
+  }
+
+  #vdReportV2 .vd-report-section-header h2 {
+    margin: 0;
+    color: #172033;
+    font-size: 15pt;
+    line-height: 1.2;
+  }
+
+  #vdReportV2 .vd-report-section-header p {
+    margin: 0;
+    color: #64748b;
+    font-size: 7.5pt;
+  }
+
+  #vdReportV2 .vd-report-section-body {
+    width: 100%;
+  }
+
+
+  /* =====================================================
+     Footer
+     ===================================================== */
+
+  #vdReportV2 .vd-report-footer {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+
+    display: flex !important;
+    justify-content: space-between;
+
+    padding-top: 2mm;
+
+    border-top: 1px solid #e2e8f0;
+
+    color: #94a3b8;
+    font-size: 6.5pt;
+  }
+
+
+  /* =====================================================
+     الغلاف
+     ===================================================== */
+
+  #vdReportV2 .vd-report-cover {
+    min-height: 183mm;
+    padding: 8mm 10mm 10mm;
+
+    border: 1px solid #e2e8f0;
+    border-radius: 5mm;
+  }
+
+  #vdReportV2 .vd-report-cover-top {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  #vdReportV2 .vd-report-cover-brand {
+    display: flex !important;
+    align-items: center;
+    gap: 4mm;
+  }
+
+  #vdReportV2 .vd-report-cover-brand img {
+    width: 17mm !important;
+    height: 17mm !important;
+    object-fit: contain;
+  }
+
+  #vdReportV2 .vd-report-cover-brand strong {
+    display: block;
+    margin-bottom: 1mm;
+    font-size: 10pt;
+  }
+
+  #vdReportV2 .vd-report-cover-brand span {
+    display: block;
+    color: #64748b;
+    font-size: 6pt;
+    letter-spacing: .4px;
+  }
+
+  #vdReportV2 .vd-report-cover-badge {
+    padding: 2.5mm 5mm;
+    border: 1px solid #cbd5e1;
+    border-radius: 999px;
+    font-size: 8pt;
+    font-weight: 800;
+  }
+
+  #vdReportV2 .vd-report-cover-title {
+    margin: 13mm 0 8mm;
+    text-align: center;
+  }
+
+  #vdReportV2 .vd-report-cover-title small {
+    color: #64748b;
+    font-size: 8pt;
+  }
+
+  #vdReportV2 .vd-report-cover-title h1 {
+    margin: 3mm 0 2mm;
+    font-size: 25pt;
+    line-height: 1.2;
+  }
+
+  #vdReportV2 .vd-report-cover-title p {
+    margin: 0 0 2mm;
+    font-size: 11pt;
+  }
+
+  #vdReportV2 .vd-report-cover-title strong {
+    font-size: 9pt;
+  }
+
+
+  /* معلومات الغلاف */
+
+  #vdReportV2 .vd-report-cover-meta {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4mm;
+
+    margin-bottom: 5mm;
+  }
+
+  #vdReportV2 .vd-report-cover-meta > div {
+    padding: 3mm 4mm;
+
+    border: 1px solid #e2e8f0;
+    border-radius: 3mm;
+
+    background: #f8fafc;
+  }
+
+  #vdReportV2 .vd-report-cover-meta span {
+    display: block;
+    margin-bottom: 1mm;
+    color: #64748b;
+    font-size: 6.5pt;
+  }
+
+  #vdReportV2 .vd-report-cover-meta b {
+    font-size: 9pt;
+  }
+
+
+  /* KPIs الموجودة على الغلاف */
+
+  #vdReportV2 .vd-report-cover-kpis {
+    display: grid !important;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 3mm;
+  }
+
+  #vdReportV2 .vd-report-cover-filters {
+    margin-top: 5mm;
+    padding-top: 3mm;
+
+    border-top: 1px solid #e2e8f0;
+
+    font-size: 7pt;
+  }
+
+  #vdReportV2 .vd-report-cover-filters > div {
+    display: flex !important;
+    flex-wrap: wrap;
+    gap: 2mm;
+
+    margin-top: 2mm;
+  }
+
+  #vdReportV2 .vd-report-cover-filters span {
+    padding: 1.5mm 3mm;
+
+    border-radius: 999px;
+
+    background: #f1f5f9;
+  }
+
+  #vdReportV2 .vd-report-cover-footer {
+    position: absolute;
+    right: 10mm;
+    bottom: 7mm;
+
+    color: #cbd5e1;
+    font-size: 7pt;
+    letter-spacing: 1px;
+  }
+
+
+  /* =====================================================
+     KPI CARDS
+     ===================================================== */
+
+  #vdReportV2 .vd-report-kpi-grid {
+    display: grid !important;
+
+    grid-template-columns:
+      repeat(6, minmax(0, 1fr));
+
+    gap: 3mm;
+  }
+
+  #vdReportV2 .vd-report-kpi-clone {
+    box-sizing: border-box !important;
+
+    min-width: 0 !important;
+    min-height: 25mm !important;
+    height: auto !important;
+
+    margin: 0 !important;
+    padding: 3mm !important;
+
+    border: 1px solid #dfe6ee !important;
+    border-radius: 3mm !important;
+
+    background: #fff !important;
+
+    box-shadow: none !important;
+
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  #vdReportV2 .vd-report-kpi-clone .value,
+  #vdReportV2 .vd-report-kpi-clone .kpi-value,
+  #vdReportV2 .vd-report-kpi-clone strong {
+    font-size: 14pt !important;
+    line-height: 1.15 !important;
+  }
+
+  #vdReportV2 .vd-report-kpi-clone .label,
+  #vdReportV2 .vd-report-kpi-clone .kpi-label,
+  #vdReportV2 .vd-report-kpi-clone span {
+    font-size: 6.5pt !important;
+    line-height: 1.35 !important;
+  }
+
+
+  /* =====================================================
+     CHARTS
+     4 charts per page / 2 x 2
+     ===================================================== */
+
+  #vdReportV2 .vd-report-chart-grid {
+    display: grid !important;
+
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+
+    grid-template-rows:
+      repeat(2, 76mm);
+
+    gap: 5mm;
+  }
+
+  #vdReportV2 .vd-report-chart-card {
+    box-sizing: border-box !important;
+
+    width: 100% !important;
+    height: 76mm !important;
+    min-height: 0 !important;
+
+    margin: 0 !important;
+    padding: 3mm !important;
+
+    overflow: hidden !important;
+
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 3mm !important;
+
+    background: #fff !important;
+
+    box-shadow: none !important;
+
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  #vdReportV2 .vd-report-chart-card h2,
+  #vdReportV2 .vd-report-chart-card h3 {
+    margin: 0 0 2mm !important;
+    font-size: 9pt !important;
+  }
+
+  #vdReportV2 .vd-report-chart-image {
+    display: block !important;
+
+    width: 100% !important;
+    max-width: 100% !important;
+
+    height: 58mm !important;
+    max-height: 58mm !important;
+
+    margin: 0 auto !important;
+
+    object-fit: contain !important;
+  }
+
+
+  /* =====================================================
+     TREES
+     ===================================================== */
+
+  #vdReportV2 .vd-report-tree-page {
+    overflow: hidden !important;
+  }
+
+  #vdReportV2 .vd-report-tree-wrapper {
+    box-sizing: border-box;
+
+    width: 138%;
+
+    zoom: .72;
+
+    transform-origin: top right;
+  }
+
+  /*
+    الشجرة الرئيسية الأكبر
+  */
+  #vdReportV2 .vd-report-tree-wrapper-large {
+    width: 178%;
+
+    zoom: .56;
+  }
+
+  #vdReportV2 .vd-report-tree-wrapper .panel {
+    width: 100% !important;
+
+    min-height: 0 !important;
+
+    margin: 0 !important;
+
+    box-shadow: none !important;
+  }
+
+
+  /* =====================================================
+     SUMMARY TABLES
+     ===================================================== */
+
+  #vdReportV2 .vd-report-summary-table {
+    width: 100% !important;
+
+    margin: 0 !important;
+
+    box-shadow: none !important;
+  }
+
+  #vdReportV2 .vd-report-summary-table .table-wrap {
+    width: 100% !important;
+
+    max-height: none !important;
+    height: auto !important;
+
+    overflow: visible !important;
+  }
+
+  #vdReportV2 table {
+    width: 100% !important;
+
+    border-collapse: collapse !important;
+
+    font-size: 7pt !important;
+  }
+
+  #vdReportV2 thead {
+    display: table-header-group !important;
+  }
+
+  #vdReportV2 th {
+    padding: 2mm !important;
+
+    background: #f1f5f9 !important;
+
+    font-size: 6.5pt !important;
+  }
+
+  #vdReportV2 td {
+    padding: 1.6mm 2mm !important;
+
+    font-size: 6.5pt !important;
+
+    line-height: 1.35 !important;
+  }
+
+  #vdReportV2 tr {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+
+  /* =====================================================
+     FULL REPORT — DETAIL APPENDIX
+     ===================================================== */
+
+  #vdReportV2 .vd-report-detail-page {
+    min-height: auto !important;
+
+    overflow: visible !important;
+  }
+
+  #vdReportV2 .vd-report-detail-page,
+  #vdReportV2 .vd-report-detail-panel {
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+  }
+
+  #vdReportV2 .vd-report-detail-panel {
+    width: 100% !important;
+
+    margin: 0 !important;
+
+    box-shadow: none !important;
+  }
+
+  #vdReportV2 .vd-report-detail-panel .table-wrap {
+    max-height: none !important;
+
+    overflow: visible !important;
+  }
+
+  #vdReportV2 .vd-report-detail-panel table {
+    font-size: 5.2pt !important;
+  }
+
+  #vdReportV2 .vd-report-detail-panel th,
+  #vdReportV2 .vd-report-detail-panel td {
+    padding: .8mm 1mm !important;
+
+    font-size: 5.2pt !important;
+  }
+
+
+  /* =====================================================
+     إزالة خصائص الشاشة غير المناسبة للطباعة
+     ===================================================== */
+
+  #vdReportV2 button,
+  #vdReportV2 .meeting-info-btn,
+  #vdReportV2 .emergency-help-btn,
+  #vdReportV2 .info-btn,
+  #vdReportV2 .help-btn {
+    display: none !important;
+  }
+
+  #vdReportV2 .panel {
+    box-shadow: none !important;
+  }
+
+  #vdReportV2 canvas {
+    display: none !important;
+  }
+}
