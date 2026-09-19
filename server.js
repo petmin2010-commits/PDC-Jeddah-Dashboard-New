@@ -109,8 +109,7 @@ async function readConfiguredSheet_(cfg,cacheKey){
   if(cacheKey!=='workorders'){const hit=cacheGet(key);if(hit)return hit}
   // صفحة الطوارئ تعتمد فقط على الأعمدة حتى V. حصر النطاق هنا يقلل
   // حجم استجابة Google Sheets ووقت فتح التاب بصورة ملحوظة.
-  const endColumn=cacheKey==='workorders'?'BD':cacheKey==='emergency'?'V':'AZ';
-  const values=await valuesGet(`${qSheet(cfg.sheet)}!A:${endColumn}`);
+const endColumn=cacheKey==='workorders'?'BD':cacheKey==='emergency'?'Z':'AZ';  const values=await valuesGet(`${qSheet(cfg.sheet)}!A:${endColumn}`);
   const headerRow=cfg.headerRow||1;
   if(values.length<headerRow)return [];
   const headers=(values[headerRow-1]||[]).map(clean_);
@@ -119,9 +118,6 @@ async function readConfiguredSheet_(cfg,cacheKey){
     map.assignedDate=5;map.value=10;map.status=17;map.consultant155=31;map.contractor155=36;map.permitStatus=40;map.payment=43;map.stage=54;map.stageStatus=55;
   }
   if(cacheKey==='permits')map.evaluation=19;
-  if(cacheKey==='emergency'){
-    Object.assign(map,{noticeNo:1,assignedDate:3,startDate:4,endDate:5,description:6,classification:7,type:8,administration:9,circuit:10,section:11,emergencyType:12,location:13,consultant:14,engineer:15,contractor:16,contractorReceiver:17,pdcEngineer:18,status:20,archive:21});
-  }
   let body=values.slice(headerRow);
   if(cacheKey==='permits'){
     let last=-1; for(let i=body.length-1;i>=0;i--){if(clean_(body[i]?.[3])!==''){last=i;break}} body=last>=0?body.slice(0,last+1):[];
