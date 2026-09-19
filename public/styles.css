@@ -2481,3 +2481,207 @@ body.vd-report-dark .topbar span{color:#a9bfd6!important}
     display: none !important;
   }
 }
+/* =========================================================
+   EMERGENCY UI — COMPACT LIKE PDC MEETING
+   Visual sizing only — no logic/data changes
+   ========================================================= */
+
+/* ===== KPI CARDS ===== */
+
+.emergency-kpi-group{
+  border-radius:14px;
+  padding:10px;
+}
+
+.emergency-kpi-group-head{
+  margin-bottom:8px;
+  padding:0 2px;
+}
+
+.emergency-kpi-group-head h3{
+  font-size:10px;
+  padding-right:7px;
+}
+
+.emergency-kpi-group-head span{
+  font-size:7px;
+}
+
+.emergency-kpi-cards{
+  gap:8px;
+}
+
+.emergency-mini-kpi{
+  min-width:0;
+  min-height:0;
+  height:auto;
+  padding:9px 10px;
+  border-radius:12px;
+}
+
+.emergency-mini-kpi:before{
+  width:3px;
+}
+
+.emergency-mini-kpi span{
+  display:block;
+  min-height:0;
+  font-size:7px;
+  font-weight:700;
+  line-height:1.4;
+}
+
+.emergency-mini-kpi strong{
+  display:block;
+  margin-top:3px;
+  margin-bottom:2px;
+  font-size:18px;
+  line-height:1.15;
+}
+
+.emergency-mini-kpi small{
+  font-size:7px;
+  line-height:1.35;
+}
+
+
+/* ===== EMERGENCY TREE ===== */
+
+.emergency-status-tree{
+  padding:6px 4px 12px;
+}
+
+/* نفس الشجرة والمنطق والإحداثيات */
+.emergency-tree-card{
+  height:82px;
+  padding:8px 10px;
+
+  border-radius:12px;
+
+  box-shadow:
+    0 5px 14px rgba(42,61,92,.08);
+}
+
+.emergency-tree-card span{
+  font-size:7px;
+  font-weight:700;
+  line-height:1.4;
+}
+
+.emergency-tree-card strong{
+  margin:3px 0;
+  font-size:18px;
+  line-height:1.15;
+}
+
+.emergency-tree-card small{
+  font-size:7px;
+  line-height:1.35;
+}
+
+
+/* الكارت الرئيسي */
+
+.emergency-tree-root{
+  border-left-width:3px;
+}
+
+.emergency-tree-root strong{
+  font-size:20px;
+}
+
+
+/* كروت حالات التنفيذ */
+
+.emergency-tree-success,
+.emergency-tree-running,
+.emergency-tree-pending{
+  border-left-width:3px;
+}
+
+
+/* عنوان دورة المستندات */
+
+.emergency-tree-docs-title{
+  height:36px;
+
+  border-radius:12px;
+
+  font-size:8px;
+}
+
+
+/* كروت دورة المستندات */
+
+.emergency-tree-doc-card{
+  border-left-width:3px;
+}
+
+.emergency-tree-doc-card strong{
+  font-size:18px;
+}
+
+
+/* كارت التحذير */
+
+.emergency-tree-warning{
+  min-height:54px;
+  padding:7px 10px;
+
+  border-radius:12px;
+
+  font-size:8px;
+}
+
+.emergency-tree-warning b{
+  width:24px;
+  height:24px;
+
+  font-size:14px;
+}
+
+.emergency-tree-warning strong{
+  font-size:18px;
+}
+
+
+/* تحذير الأرشفة */
+
+.emergency-tree-archive-warning{
+  height:82px;
+}
+
+
+/* الخطوط والأسهم */
+
+.tree-status-line,
+.tree-doc-line{
+  stroke-width:2;
+}
+
+.tree-flow-green,
+.tree-flow-orange{
+  stroke-width:2.3;
+}
+
+.tree-return-flow{
+  stroke-width:3;
+}
+
+.tree-arrow-label{
+  font-size:8px;
+}
+
+.tree-arrow-label-orange{
+  font-size:8px;
+}
+
+
+/* Hover بنفس هدوء اجتماع PDC */
+
+button.emergency-tree-card:hover{
+  transform:translateY(-1px);
+
+  box-shadow:
+    0 7px 17px rgba(42,61,92,.11);
+}
