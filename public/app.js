@@ -1803,6 +1803,7 @@ renderEmergencyCategoricalChart(
     'contractor',
     'المقاول'
   );
+  installEmergencyHelpV2();
 }
 
 
@@ -2210,7 +2211,7 @@ function installEmergencyHelpV2(){
   );
 
 
-  installEmergencyHelpV2();
+
 }
 
 function renderEmergencyStatusTree(rows){
