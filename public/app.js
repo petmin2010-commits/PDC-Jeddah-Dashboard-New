@@ -2220,7 +2220,7 @@ function renderEmergencyStatusTree(rows){
 
   const total=rows.length;
 
-  // المستوى الرئيسي يقرأ تلقائياً كل القيم غير الفارغة الموجودة في العمود U (status).
+  // المستوى الرئيسي يقرأ تلقائياً كل القيم غير الفارغة في حقل status.
   const statusCounts=new Map();
   rows.forEach(r=>{
     const label=String(r.status||'').replace(/\s+/g,' ').trim();
@@ -2242,7 +2242,7 @@ function renderEmergencyStatusTree(rows){
   const rate=(count,base)=>base?(count/base*100):0;
   const statusActive=activeChartFilter('emergencyStatusTree','emergency');
 
-  // العمود V في ورقة «اشعارات الطوارئ» ممثل بالحقل archive.
+  // حقل archive يقرأ تلقائياً من رأس العمود «ارشفة المستندات».
   const archiveCount=label=>{
     const target=normalizeEmergencyStage(label);
     return completedRows.filter(r=>normalizeEmergencyStage(r.archive)===target).length;
@@ -2282,48 +2282,48 @@ function renderEmergencyStatusTree(rows){
     return 'running';
   };
 
-  const statusWidth=280;
+  const statusWidth=220;
   const statusCenters=statusEntries.map((_,i)=>{
     if(statusEntries.length<=1)return 580;
     return 140+(880*i/(statusEntries.length-1));
   });
-  const statusBranches=statusCenters.map(x=>`M${x} 135 V165`).join(' ');
+  const statusBranches=statusCenters.map(x=>`M${x} 82 V110`).join(' ');
   const completedIndex=statusEntries.findIndex(([label])=>exactStatus(label,'منجز'));
   const completedX=completedIndex>=0?statusCenters[completedIndex]:1020;
   const statusHtml=statusEntries.map(([label,count],i)=>{
-    const left=Math.max(0,Math.min(880,statusCenters[i]-statusWidth/2));
+    const left=Math.max(0,Math.min(940,statusCenters[i]-statusWidth/2));
     return `<div class="tree-status" style="left:${left.toFixed(1)}px">${statusCard(label,count,statusTone(label))}</div>`;
   }).join('');
 
   root.innerHTML=`
     <div class="emergency-tree-canvas">
-      <svg class="emergency-tree-lines" viewBox="0 0 1160 1040" aria-hidden="true" focusable="false">
+      <svg class="emergency-tree-lines" viewBox="0 0 1160 680" aria-hidden="true" focusable="false">
         <defs>
           <marker id="emergencyGreenArrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0 L10 5 L0 10 Z" class="tree-arrow-green"/></marker>
           <marker id="emergencyOrangeArrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0 L10 5 L0 10 Z" class="tree-arrow-orange"/></marker>
         </defs>
 
-        <path class="tree-status-line" d="M580 105 V135 M140 135 H1020 ${statusBranches}"/>
-        <path class="tree-doc-line" d="M${completedX} 270 V300 H580 V325 M580 367 V390 M250 390 H910 M250 390 V410 M910 390 V410"/>
+        <path id="emergencyStatusLine" class="tree-status-line" d="M580 58 V82 M140 82 H1020 ${statusBranches}"/>
+        <path id="emergencyDocLine" class="tree-doc-line" d="M${completedX} 168 V190 H580 V205 M580 235 V250 M250 250 H910 M250 250 V270 M910 250 V270"/>
 
-        <rect class="tree-loop-box" x="60" y="392" width="1020" height="285" rx="30"/>
-        <rect class="tree-loop-box" x="60" y="527" width="1020" height="405" rx="30"/>
+        <rect id="emergencyContractorLoop" class="tree-loop-box" x="60" y="252" width="1020" height="233" rx="22"/>
+        <rect id="emergencyConsultantLoop" class="tree-loop-box" x="60" y="337" width="1020" height="273" rx="22"/>
 
-        <path class="tree-flow-green" marker-end="url(#emergencyGreenArrow)" d="M390 462 H770"/>
-        <path class="tree-flow-green" marker-end="url(#emergencyGreenArrow)" d="M910 515 V545"/>
-        <path class="tree-flow-orange" marker-end="url(#emergencyOrangeArrow)" d="M770 580 H390"/>
-        <path class="tree-flow-orange" marker-end="url(#emergencyOrangeArrow)" d="M250 545 V515"/>
+        <path id="emergencyFlowReceived" class="tree-flow-green" marker-end="url(#emergencyGreenArrow)" d="M370 299 H790"/>
+        <path id="emergencyFlowConsultant" class="tree-flow-green" marker-end="url(#emergencyGreenArrow)" d="M910 328 V355"/>
+        <path id="emergencyFlowReturnContractor" class="tree-flow-orange" marker-end="url(#emergencyOrangeArrow)" d="M790 384 H370"/>
+        <path id="emergencyFlowBackContractor" class="tree-flow-orange" marker-end="url(#emergencyOrangeArrow)" d="M250 355 V328"/>
 
-        <path class="tree-flow-green" marker-end="url(#emergencyGreenArrow)" d="M910 650 V680"/>
-        <path class="tree-flow-orange tree-return-flow" marker-end="url(#emergencyOrangeArrow)" d="M770 860 C650 860 560 790 390 748"/>
-        <path class="tree-flow-green" marker-end="url(#emergencyGreenArrow)" d="M910 785 V815"/>
-        <path class="tree-flow-green" marker-end="url(#emergencyGreenArrow)" d="M910 920 V950"/>
+        <path id="emergencyFlowReady" class="tree-flow-green" marker-end="url(#emergencyGreenArrow)" d="M910 413 V440"/>
+        <path id="emergencyFlowReturnConsultant" class="tree-flow-orange tree-return-flow" marker-end="url(#emergencyOrangeArrow)" d="M790 554 C650 554 560 500 370 469"/>
+        <path id="emergencyFlowPdcReview" class="tree-flow-green" marker-end="url(#emergencyGreenArrow)" d="M910 498 V525"/>
+        <path id="emergencyFlowApproved" class="tree-flow-green" marker-end="url(#emergencyGreenArrow)" d="M910 583 V610"/>
 
-        <path class="tree-quality-line" d="M210 982 C435 982 570 462 770 462"/>
-        <text class="tree-loop-label" x="78" y="420">دورة ملاحظات المقاول</text>
-        <text class="tree-loop-label" x="78" y="555">دورة ملاحظات الاستشاري</text>
-        <text class="tree-arrow-label" x="580" y="448">عند الاستلام</text>
-        <text class="tree-arrow-label tree-arrow-label-orange" x="590" y="716">إعادة للمراجعة</text>
+        <path class="tree-quality-line" d="M210 639 C435 639 570 299 790 299"/>
+        <text id="emergencyContractorLoopLabel" class="tree-loop-label" x="78" y="275">دورة ملاحظات المقاول</text>
+        <text id="emergencyConsultantLoopLabel" class="tree-loop-label" x="78" y="360">دورة ملاحظات الاستشاري</text>
+        <text class="tree-arrow-label" x="580" y="291">عند الاستلام</text>
+        <text class="tree-arrow-label tree-arrow-label-orange" x="590" y="492">إعادة للمراجعة</text>
       </svg>
 
       <article class="emergency-tree-card emergency-tree-root">
@@ -2336,7 +2336,7 @@ function renderEmergencyStatusTree(rows){
 
       ${statusHtml}
 
-      <div class="emergency-tree-docs-title">دورة المستندات — العمود V</div>
+      <div class="emergency-tree-docs-title">دورة المستندات — ارشفة المستندات</div>
       ${archiveCard('لم يستلم من المقاول',notReceived,'tree-doc-not-received')}
       ${archiveCard('مستلم من المقاول',received,'tree-doc-received','__received__')}
       ${archiveCard('معاده للمقاول بملاحظات',returnedContractor,'tree-doc-returned-contractor')}
@@ -2350,6 +2350,263 @@ function renderEmergencyStatusTree(rows){
         <span>الفراغات</span><strong>${fmt(blankArchive)}</strong><small>تنبيه جودة بيانات</small>
       </button>
     </div>`;
+
+
+  // Dynamic SVG connectors: follow the real edges of flexible-width cards.
+  const updateEmergencyTreeConnectors=()=>{
+    const canvas=root.querySelector('.emergency-tree-canvas');
+    if(!canvas)return;
+
+    const canvasRect=canvas.getBoundingClientRect();
+    if(!canvasRect.width||!canvasRect.height)return;
+
+    const sx=1160/canvasRect.width;
+    const sy=680/canvasRect.height;
+
+    const box=selector=>{
+      const el=root.querySelector(selector);
+      if(!el)return null;
+      const r=el.getBoundingClientRect();
+      const left=(r.left-canvasRect.left)*sx;
+      const right=(r.right-canvasRect.left)*sx;
+      const top=(r.top-canvasRect.top)*sy;
+      const bottom=(r.bottom-canvasRect.top)*sy;
+      return {
+        left,right,top,bottom,
+        cx:(left+right)/2,
+        cy:(top+bottom)/2
+      };
+    };
+
+    const setPath=(id,d)=>{
+      const el=root.querySelector('#'+id);
+      if(el&&d)el.setAttribute('d',d);
+    };
+
+    const rootCard=box('.emergency-tree-root');
+    const statuses=[...root.querySelectorAll('.tree-status > .emergency-tree-card')].map(el=>{
+      const r=el.getBoundingClientRect();
+      const left=(r.left-canvasRect.left)*sx;
+      const right=(r.right-canvasRect.left)*sx;
+      const top=(r.top-canvasRect.top)*sy;
+      const bottom=(r.bottom-canvasRect.top)*sy;
+      return {left,right,top,bottom,cx:(left+right)/2,cy:(top+bottom)/2};
+    });
+
+    if(rootCard&&statuses.length){
+      const branchY=Math.max(rootCard.bottom+15,Math.min(...statuses.map(x=>x.top))-15);
+      const minX=Math.min(...statuses.map(x=>x.cx));
+      const maxX=Math.max(...statuses.map(x=>x.cx));
+
+      let d='M'+rootCard.cx+' '+rootCard.bottom+' V'+branchY+
+            ' M'+minX+' '+branchY+' H'+maxX;
+
+      statuses.forEach(x=>{
+        d+=' M'+x.cx+' '+branchY+' V'+x.top;
+      });
+
+      setPath('emergencyStatusLine',d);
+    }
+
+    const completedCard=[...root.querySelectorAll('.tree-status > .emergency-tree-card')]
+      .find(el=>el.dataset.treeValue==='منجز');
+
+    const completed=completedCard ? (()=>{
+      const r=completedCard.getBoundingClientRect();
+      const left=(r.left-canvasRect.left)*sx;
+      const right=(r.right-canvasRect.left)*sx;
+      const top=(r.top-canvasRect.top)*sy;
+      const bottom=(r.bottom-canvasRect.top)*sy;
+      return {left,right,top,bottom,cx:(left+right)/2,cy:(top+bottom)/2};
+    })() : null;
+
+    const title=box('.emergency-tree-docs-title');
+    const notReceived=box('.tree-doc-not-received');
+    const received=box('.tree-doc-received');
+    const returnedContractor=box('.tree-doc-returned-contractor');
+    const consultant=box('.tree-doc-consultant-review');
+    const returnedConsultant=box('.tree-doc-returned-consultant');
+    const ready=box('.tree-doc-pdc-ready');
+    const pdcReview=box('.tree-doc-pdc-review');
+    const approved=box('.tree-doc-pdc-approved');
+
+    if(completed&&title&&notReceived&&received){
+      const y1=(completed.bottom+title.top)/2;
+      const y2=(title.bottom+Math.min(notReceived.top,received.top))/2;
+
+      setPath(
+        'emergencyDocLine',
+        'M'+completed.cx+' '+completed.bottom+
+        ' V'+y1+
+        ' H'+title.cx+
+        ' V'+title.top+
+        ' M'+title.cx+' '+title.bottom+
+        ' V'+y2+
+        ' M'+notReceived.cx+' '+y2+
+        ' H'+received.cx+
+        ' M'+notReceived.cx+' '+y2+
+        ' V'+notReceived.top+
+        ' M'+received.cx+' '+y2+
+        ' V'+received.top
+      );
+    }
+
+    if(notReceived&&received){
+      setPath(
+        'emergencyFlowReceived',
+        'M'+notReceived.right+' '+notReceived.cy+
+        ' H'+received.left
+      );
+    }
+
+    if(received&&consultant){
+      setPath(
+        'emergencyFlowConsultant',
+        'M'+received.cx+' '+received.bottom+
+        ' V'+consultant.top
+      );
+    }
+
+    if(consultant&&returnedContractor){
+      setPath(
+        'emergencyFlowReturnContractor',
+        'M'+consultant.left+' '+consultant.cy+
+        ' H'+returnedContractor.right
+      );
+    }
+
+    if(returnedContractor&&notReceived){
+      setPath(
+        'emergencyFlowBackContractor',
+        'M'+returnedContractor.cx+' '+returnedContractor.top+
+        ' V'+notReceived.bottom
+      );
+    }
+
+    if(consultant&&ready){
+      setPath(
+        'emergencyFlowReady',
+        'M'+consultant.cx+' '+consultant.bottom+
+        ' V'+ready.top
+      );
+    }
+
+    if(ready&&pdcReview){
+      setPath(
+        'emergencyFlowPdcReview',
+        'M'+ready.cx+' '+ready.bottom+
+        ' V'+pdcReview.top
+      );
+    }
+
+    if(pdcReview&&approved){
+      setPath(
+        'emergencyFlowApproved',
+        'M'+pdcReview.cx+' '+pdcReview.bottom+
+        ' V'+approved.top
+      );
+    }
+
+
+    // Flexible orange loop boxes and their titles.
+    const contractorLoop=root.querySelector('#emergencyContractorLoop');
+    const consultantLoop=root.querySelector('#emergencyConsultantLoop');
+    const contractorLabel=root.querySelector('#emergencyContractorLoopLabel');
+    const consultantLabel=root.querySelector('#emergencyConsultantLoopLabel');
+
+    if(notReceived&&received&&returnedContractor&&consultant){
+      const padX=38;
+      const padTop=18;
+      const padBottom=18;
+
+      const left=Math.min(
+        notReceived.left,
+        received.left,
+        returnedContractor.left,
+        consultant.left
+      )-padX;
+
+      const right=Math.max(
+        notReceived.right,
+        received.right,
+        returnedContractor.right,
+        consultant.right
+      )+padX;
+
+      const top=Math.min(notReceived.top,received.top)-padTop;
+      const bottom=Math.max(returnedContractor.bottom,consultant.bottom)+padBottom;
+
+      if(contractorLoop){
+        contractorLoop.setAttribute('x',left);
+        contractorLoop.setAttribute('y',top);
+        contractorLoop.setAttribute('width',right-left);
+        contractorLoop.setAttribute('height',bottom-top);
+      }
+
+      if(contractorLabel){
+        contractorLabel.setAttribute('x',left+16);
+        contractorLabel.setAttribute('y',top+22);
+      }
+    }
+
+    if(returnedContractor&&consultant&&returnedConsultant&&ready&&pdcReview){
+      const padX=38;
+      const padTop=18;
+      const padBottom=18;
+
+      const left=Math.min(
+        returnedContractor.left,
+        consultant.left,
+        returnedConsultant.left,
+        ready.left,
+        pdcReview.left
+      )-padX;
+
+      const right=Math.max(
+        returnedContractor.right,
+        consultant.right,
+        returnedConsultant.right,
+        ready.right,
+        pdcReview.right
+      )+padX;
+
+      const top=Math.min(returnedContractor.top,consultant.top)-padTop;
+      const bottom=Math.max(
+        returnedConsultant.bottom,
+        ready.bottom,
+        pdcReview.bottom
+      )+padBottom;
+
+      if(consultantLoop){
+        consultantLoop.setAttribute('x',left);
+        consultantLoop.setAttribute('y',top);
+        consultantLoop.setAttribute('width',right-left);
+        consultantLoop.setAttribute('height',bottom-top);
+      }
+
+      if(consultantLabel){
+        consultantLabel.setAttribute('x',left+16);
+        consultantLabel.setAttribute('y',top+22);
+      }
+    }
+
+    if(pdcReview&&returnedConsultant){
+      const startX=pdcReview.left;
+      const startY=pdcReview.cy;
+      const endX=returnedConsultant.right;
+      const endY=returnedConsultant.cy;
+      const bend1=startX-(startX-endX)*.35;
+      const bend2=endX+(startX-endX)*.35;
+
+      setPath(
+        'emergencyFlowReturnConsultant',
+        'M'+startX+' '+startY+
+        ' C'+bend1+' '+startY+' '+bend2+' '+endY+' '+endX+' '+endY
+      );
+    }
+  };
+
+  requestAnimationFrame(updateEmergencyTreeConnectors);
 
   root.querySelectorAll('[data-tree-field]').forEach(card=>{
     card.onclick=()=>toggleChartFilter(
