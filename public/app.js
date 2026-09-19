@@ -1805,6 +1805,414 @@ renderEmergencyCategoricalChart(
   );
 }
 
+
+
+/* =========================================================
+   EMERGENCY HELP V2
+   Calculation/source explanations for emergency dashboard
+   ========================================================= */
+
+function installEmergencyHelpV2(){
+
+  if(S.current !== 'emergency') return;
+
+  const page = document.getElementById('dataPage');
+  if(!page) return;
+
+  /* ---------- CSS ---------- */
+
+  if(!document.getElementById('emergencyHelpV2Style')){
+
+    const style = document.createElement('style');
+
+    style.id = 'emergencyHelpV2Style';
+
+    style.textContent = [
+      '.em-help-host{position:relative!important}',
+
+      '.em-help-btn{',
+        'position:absolute;',
+        'top:8px;',
+        'left:8px;',
+        'z-index:50;',
+        'width:22px;',
+        'height:22px;',
+        'border-radius:50%;',
+        'border:1px solid #e9a126;',
+        'background:#fff;',
+        'color:#c77b00;',
+        'font:700 12px Arial,sans-serif;',
+        'display:flex;',
+        'align-items:center;',
+        'justify-content:center;',
+        'cursor:pointer;',
+        'box-shadow:0 2px 7px rgba(30,50,80,.13);',
+        'padding:0;',
+      '}',
+
+      '.em-help-btn:hover{',
+        'background:#fff6e6;',
+        'transform:scale(1.08);',
+      '}',
+
+      '.em-help-overlay{',
+        'position:fixed;',
+        'inset:0;',
+        'z-index:99998;',
+        'background:rgba(15,30,55,.28);',
+        'display:flex;',
+        'align-items:center;',
+        'justify-content:center;',
+        'padding:20px;',
+      '}',
+
+      '.em-help-box{',
+        'width:min(560px,94vw);',
+        'background:#fff;',
+        'border-radius:18px;',
+        'padding:24px;',
+        'box-shadow:0 18px 60px rgba(20,40,70,.25);',
+        'direction:rtl;',
+        'text-align:right;',
+        'font-family:Cairo,Arial,sans-serif;',
+        'position:relative;',
+      '}',
+
+      '.em-help-box h3{',
+        'margin:0 0 14px;',
+        'padding-left:32px;',
+        'font-size:18px;',
+        'color:#172542;',
+      '}',
+
+      '.em-help-box p{',
+        'margin:0;',
+        'white-space:pre-line;',
+        'line-height:1.9;',
+        'font-size:13px;',
+        'color:#52627d;',
+      '}',
+
+      '.em-help-close{',
+        'position:absolute;',
+        'top:13px;',
+        'left:13px;',
+        'width:30px;',
+        'height:30px;',
+        'border:0;',
+        'border-radius:50%;',
+        'background:#f2f5f9;',
+        'cursor:pointer;',
+        'font-size:18px;',
+        'color:#52627d;',
+      '}',
+
+      '@media print{.em-help-btn{display:none!important}}'
+
+    ].join('');
+
+    document.head.appendChild(style);
+  }
+
+
+  /* ---------- Popup ---------- */
+
+  function showHelp(title,text){
+
+    document.querySelector('.em-help-overlay')?.remove();
+
+    const overlay = document.createElement('div');
+
+    overlay.className = 'em-help-overlay';
+
+    const box = document.createElement('div');
+
+    box.className = 'em-help-box';
+
+    const close = document.createElement('button');
+
+    close.type = 'button';
+    close.className = 'em-help-close';
+    close.textContent = '×';
+
+    const h = document.createElement('h3');
+    h.textContent = title;
+
+    const p = document.createElement('p');
+    p.textContent = text;
+
+    close.onclick = () => overlay.remove();
+
+    overlay.onclick = e => {
+      if(e.target === overlay) overlay.remove();
+    };
+
+    box.append(close,h,p);
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+  }
+
+
+  /* ---------- Generic button ---------- */
+
+  function addButton(host,title,text){
+
+    if(!host) return;
+
+    if(host.querySelector(':scope > .em-help-btn')) return;
+
+    host.classList.add('em-help-host');
+
+    const b = document.createElement('button');
+
+    b.type = 'button';
+    b.className = 'em-help-btn';
+    b.textContent = 'i';
+
+    b.title = 'شرح طريقة الاحتساب';
+
+    b.onclick = e => {
+      e.preventDefault();
+      e.stopPropagation();
+      showHelp(title,text);
+    };
+
+    host.appendChild(b);
+  }
+
+
+  /* =====================================================
+     KPI CARDS
+     ===================================================== */
+
+  const kpiRules = [
+
+    [
+      'مسند اليوم',
+      'المصدر: العمود D — تاريخ الإسناد.\nالحساب: عدد السجلات التي يطابق تاريخ إسنادها تاريخ اليوم.'
+    ],
+
+    [
+      'مسند هذا الشهر',
+      'المصدر: العمود D — تاريخ الإسناد.\nالحساب: عدد السجلات التي يقع تاريخ إسنادها في الشهر والسنة الحاليين.'
+    ],
+
+    [
+      'تمت مباشرة العمل',
+      'المصدر: العمود E — تاريخ مباشرة العمل.\nالحساب: عدد السجلات التي تحتوي على تاريخ مباشرة عمل.\nالنسبة: العدد ÷ إجمالي الإشعارات × 100.'
+    ],
+
+    [
+      'لم تبدأ بعد',
+      'المصدر: العمود E — تاريخ مباشرة العمل.\nالحساب: عدد السجلات التي لا تحتوي على تاريخ مباشرة عمل.'
+    ],
+
+    [
+      'لها تاريخ انتهاء',
+      'المصدر: العمود F — تاريخ انتهاء العمل.\nالحساب: عدد السجلات التي تحتوي على تاريخ انتهاء.\nالنسبة: العدد ÷ إجمالي الإشعارات × 100.'
+    ],
+
+    [
+      'إنجاز في نفس يوم الإسناد',
+      'المصدر: D تاريخ الإسناد + F تاريخ انتهاء العمل.\nالحساب: عدد السجلات التي يكون فيها التاريخان في نفس اليوم.\nالنسبة: العدد ÷ إجمالي الإشعارات × 100.'
+    ],
+
+    [
+      'متوسط زمن المباشرة',
+      'المصدر: D تاريخ الإسناد → E تاريخ مباشرة العمل.\nالحساب: متوسط الفرق بين التاريخين.\nيتم احتساب السجلات ذات التاريخين الصالحين فقط، مع استبعاد الفرق السالب.\n«سجل صالح» = عدد السجلات الداخلة فعليًا في المتوسط.'
+    ],
+
+    [
+      'متوسط مدة التنفيذ',
+      'المصدر: E تاريخ مباشرة العمل → F تاريخ انتهاء العمل.\nالحساب: متوسط الفرق بين التاريخين.\nيتم احتساب السجلات ذات التاريخين الصالحين فقط، مع استبعاد الفرق السالب.\n«سجل صالح» = عدد السجلات الداخلة فعليًا في المتوسط.'
+    ],
+
+    [
+      'متوسط الإسناد حتى الانتهاء',
+      'المصدر: D تاريخ الإسناد → F تاريخ انتهاء العمل.\nالحساب: متوسط المدة الكلية من الإسناد حتى الانتهاء.\nيتم احتساب السجلات ذات التاريخين الصالحين فقط، مع استبعاد الفرق السالب.'
+    ],
+
+    [
+      'إجمالي الإشعارات',
+      'الحساب: إجمالي سجلات إشعارات الطوارئ بعد تطبيق الفلاتر الحالية.'
+    ],
+
+    [
+      'منجز',
+      'المصدر: العمود U — حالة التنفيذ.\nالحساب: عدد السجلات التي حالتها «منجز».'
+    ],
+
+    [
+      'جاري التنفيذ',
+      'المصدر: العمود U — حالة التنفيذ.\nالحساب: عدد السجلات التي حالتها «جاري التنفيذ».'
+    ],
+
+    [
+      'لم يتم البدء',
+      'المصدر: العمود U — حالة التنفيذ.\nالحساب: عدد السجلات التي حالتها «لم يتم البدء».'
+    ],
+
+    [
+      'نسبة الإنجاز',
+      'المصدر: العمود U — حالة التنفيذ.\nالحساب: عدد السجلات المنجزة ÷ إجمالي الإشعارات × 100.'
+    ],
+
+    [
+      'طارئ',
+      'المصدر: العمود M — مجدول / طارئ.\nالحساب: عدد السجلات المصنفة «طارئ».'
+    ],
+
+    [
+      'مجدول',
+      'المصدر: العمود M — مجدول / طارئ.\nالحساب: عدد السجلات المصنفة «مجدول».'
+    ],
+
+    [
+      'نسبة الأرشفة',
+      'المصدر: العمود V — حالة المستندات.\nالحساب: عدد السجلات المصنفة كمؤرشفة ÷ إجمالي الإشعارات × 100.'
+    ]
+
+  ];
+
+
+  page.querySelectorAll('#pageKpis article').forEach(card => {
+
+    const text = String(card.innerText || '')
+      .replace(/\s+/g,' ')
+      .trim();
+
+    const rule = kpiRules.find(([name]) => text.includes(name));
+
+    if(rule){
+      addButton(card,rule[0],rule[1]);
+    }else{
+      addButton(
+        card,
+        'شرح المؤشر',
+        'يتم احتساب هذا المؤشر من بيانات إشعارات الطوارئ بعد تطبيق الفلاتر الحالية.'
+      );
+    }
+
+  });
+
+
+  /* =====================================================
+     TREE
+     ===================================================== */
+
+  addButton(
+    document.getElementById('emergencyStatusTree')?.closest('.panel'),
+    'مسار إشعارات الطوارئ ودورة المستندات',
+    'حالة التنفيذ الرئيسية مصدرها العمود U.\nيتم قراءة جميع الحالات غير الفارغة الموجودة في U تلقائيًا.\n\nفرع «منجز» ينتقل إلى دورة المستندات، ومصدر حالات المستندات هو العمود V.\n\nالنسب داخل حالات التنفيذ محسوبة من إجمالي الإشعارات، بينما نسب دورة المستندات محسوبة من إجمالي السجلات المنجزة.'
+  );
+
+
+  addButton(
+    document.getElementById('emergencyTypeTree')?.closest('.panel'),
+    'تصنيف الطوارئ ووصف العمل',
+    'المستوى الأول مصدره العمود M — مجدول / طارئ.\nالمستوى التالي مصدره العمود G — وصف العمل.\n\nالنسبة في كل فرع من أوصاف العمل محسوبة من إجمالي سجلات النوع نفسه.'
+  );
+
+
+  /* =====================================================
+     CHARTS
+     ===================================================== */
+
+  const chartRules = {
+
+    emergencyMonthlyChart:
+      ['الإشعارات شهريًا',
+       'المصدر: العمود D — تاريخ الإسناد.\nيتم تجميع الإشعارات حسب الشهر والسنة من تاريخ الإسناد.'],
+
+    emergencyStatusChart:
+      ['حالة التنفيذ',
+       'المصدر: العمود U — حالة التنفيذ.\nيعرض عدد السجلات لكل حالة موجودة في العمود.'],
+
+    emergencyCircuitChart:
+      ['الدائرة',
+       'المصدر: العمود K — الدائرة.\nيتم تجميع وعدّ الإشعارات حسب الدائرة.'],
+
+    emergencyClassificationChart:
+      ['تصنيف العمل',
+       'المصدر: العمود H — تصنيف العمل.\nيتم تجميع وعدّ الإشعارات حسب تصنيف العمل.'],
+
+    emergencyWorkTypeChart:
+      ['النوع',
+       'المصدر: العمود I — النوع.\nيتم تجميع وعدّ الإشعارات حسب النوع.'],
+
+    emergencyAdministrationChart:
+      ['الإدارة',
+       'المصدر: العمود J — الإدارة.\nيتم تجميع وعدّ الإشعارات حسب الإدارة.'],
+
+    emergencySectionChart:
+      ['القسم',
+       'المصدر: العمود L — القسم.\nيتم تجميع وعدّ الإشعارات حسب القسم.'],
+
+    emergencyScheduleTypeChart:
+      ['مجدول / طارئ',
+       'المصدر: العمود M.\nيتم تجميع وعدّ الإشعارات حسب قيمة مجدول / طارئ.'],
+
+    emergencyConsultantChart:
+      ['الاستشاري',
+       'المصدر: العمود O — الاستشاري.\nيتم تجميع وعدّ الإشعارات حسب الجهة الاستشارية.'],
+
+    emergencyEngineerChart:
+      ['اسم الاستشاري',
+       'المصدر: العمود P — اسم الاستشاري.\nيتم تجميع وعدّ الإشعارات حسب اسم الاستشاري.'],
+
+    emergencyArchiveChart:
+      ['حالة المستندات',
+       'المصدر: العمود V — حالة المستندات.\nيتم تجميع وعدّ السجلات حسب الحالة الموجودة في V.'],
+
+    emergencyFaultChart:
+      ['وصف العمل / الأعطال',
+       'المصدر: العمود G — وصف العمل.\nيتم تجميع الأوصاف وترتيبها تنازليًا حسب عدد الإشعارات.'],
+
+    emergencyContractorChart:
+      ['المقاول',
+       'المصدر: العمود Q — المقاول.\nيتم تجميع وعدّ الإشعارات حسب المقاول.']
+
+  };
+
+
+  Object.entries(chartRules).forEach(([id,rule]) => {
+
+    const canvas = document.getElementById(id);
+
+    if(!canvas) return;
+
+    const panel = canvas.closest('.panel');
+
+    addButton(panel,rule[0],rule[1]);
+
+  });
+
+
+  /* =====================================================
+     TABLES
+     ===================================================== */
+
+  const locationTable = document.getElementById('emergencyLocationTable');
+
+  addButton(
+    locationTable?.closest('.panel'),
+    'جدول الأعطال حسب الحي / الموقع',
+    'المصدر الأساسي: العمود N — الموقع / الحي.\nيتم تجميع جميع السجلات حسب الموقع.\n\nحالات التنفيذ مصدرها العمود U.\nنسبة الإنجاز لكل موقع = عدد حالة «منجز» ÷ إجمالي إشعارات الموقع × 100.'
+  );
+
+
+  const contractorTable = document.getElementById('emergencyContractorTable');
+
+  addButton(
+    contractorTable?.closest('.panel'),
+    'جدول الأعطال حسب المقاول',
+    'المصدر الأساسي: العمود Q — المقاول.\nيتم تجميع جميع السجلات حسب المقاول.\n\nحالات التنفيذ مصدرها العمود U.\nنسبة الإنجاز لكل مقاول = عدد حالة «منجز» ÷ إجمالي إشعارات المقاول × 100.'
+  );
+
+
+  installEmergencyHelpV2();
+}
+
 function renderEmergencyStatusTree(rows){
   const root=document.getElementById('emergencyStatusTree');
   if(!root)return;
