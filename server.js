@@ -142,9 +142,31 @@ function getFastMasterKpis_(rows){
 
 async function getMasterExtras_(){
   const key='PDC_V2_MASTER_EXTRA_MERGED_V2',hit=cacheGet(key);if(hit)return hit;
-  const out={attachmentsTotal:0,attachmentsUploaded:0,emergencyTotal:0,emergencyDone:0,tasksTotal:0,tasksResolved:0,minutes:0,executionViolations:0,penalties:0};
+  const out={attachmentsTotal:0,attachmentsUploaded:0,emergencyTotal:0,emergencyDone:0,emergencyCompleted:0,emergencyRunning:0,emergencyTransferred:0,emergencyStopped:0,tasksTotal:0,tasksResolved:0,minutes:0,executionViolations:0,penalties:0};
   try{const a=await readConfiguredSheet_(APP.PAGES.attachments,'attachments');out.attachmentsTotal=a.length;out.attachmentsUploaded=a.filter(r=>contains_(r.status,'تم رفع')).length}catch(e){}
-  try{const x=await readConfiguredSheet_(APP.PAGES.emergency,'emergency');out.emergencyTotal=x.length;out.emergencyDone=x.filter(r=>contains_(r.status,'تم الانتهاء')||contains_(r.status,'مغلق')).length}catch(e){}
+  try{
+  const x=await readConfiguredSheet_(APP.PAGES.emergency,'emergency');
+
+  out.emergencyTotal=x.length;
+
+  out.emergencyCompleted=x.filter(
+    r=>norm_(r.status)==="منجز"
+  ).length;
+
+  out.emergencyRunning=x.filter(
+    r=>contains_(r.status,"جاري التنفيذ")
+  ).length;
+
+  out.emergencyTransferred=x.filter(
+    r=>norm_(r.status)==="محول"
+  ).length;
+
+  out.emergencyStopped=x.filter(
+    r=>norm_(r.status)==="موقوف"
+  ).length;
+
+  out.emergencyDone=out.emergencyCompleted;
+}catch(e){}
   try{const t=await readConfiguredSheet_(APP.PAGES.tasks,'tasks');out.tasksTotal=t.length;out.tasksResolved=t.filter(r=>contains_(r.attachments,'تم المعالجة')||contains_(r.resolved,'تم')).length}catch(e){}
   try{const v=await readConfiguredSheet_(APP.PAGES.executionViolations,'executionViolations');out.executionViolations=v.length}catch(e){}
   try{const m=await readConfiguredSheet_(APP.PAGES.minutes,'minutes');out.minutes=m.length;out.penalties=sum_(m,'penalty')}catch(e){}
@@ -157,7 +179,7 @@ async function getBootData(){
 }
 async function getSecondaryMasterKpis(){
   const x=await getMasterExtras_();
-  return [kpi_('مخالفات التنفيذ',num_(x.executionViolations)+num_(x.minutes),'violationsCombined','danger'),kpi_('إجمالي الغرامات على المقاول من مخالفات التنفيذ',x.penalties,'violationsCombined','danger','ر.س',false,true),kpi_('مرفقات مرفوعة',x.attachmentsUploaded,'attachments','success',pct_(x.attachmentsUploaded,x.attachmentsTotal)),kpi_('مرفقات غير مكتملة',Math.max(0,x.attachmentsTotal-x.attachmentsUploaded),'attachments','warning'),kpi_('حالات الطوارئ',x.emergencyTotal,'emergency','purple'),kpi_('طوارئ منتهية',x.emergencyDone,'emergency','success',pct_(x.emergencyDone,x.emergencyTotal)),kpi_('المهام والإفادات',x.tasksTotal,'tasks','primary'),kpi_('مهام معالجة',x.tasksResolved,'tasks','success',pct_(x.tasksResolved,x.tasksTotal))];
+  return [kpi_('مخالفات التنفيذ',num_(x.executionViolations)+num_(x.minutes),'violationsCombined','danger'),kpi_('إجمالي الغرامات على المقاول من مخالفات التنفيذ',x.penalties,'violationsCombined','danger','ر.س',false,true),kpi_('مرفقات مرفوعة',x.attachmentsUploaded,'attachments','success',pct_(x.attachmentsUploaded,x.attachmentsTotal)),kpi_('مرفقات غير مكتملة',Math.max(0,x.attachmentsTotal-x.attachmentsUploaded),'attachments','warning'),kpi_('حالات الطوارئ',x.emergencyTotal,'emergency','purple'),kpi_("موقوف",x.emergencyStopped,'emergency','warning',pct_(x.emergencyStopped,x.emergencyTotal)),kpi_("محول",x.emergencyTransferred,'emergency','warning',pct_(x.emergencyTransferred,x.emergencyTotal)),kpi_("منجز",x.emergencyCompleted,'emergency','success',pct_(x.emergencyCompleted,x.emergencyTotal)),kpi_("جاري التنفيذ",x.emergencyRunning,'emergency','warning',pct_(x.emergencyRunning,x.emergencyTotal)),kpi_('المهام والإفادات',x.tasksTotal,'tasks','primary'),kpi_('مهام معالجة',x.tasksResolved,'tasks','success',pct_(x.tasksResolved,x.tasksTotal))];
 }
 async function getSafetyReportPage_(){
   const cfg=APP.PAGES.safety;
