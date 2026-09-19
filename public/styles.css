@@ -1356,3 +1356,230 @@ body.vd-report-dark .topbar span{color:#a9bfd6!important}
 .target-tree .kpi-story-greatgrandchild span{font-size:6.5px!important}
 .target-tree .kpi-story-greatgrandchild strong{font-size:14px!important;color:var(--story-color)}
 .target-tree .kpi-story-greatgrandchild small{font-size:6px!important}
+/* =========================================================
+   UNIVERSAL PDF REPORT
+   ========================================================= */
+
+.vd-universal-report-header{
+  display:none;
+}
+
+.vd-print-canvas-image{
+  display:none;
+}
+
+@media print{
+
+  @page{
+    size:A4 landscape;
+    margin:10mm;
+  }
+
+  html,
+  body{
+    background:#fff !important;
+    direction:rtl;
+  }
+
+  body{
+    -webkit-print-color-adjust:exact !important;
+    print-color-adjust:exact !important;
+  }
+
+  .sidebar,
+  .topbar,
+  #filterBar,
+  #toast,
+  #boot,
+  .em-help-btn,
+  .meeting-info-btn,
+  .safety-pdf-btn,
+  button{
+    display:none !important;
+  }
+
+  .app,
+  main{
+    display:block !important;
+    width:100% !important;
+    max-width:none !important;
+    margin:0 !important;
+    padding:0 !important;
+  }
+
+  .page{
+    display:none !important;
+  }
+
+  .page.active{
+    display:block !important;
+    width:100% !important;
+  }
+
+  .vd-universal-report-header{
+    display:block !important;
+    margin:0 0 8mm;
+    padding:6mm;
+    border:1px solid #d9e1ec;
+    border-radius:12px;
+    background:#fff;
+    page-break-inside:avoid;
+    break-inside:avoid;
+  }
+
+  .vd-report-brand{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    border-bottom:1px solid #e6ebf2;
+    padding-bottom:4mm;
+  }
+
+  .vd-report-brand img{
+    width:52px;
+    height:52px;
+    object-fit:contain;
+  }
+
+  .vd-report-brand strong{
+    display:block;
+    font-size:15px;
+    color:#132445;
+  }
+
+  .vd-report-brand span{
+    display:block;
+    margin-top:2px;
+    font-size:8px;
+    letter-spacing:.5px;
+    color:#7b8ba5;
+  }
+
+  .vd-report-title{
+    text-align:center;
+    padding:5mm 0 3mm;
+  }
+
+  .vd-report-title small{
+    font-size:9px;
+    color:#d9445b;
+    font-weight:700;
+  }
+
+  .vd-report-title h1{
+    margin:2mm 0;
+    font-size:23px;
+    color:#102344;
+  }
+
+  .vd-report-title p{
+    margin:1mm 0;
+    font-size:10px;
+    color:#64748b;
+  }
+
+  .vd-report-title b{
+    font-size:10px;
+    color:#263a5d;
+  }
+
+  .vd-report-meta{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:3mm;
+    margin-top:2mm;
+  }
+
+  .vd-report-meta > div{
+    border:1px solid #e5eaf1;
+    border-radius:8px;
+    padding:2.5mm 4mm;
+  }
+
+  .vd-report-meta span{
+    display:block;
+    font-size:8px;
+    color:#8492a9;
+  }
+
+  .vd-report-meta b{
+    display:block;
+    margin-top:1mm;
+    font-size:10px;
+    color:#172b4d;
+  }
+
+  .vd-report-filters{
+    display:flex;
+    flex-wrap:wrap;
+    gap:2mm;
+    margin-top:3mm;
+    padding-top:3mm;
+    border-top:1px solid #e8edf3;
+    font-size:8px;
+  }
+
+  .vd-report-filters strong{
+    color:#172b4d;
+  }
+
+  .vd-report-filters span{
+    padding:1mm 2.5mm;
+    border-radius:20px;
+    background:#f1f5f9;
+    color:#52627d;
+  }
+
+  .panel,
+  .kpi,
+  .master-kpi,
+  .emergency-mini-kpi,
+  article{
+    break-inside:avoid;
+    page-break-inside:avoid;
+  }
+
+  canvas{
+    display:none !important;
+  }
+
+  .vd-print-canvas-image{
+    display:block !important;
+    width:100% !important;
+    max-width:100% !important;
+    height:auto !important;
+    object-fit:contain;
+  }
+
+  .table-wrap,
+  .emergency-summary-table,
+  .safety-rank-table{
+    overflow:visible !important;
+    max-height:none !important;
+    height:auto !important;
+  }
+
+  table{
+    width:100% !important;
+    font-size:7px !important;
+    border-collapse:collapse !important;
+  }
+
+  thead{
+    display:table-header-group;
+  }
+
+  tr{
+    break-inside:avoid;
+    page-break-inside:avoid;
+  }
+
+  th,
+  td{
+    padding:1.5mm !important;
+  }
+
+  .panel{
+    box-shadow:none !important;
+  }
+}
