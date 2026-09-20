@@ -3099,3 +3099,9 @@ button.emergency-tree-card:hover{transform:translateY(-1px);box-shadow:0 7px 17p
   }
 
 }
+/* Hide Emergency vertical green arrows only */
+#emergencyFlowConsultant,
+#emergencyFlowPdcReview,
+#emergencyFlowApproved {
+  display: none !important;
+}

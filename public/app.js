@@ -2253,7 +2253,6 @@ function renderEmergencyStatusTree(rows){
   const returnedContractor=archiveCount('معاده للمقاول بملاحظات');
   const pdcReview=archiveCount('قيد مراجعة ال PDC');
   const approvedPdc=archiveCount('تم الاعتماد من PDC');
-  const readyPdc=archiveCount('جاهز للرفع لـPDC');
   const returnedConsultant=archiveCount('معاده للاستشاري بملاحظات');
   const blankArchive=completedRows.filter(r=>!normalizeEmergencyStage(r.archive)).length;
 
@@ -2297,7 +2296,7 @@ function renderEmergencyStatusTree(rows){
 
   root.innerHTML=`
     <div class="emergency-tree-canvas">
-      <svg class="emergency-tree-lines" viewBox="0 0 1160 680" aria-hidden="true" focusable="false">
+      <svg class="emergency-tree-lines" viewBox="0 0 1160 710" aria-hidden="true" focusable="false">
         <defs>
           <marker id="emergencyGreenArrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0 L10 5 L0 10 Z" class="tree-arrow-green"/></marker>
           <marker id="emergencyOrangeArrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0 L10 5 L0 10 Z" class="tree-arrow-orange"/></marker>
@@ -2313,8 +2312,6 @@ function renderEmergencyStatusTree(rows){
         <path id="emergencyFlowConsultant" class="tree-flow-green" marker-end="url(#emergencyGreenArrow)" d="M910 328 V355"/>
         <path id="emergencyFlowReturnContractor" class="tree-flow-orange" marker-end="url(#emergencyOrangeArrow)" d="M790 384 H370"/>
         <path id="emergencyFlowBackContractor" class="tree-flow-orange" marker-end="url(#emergencyOrangeArrow)" d="M250 355 V328"/>
-
-        <path id="emergencyFlowReady" class="tree-flow-green" marker-end="url(#emergencyGreenArrow)" d="M910 413 V440"/>
         <path id="emergencyFlowReturnConsultant" class="tree-flow-orange tree-return-flow" marker-end="url(#emergencyOrangeArrow)" d="M790 554 C650 554 560 500 370 469"/>
         <path id="emergencyFlowPdcReview" class="tree-flow-green" marker-end="url(#emergencyGreenArrow)" d="M910 498 V525"/>
         <path id="emergencyFlowApproved" class="tree-flow-green" marker-end="url(#emergencyGreenArrow)" d="M910 583 V610"/>
@@ -2344,8 +2341,6 @@ function renderEmergencyStatusTree(rows){
       ${archiveCard('معاده للاستشاري بملاحظات',returnedConsultant,'tree-doc-returned-consultant')}
       ${archiveCard('قيد مراجعة ال PDC',pdcReview,'tree-doc-pdc-review')}
       ${archiveCard('تم الاعتماد من PDC',approvedPdc,'tree-doc-pdc-approved')}
-      ${archiveCard('جاهز للرفع لـPDC',readyPdc,'tree-doc-pdc-ready')}
-
       <button type="button" class="emergency-tree-card emergency-tree-archive-warning ${statusActive&&statusActive.value==='__blank__'?'selected':''}" data-tree-field="archive" data-tree-value="__blank__" data-tree-mode="emergency-archive-stage" data-tree-label="حالة المستندات">
         <span>الفراغات</span><strong>${fmt(blankArchive)}</strong><small>تنبيه جودة بيانات</small>
       </button>
@@ -2361,7 +2356,7 @@ function renderEmergencyStatusTree(rows){
     if(!canvasRect.width||!canvasRect.height)return;
 
     const sx=1160/canvasRect.width;
-    const sy=680/canvasRect.height;
+    const sy=710/canvasRect.height;
 
     const box=selector=>{
       const el=root.querySelector(selector);
@@ -2382,6 +2377,32 @@ function renderEmergencyStatusTree(rows){
       const el=root.querySelector('#'+id);
       if(el&&d)el.setAttribute('d',d);
     };
+
+    // Equal spacing for the four main right-side document cards.
+    const receivedEl=root.querySelector('.tree-doc-received');
+    const consultantEl=root.querySelector('.tree-doc-consultant-review');
+    const pdcReviewEl=root.querySelector('.tree-doc-pdc-review');
+    const approvedEl=root.querySelector('.tree-doc-pdc-approved');
+
+    if(receivedEl&&consultantEl&&pdcReviewEl&&approvedEl){
+      pdcReviewEl.style.transform='';
+      approvedEl.style.transform='';
+
+      const rr1=receivedEl.getBoundingClientRect();
+      const rr2=consultantEl.getBoundingClientRect();
+      const rr3=pdcReviewEl.getBoundingClientRect();
+      const rr4=approvedEl.getBoundingClientRect();
+
+      const verticalStep=rr2.top-rr1.top;
+      const targetPdcTop=rr2.top+verticalStep;
+      const targetApprovedTop=rr2.top+(verticalStep*2);
+
+      pdcReviewEl.style.transform=
+        'translateY('+(targetPdcTop-rr3.top)+'px)';
+
+      approvedEl.style.transform=
+        'translateY('+(targetApprovedTop-rr4.top)+'px)';
+    }
 
     const rootCard=box('.emergency-tree-root');
     const statuses=[...root.querySelectorAll('.tree-status > .emergency-tree-card')].map(el=>{
@@ -2426,7 +2447,6 @@ function renderEmergencyStatusTree(rows){
     const returnedContractor=box('.tree-doc-returned-contractor');
     const consultant=box('.tree-doc-consultant-review');
     const returnedConsultant=box('.tree-doc-returned-consultant');
-    const ready=box('.tree-doc-pdc-ready');
     const pdcReview=box('.tree-doc-pdc-review');
     const approved=box('.tree-doc-pdc-approved');
 
@@ -2463,7 +2483,7 @@ function renderEmergencyStatusTree(rows){
       setPath(
         'emergencyFlowConsultant',
         'M'+received.cx+' '+received.bottom+
-        ' V'+consultant.top
+        ' V'+(consultant.top-Math.max(24,(consultant.top-received.bottom)*0.45))
       );
     }
 
@@ -2482,20 +2502,11 @@ function renderEmergencyStatusTree(rows){
         ' V'+notReceived.bottom
       );
     }
-
-    if(consultant&&ready){
-      setPath(
-        'emergencyFlowReady',
-        'M'+consultant.cx+' '+consultant.bottom+
-        ' V'+ready.top
-      );
-    }
-
-    if(ready&&pdcReview){
+    if(consultant&&pdcReview){
       setPath(
         'emergencyFlowPdcReview',
-        'M'+ready.cx+' '+ready.bottom+
-        ' V'+pdcReview.top
+        'M'+consultant.cx+' '+consultant.bottom+
+        ' V'+(pdcReview.top-Math.max(24,(pdcReview.top-consultant.bottom)*0.45))
       );
     }
 
@@ -2503,7 +2514,7 @@ function renderEmergencyStatusTree(rows){
       setPath(
         'emergencyFlowApproved',
         'M'+pdcReview.cx+' '+pdcReview.bottom+
-        ' V'+approved.top
+        ' V'+(approved.top-Math.max(24,(approved.top-pdcReview.bottom)*0.45))
       );
     }
 
@@ -2549,7 +2560,7 @@ function renderEmergencyStatusTree(rows){
       }
     }
 
-    if(returnedContractor&&consultant&&returnedConsultant&&ready&&pdcReview){
+    if(returnedContractor&&consultant&&returnedConsultant&&pdcReview&&approved){
       const padX=38;
       const padTop=18;
       const padBottom=18;
@@ -2558,23 +2569,23 @@ function renderEmergencyStatusTree(rows){
         returnedContractor.left,
         consultant.left,
         returnedConsultant.left,
-        ready.left,
-        pdcReview.left
+        pdcReview.left,
+        approved.left
       )-padX;
 
       const right=Math.max(
         returnedContractor.right,
         consultant.right,
         returnedConsultant.right,
-        ready.right,
-        pdcReview.right
+        pdcReview.right,
+        approved.right
       )+padX;
 
       const top=Math.min(returnedContractor.top,consultant.top)-padTop;
       const bottom=Math.max(
         returnedConsultant.bottom,
-        ready.bottom,
-        pdcReview.bottom
+        pdcReview.bottom,
+        approved.bottom
       )+padBottom;
 
       if(consultantLoop){
@@ -2595,13 +2606,11 @@ function renderEmergencyStatusTree(rows){
       const startY=pdcReview.cy;
       const endX=returnedConsultant.right;
       const endY=returnedConsultant.cy;
-      const bend1=startX-(startX-endX)*.35;
-      const bend2=endX+(startX-endX)*.35;
 
       setPath(
         'emergencyFlowReturnConsultant',
         'M'+startX+' '+startY+
-        ' C'+bend1+' '+startY+' '+bend2+' '+endY+' '+endX+' '+endY
+        ' L'+endX+' '+endY
       );
     }
   };
@@ -4285,4 +4294,8 @@ if(document.readyState==='loading'){
   initDashboardUserProfile();
 
 }
+
+
+
+
 
