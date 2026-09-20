@@ -2378,32 +2378,6 @@ function renderEmergencyStatusTree(rows){
       if(el&&d)el.setAttribute('d',d);
     };
 
-    // Equal spacing for the four main right-side document cards.
-    const receivedEl=root.querySelector('.tree-doc-received');
-    const consultantEl=root.querySelector('.tree-doc-consultant-review');
-    const pdcReviewEl=root.querySelector('.tree-doc-pdc-review');
-    const approvedEl=root.querySelector('.tree-doc-pdc-approved');
-
-    if(receivedEl&&consultantEl&&pdcReviewEl&&approvedEl){
-      pdcReviewEl.style.transform='';
-      approvedEl.style.transform='';
-
-      const rr1=receivedEl.getBoundingClientRect();
-      const rr2=consultantEl.getBoundingClientRect();
-      const rr3=pdcReviewEl.getBoundingClientRect();
-      const rr4=approvedEl.getBoundingClientRect();
-
-      const verticalStep=rr2.top-rr1.top;
-      const targetPdcTop=rr2.top+verticalStep;
-      const targetApprovedTop=rr2.top+(verticalStep*2);
-
-      pdcReviewEl.style.transform=
-        'translateY('+(targetPdcTop-rr3.top)+'px)';
-
-      approvedEl.style.transform=
-        'translateY('+(targetApprovedTop-rr4.top)+'px)';
-    }
-
     const rootCard=box('.emergency-tree-root');
     const statuses=[...root.querySelectorAll('.tree-status > .emergency-tree-card')].map(el=>{
       const r=el.getBoundingClientRect();
@@ -2601,17 +2575,28 @@ function renderEmergencyStatusTree(rows){
       }
     }
 
-    if(pdcReview&&returnedConsultant){
-      const startX=pdcReview.left;
-      const startY=pdcReview.cy;
-      const endX=returnedConsultant.right;
-      const endY=returnedConsultant.cy;
+    if(returnedConsultant){
+      const pdcCardEl=root.querySelector('.tree-doc-pdc-review');
 
-      setPath(
-        'emergencyFlowReturnConsultant',
-        'M'+startX+' '+startY+
-        ' L'+endX+' '+endY
-      );
+      if(pdcCardEl){
+        const pdcRect=pdcCardEl.getBoundingClientRect();
+
+        const startX=
+          (pdcRect.left-canvasRect.left)*sx;
+
+        const startY=
+          ((pdcRect.top-canvasRect.top) +
+          (pdcRect.height/2))*sy;
+
+        const endX=returnedConsultant.right;
+        const endY=returnedConsultant.cy;
+
+        setPath(
+          'emergencyFlowReturnConsultant',
+          'M'+startX+' '+startY+
+          ' L'+endX+' '+endY
+        );
+      }
     }
   };
 

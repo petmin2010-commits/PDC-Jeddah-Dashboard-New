@@ -2514,8 +2514,8 @@ body.vd-report-dark .topbar span{color:#a9bfd6!important}
 .tree-doc-not-received,.tree-doc-received{top:275px}
 .tree-doc-returned-contractor,.tree-doc-consultant-review{top:365px}
 .tree-doc-returned-consultant,.tree-doc-pdc-ready{top:455px}
-.tree-doc-pdc-review{top:545px}
-.tree-doc-pdc-approved{top:635px}
+.tree-doc-pdc-review{top:455px}
+.tree-doc-pdc-approved{top:545px}
 .emergency-tree-archive-warning{top:635px;height:58px}
 .emergency-tree-warning{top:4px;min-height:48px;padding:5px 8px;border-radius:12px;font-size:7px}
 .emergency-tree-warning b{width:20px;height:20px;font-size:12px}
