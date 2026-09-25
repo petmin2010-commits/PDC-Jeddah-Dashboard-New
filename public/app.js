@@ -2220,6 +2220,7 @@ function installEmergencyHelpV2(){
 function renderEmergencyStatusTree(rows,rootTarget='emergencyStatusTree',interactive=true){
   const root=typeof rootTarget==='string'?document.getElementById(rootTarget):rootTarget;
   if(!root)return;
+  const uid=interactive?'emergency':'closuresEmergency';
 
   const total=rows.length;
 
@@ -2301,27 +2302,27 @@ function renderEmergencyStatusTree(rows,rootTarget='emergencyStatusTree',interac
     <div class="emergency-tree-canvas">
       <svg class="emergency-tree-lines" viewBox="0 0 1160 710" aria-hidden="true" focusable="false">
         <defs>
-          <marker id="emergencyGreenArrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0 L10 5 L0 10 Z" class="tree-arrow-green"/></marker>
-          <marker id="emergencyOrangeArrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0 L10 5 L0 10 Z" class="tree-arrow-orange"/></marker>
+          <marker id="${uid}GreenArrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0 L10 5 L0 10 Z" class="tree-arrow-green"/></marker>
+          <marker id="${uid}OrangeArrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0 L10 5 L0 10 Z" class="tree-arrow-orange"/></marker>
         </defs>
 
-        <path id="emergencyStatusLine" class="tree-status-line" d="M580 58 V82 M140 82 H1020 ${statusBranches}"/>
-        <path id="emergencyDocLine" class="tree-doc-line" d="M${completedX} 168 V190 H580 V205 M580 235 V250 M250 250 H910 M250 250 V270 M910 250 V270"/>
+        <path id="${uid}StatusLine" class="tree-status-line" d="M580 58 V82 M140 82 H1020 ${statusBranches}"/>
+        <path id="${uid}DocLine" class="tree-doc-line" d="M${completedX} 168 V190 H580 V205 M580 235 V250 M250 250 H910 M250 250 V270 M910 250 V270"/>
 
-        <rect id="emergencyContractorLoop" class="tree-loop-box" x="60" y="252" width="1020" height="233" rx="22"/>
-        <rect id="emergencyConsultantLoop" class="tree-loop-box" x="60" y="337" width="1020" height="273" rx="22"/>
+        <rect id="${uid}ContractorLoop" class="tree-loop-box" x="60" y="252" width="1020" height="233" rx="22"/>
+        <rect id="${uid}ConsultantLoop" class="tree-loop-box" x="60" y="337" width="1020" height="273" rx="22"/>
 
-        <path id="emergencyFlowReceived" class="tree-flow-green" marker-end="url(#emergencyGreenArrow)" d="M370 299 H790"/>
-        <path id="emergencyFlowConsultant" class="tree-flow-green" marker-end="url(#emergencyGreenArrow)" d="M910 328 V355"/>
-        <path id="emergencyFlowReturnContractor" class="tree-flow-orange" marker-end="url(#emergencyOrangeArrow)" d="M790 384 H370"/>
-        <path id="emergencyFlowBackContractor" class="tree-flow-orange" marker-end="url(#emergencyOrangeArrow)" d="M250 355 V328"/>
-        <path id="emergencyFlowReturnConsultant" class="tree-flow-orange tree-return-flow" marker-end="url(#emergencyOrangeArrow)" d="M790 554 C650 554 560 500 370 469"/>
-        <path id="emergencyFlowPdcReview" class="tree-flow-green" marker-end="url(#emergencyGreenArrow)" d="M910 498 V525"/>
-        <path id="emergencyFlowApproved" class="tree-flow-green" marker-end="url(#emergencyGreenArrow)" d="M910 583 V610"/>
+        <path id="${uid}FlowReceived" class="tree-flow-green" marker-end="url(#${uid}GreenArrow)" d="M370 299 H790"/>
+        <path id="${uid}FlowConsultant" class="tree-flow-green" marker-end="url(#${uid}GreenArrow)" d="M910 328 V355"/>
+        <path id="${uid}FlowReturnContractor" class="tree-flow-orange" marker-end="url(#${uid}OrangeArrow)" d="M790 384 H370"/>
+        <path id="${uid}FlowBackContractor" class="tree-flow-orange" marker-end="url(#${uid}OrangeArrow)" d="M250 355 V328"/>
+        <path id="${uid}FlowReturnConsultant" class="tree-flow-orange tree-return-flow" marker-end="url(#${uid}OrangeArrow)" d="M790 554 C650 554 560 500 370 469"/>
+        <path id="${uid}FlowPdcReview" class="tree-flow-green" marker-end="url(#${uid}GreenArrow)" d="M910 498 V525"/>
+        <path id="${uid}FlowApproved" class="tree-flow-green" marker-end="url(#${uid}GreenArrow)" d="M910 583 V610"/>
 
         <path class="tree-quality-line" d="M210 639 C435 639 570 299 790 299"/>
-        <text id="emergencyContractorLoopLabel" class="tree-loop-label" x="78" y="275">دورة ملاحظات المقاول</text>
-        <text id="emergencyConsultantLoopLabel" class="tree-loop-label" x="78" y="360">دورة ملاحظات الاستشاري</text>
+        <text id="${uid}ContractorLoopLabel" class="tree-loop-label" x="78" y="275">دورة ملاحظات المقاول</text>
+        <text id="${uid}ConsultantLoopLabel" class="tree-loop-label" x="78" y="360">دورة ملاحظات الاستشاري</text>
         <text class="tree-arrow-label" x="580" y="291">عند الاستلام</text>
         <text class="tree-arrow-label tree-arrow-label-orange" x="590" y="492">إعادة للمراجعة</text>
       </svg>
@@ -2403,7 +2404,7 @@ function renderEmergencyStatusTree(rows,rootTarget='emergencyStatusTree',interac
         d+=' M'+x.cx+' '+branchY+' V'+x.top;
       });
 
-      setPath('emergencyStatusLine',d);
+      setPath(uid+'StatusLine',d);
     }
 
     const completedCard=[...root.querySelectorAll('.tree-status > .emergency-tree-card')]
@@ -2432,7 +2433,7 @@ function renderEmergencyStatusTree(rows,rootTarget='emergencyStatusTree',interac
       const y2=(title.bottom+Math.min(notReceived.top,received.top))/2;
 
       setPath(
-        'emergencyDocLine',
+        uid+'DocLine',
         'M'+completed.cx+' '+completed.bottom+
         ' V'+y1+
         ' H'+title.cx+
@@ -2450,7 +2451,7 @@ function renderEmergencyStatusTree(rows,rootTarget='emergencyStatusTree',interac
 
     if(notReceived&&received){
       setPath(
-        'emergencyFlowReceived',
+        uid+'FlowReceived',
         'M'+notReceived.right+' '+notReceived.cy+
         ' H'+received.left
       );
@@ -2458,7 +2459,7 @@ function renderEmergencyStatusTree(rows,rootTarget='emergencyStatusTree',interac
 
     if(received&&consultant){
       setPath(
-        'emergencyFlowConsultant',
+        uid+'FlowConsultant',
         'M'+received.cx+' '+received.bottom+
         ' V'+(consultant.top-Math.max(24,(consultant.top-received.bottom)*0.45))
       );
@@ -2466,7 +2467,7 @@ function renderEmergencyStatusTree(rows,rootTarget='emergencyStatusTree',interac
 
     if(consultant&&returnedContractor){
       setPath(
-        'emergencyFlowReturnContractor',
+        uid+'FlowReturnContractor',
         'M'+consultant.left+' '+consultant.cy+
         ' H'+returnedContractor.right
       );
@@ -2474,14 +2475,14 @@ function renderEmergencyStatusTree(rows,rootTarget='emergencyStatusTree',interac
 
     if(returnedContractor&&notReceived){
       setPath(
-        'emergencyFlowBackContractor',
+        uid+'FlowBackContractor',
         'M'+returnedContractor.cx+' '+returnedContractor.top+
         ' V'+notReceived.bottom
       );
     }
     if(consultant&&pdcReview){
       setPath(
-        'emergencyFlowPdcReview',
+        uid+'FlowPdcReview',
         'M'+consultant.cx+' '+consultant.bottom+
         ' V'+(pdcReview.top-Math.max(24,(pdcReview.top-consultant.bottom)*0.45))
       );
@@ -2489,7 +2490,7 @@ function renderEmergencyStatusTree(rows,rootTarget='emergencyStatusTree',interac
 
     if(pdcReview&&approved){
       setPath(
-        'emergencyFlowApproved',
+        uid+'FlowApproved',
         'M'+pdcReview.cx+' '+pdcReview.bottom+
         ' V'+(approved.top-Math.max(24,(approved.top-pdcReview.bottom)*0.45))
       );
@@ -2497,10 +2498,10 @@ function renderEmergencyStatusTree(rows,rootTarget='emergencyStatusTree',interac
 
 
     // Flexible orange loop boxes and their titles.
-    const contractorLoop=root.querySelector('#emergencyContractorLoop');
-    const consultantLoop=root.querySelector('#emergencyConsultantLoop');
-    const contractorLabel=root.querySelector('#emergencyContractorLoopLabel');
-    const consultantLabel=root.querySelector('#emergencyConsultantLoopLabel');
+    const contractorLoop=root.querySelector('#'+uid+'ContractorLoop');
+    const consultantLoop=root.querySelector('#'+uid+'ConsultantLoop');
+    const contractorLabel=root.querySelector('#'+uid+'ContractorLoopLabel');
+    const consultantLabel=root.querySelector('#'+uid+'ConsultantLoopLabel');
 
     if(notReceived&&received&&returnedContractor&&consultant){
       const padX=38;
@@ -2595,7 +2596,7 @@ function renderEmergencyStatusTree(rows,rootTarget='emergencyStatusTree',interac
         const endY=returnedConsultant.cy;
 
         setPath(
-          'emergencyFlowReturnConsultant',
+          uid+'FlowReturnConsultant',
           'M'+startX+' '+startY+
           ' L'+endX+' '+endY
         );
