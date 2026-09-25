@@ -1077,13 +1077,24 @@ app.use(express.static(PUBLIC_DIR,{
   index:false
 }));
 
-app.get('/api/health',(req,res)=>res.json({
-  ok:true,
-  title:APP.TITLE,
-  spreadsheetConfigured:!!SPREADSHEET_ID,
-  publicDirExists:fs.existsSync(PUBLIC_DIR),
-  indexExists:fs.existsSync(INDEX_FILE)
-}));
+app.get('/api/health',(req,res)=>{
+  let ui='';
+  try{ui=fs.readFileSync(INDEX_FILE,'utf8')}catch{}
+  const reportsMarker='<div class="nav-section-label">التقارير</div>';
+  res.json({
+    ok:true,
+    title:APP.TITLE,
+    spreadsheetConfigured:!!SPREADSHEET_ID,
+    publicDirExists:fs.existsSync(PUBLIC_DIR),
+    indexExists:fs.existsSync(INDEX_FILE),
+    uiBuild:'executive-home-2026-09-25',
+    renderCommit:process.env.RENDER_GIT_COMMIT||'',
+    masterExecutiveLinked:ui.includes('/master-executive.js'),
+    workordersNavPresent:ui.includes('data-page="workorders"'),
+    meetingPresent:ui.includes('data-page="wednesdayMeeting"'),
+    meetingUnderReports:ui.indexOf('data-page="wednesdayMeeting"')>ui.indexOf(reportsMarker)
+  });
+});
 
 app.get('/api/monitor/summary',requireAuth_,async(req,res)=>{
   try{
