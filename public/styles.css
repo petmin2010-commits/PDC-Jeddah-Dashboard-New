@@ -3111,3 +3111,10 @@ main{margin-right:205px!important}
 .brand{gap:8px!important}.brand-copy b{font-size:8px!important}.brand-copy strong{font-size:10px!important}.brand-copy em,.brand-copy span{font-size:7px!important}
 nav{gap:3px!important;padding-top:12px!important}.nav-item{padding:7px 8px!important;font-size:10px!important;gap:7px!important}.nav-section-label{margin:7px 10px 3px!important;padding-top:6px!important;font-size:8px!important}
 @media(max-width:850px){.sidebar{width:70px!important}main{margin-right:70px!important}}
+
+/* Closures — copied live trees from PDC meeting and emergency */
+.closures-copied-trees{margin-bottom:16px}
+.closures-tree-panel{margin-bottom:14px;overflow:hidden}
+.closures-tree-panel>.panel-title{margin-bottom:8px}
+.closures-meeting-tree{margin-top:4px!important}
+.closures-emergency-tree [data-tree-field]{cursor:default}

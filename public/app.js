@@ -2217,8 +2217,8 @@ function installEmergencyHelpV2(){
 
 }
 
-function renderEmergencyStatusTree(rows){
-  const root=document.getElementById('emergencyStatusTree');
+function renderEmergencyStatusTree(rows,rootTarget='emergencyStatusTree',interactive=true){
+  const root=typeof rootTarget==='string'?document.getElementById(rootTarget):rootTarget;
   if(!root)return;
 
   const total=rows.length;
@@ -2243,7 +2243,7 @@ function renderEmergencyStatusTree(rows){
   const completed=completedRows.length;
   const blankStatus=rows.filter(r=>!String(r.status||'').trim()).length;
   const rate=(count,base)=>base?(count/base*100):0;
-  const statusActive=activeChartFilter('emergencyStatusTree','emergency');
+  const statusActive=interactive?activeChartFilter('emergencyStatusTree','emergency'):null;
 
   // حقل archive يقرأ تلقائياً من رأس العمود «ارشفة المستندات».
   const archiveCount=label=>{
@@ -2605,7 +2605,7 @@ function renderEmergencyStatusTree(rows){
 
   requestAnimationFrame(updateEmergencyTreeConnectors);
 
-  root.querySelectorAll('[data-tree-field]').forEach(card=>{
+  if(interactive)root.querySelectorAll('[data-tree-field]').forEach(card=>{
     card.onclick=()=>toggleChartFilter(
       'emergencyStatusTree',card.dataset.treeField,card.dataset.treeValue,
       card.dataset.treeLabel,card.dataset.treeMode,
