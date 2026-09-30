@@ -25,6 +25,19 @@
       || 'تقرير الداشبورد';
   }
 
+  function getBrandInfo() {
+    const box = document.querySelector('.brand-copy');
+    const project = box?.querySelector('b')?.textContent?.trim()
+      || 'العقد الموحد للإشراف على خدمات شبكات الطاقة';
+    const city = box?.querySelector('strong')?.textContent?.trim()
+      || document.title
+      || 'إدارة الكهرباء';
+    const contractText = box?.querySelector('em')?.textContent?.trim()
+      || '';
+    const contract = contractText.replace(/^رقم العقد\s*:\s*/,'').trim();
+    return { project, city, contract, contractText };
+  }
+
   function getAppliedFilters() {
     const result = [];
 
@@ -219,8 +232,9 @@
       <div class="vd-report-section-body"></div>
 
       <footer class="vd-report-footer">
+        <span>Vision Dimensions</span>
         <span>شركة أبعاد الرؤية للاستشارات الهندسية</span>
-        <span>العقد رقم 4400023827</span>
+        <span>${escapeHtml(getBrandInfo().contractText || '')}</span>
       </footer>
     `;
 
@@ -229,6 +243,7 @@
 
   function buildCover(report, reportType, kpis) {
     const filters = getAppliedFilters();
+    const brand = getBrandInfo();
     const now = new Date();
 
     const cover = document.createElement('section');
@@ -271,7 +286,7 @@
       <div class="vd-report-cover-title">
 
         <small>
-          العقد الموحد للإشراف على خدمات شبكات الطاقة
+          ${escapeHtml(brand.project)}
         </small>
 
         <h1>
@@ -279,11 +294,11 @@
         </h1>
 
         <p>
-          إدارة كهرباء جدة
+          ${escapeHtml(brand.city)}
         </p>
 
         <strong>
-          رقم العقد: 4400023827
+          ${escapeHtml(brand.contractText || '')}
         </strong>
 
       </div>
@@ -722,7 +737,7 @@
             📄
           </div>
 
-          <h2>تصدير تقرير PDF</h2>
+          <h2>تصدير تقرير</h2>
 
           <p>
             اختر نوع التقرير المطلوب للتاب الحالي
@@ -812,7 +827,7 @@
     if (!btn) return;
 
     btn.textContent =
-      '📄 تصدير تقرير PDF';
+      '📄 تصدير تقرير';
 
     btn.title =
       'إنشاء تقرير PDF للتاب الحالي';
@@ -829,7 +844,22 @@
       'click',
       showModal
     );
+
+    ['exportSafetyPdfBtn','exportExecutionPdfBtn'].forEach(id => {
+      const special = document.getElementById(id);
+      if (!special) return;
+      const replacement = special.cloneNode(true);
+      replacement.textContent = '⤓ تصدير تقرير';
+      replacement.title = 'إنشاء تقرير موحد للتاب الحالي';
+      special.parentNode.replaceChild(replacement, special);
+      replacement.addEventListener('click', showModal);
+    });
   }
+
+  window.VDReportExport = {
+    showModal,
+    printReport
+  };
 
   if (document.readyState === 'loading') {
     document.addEventListener(
