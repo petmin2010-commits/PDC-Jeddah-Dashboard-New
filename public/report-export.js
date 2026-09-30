@@ -202,6 +202,16 @@
       }
 
       try {
+        const liveChart =
+          window.Chart?.getChart?.(canvas);
+
+        if (liveChart) {
+          try {
+            liveChart.stop?.();
+            liveChart.update?.('none');
+          } catch (_) {}
+        }
+
         const img = document.createElement('img');
 
         img.className = 'vd-report-chart-image';
@@ -793,6 +803,13 @@
       brand.city,
       'vd-report-data-quality-cover'
     );
+
+    /*
+      لا نستخدم Footer في الصفحة الأولى لجودة البيانات.
+      في Chrome كان الـ footer المطلق للغلاف يُرحّل وحده إلى ورقة ثانية،
+      وهو بالضبط سبب الصفحة البيضاء التي يظهر بها فقط رقم العقد واسم الشركة.
+    */
+    cover.querySelector('.vd-report-footer')?.remove();
 
     const coverBody =
       cover.querySelector('.vd-report-section-body');
