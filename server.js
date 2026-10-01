@@ -689,6 +689,7 @@ async function getEmployeeEvaluationData_(){
     safetyElectronicRate:['نسبة نموذج السلامة الالكتروني'],
     safetyPaper:['حالة رفع نماذج السلامة الورقية'],
     safetyPaperFix:['هل تم معالجة مشكلة عدم رفع نماذج السلامة الورقية'],
+    safetyViolations:['عدد مخالفات السلامة التي تم اصدارها','عدد مخالفات السلامة','مخالفات السلامة','عدد المخالفات'],
     photos:['حالة رفع الصور','حالة  رفع الصور'],
     photosFix:['هل تم معالجة مشكلة عدم رفع الصور'],
     supervision:['حالة رفع نماذج الاشراف','حالة رفع نماذج الإشراف'],
@@ -701,6 +702,8 @@ async function getEmployeeEvaluationData_(){
     unclassifiedFix:['هل تم معالجة مشكلة عدم رفع مرفقات غير مصنفة']
   };
   const map={};Object.entries(defs).forEach(([k,c])=>map[k]=findHeader_(headers,c));
+  // العمود AB هو المصدر المعتمد لعدد مخالفات السلامة لكل مهمة.
+  if(map.safetyViolations<0&&headers.length>27)map.safetyViolations=27;
   const available={};Object.keys(defs).forEach(k=>available[k]=map[k]>=0);
   const rows=[];
   vals.slice(1,APP.MAX_ROWS+1).forEach((r,i)=>{
@@ -711,7 +714,8 @@ async function getEmployeeEvaluationData_(){
       description:get('description'),location:get('location'),taskDate:get('taskDate'),engineer,
       advice:get('advice'),owner:get('owner'),attachments:get('attachments'),attachmentsFix:get('attachmentsFix'),
       safetyElectronic:get('safetyElectronic'),safetyElectronicFix:get('safetyElectronicFix'),safetyElectronicRate:get('safetyElectronicRate'),
-      safetyPaper:get('safetyPaper'),safetyPaperFix:get('safetyPaperFix'),photos:get('photos'),photosFix:get('photosFix'),
+      safetyPaper:get('safetyPaper'),safetyPaperFix:get('safetyPaperFix'),safetyViolations:get('safetyViolations'),
+      photos:get('photos'),photosFix:get('photosFix'),
       supervision:get('supervision'),supervisionFix:get('supervisionFix'),asBuilt:get('asBuilt'),asBuiltFix:get('asBuiltFix'),
       assets:get('assets'),assetsFix:get('assetsFix'),unclassified:get('unclassified'),unclassifiedFix:get('unclassifiedFix')});
   });
