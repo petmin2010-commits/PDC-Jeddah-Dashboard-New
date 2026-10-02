@@ -1821,3 +1821,51 @@ body.vd-report-v2-mode #vdReportV2 .vd-report-projects-chart-page .vd-report-dou
     page-break-after:auto!important;
   }
 }
+
+
+/* Jeddah الرئيسية PDF — dense doughnut handling */
+body.vd-report-v2-mode #vdReportV2 .vd-report-master-control .vd-report-doughnut-dense .vd-report-chart-image-doughnut{
+  width:84%!important;
+  height:31mm!important;
+  max-height:31mm!important;
+  flex:0 0 31mm!important;
+}
+body.vd-report-v2-mode #vdReportV2 .vd-report-master-control .vd-report-doughnut-dense .vd-report-control-doughnut-legend{
+  min-height:11mm!important;
+  max-height:13mm!important;
+  gap:.6mm 1.4mm!important;
+  padding:0 .8mm!important;
+}
+body.vd-report-v2-mode #vdReportV2 .vd-report-master-control .vd-report-doughnut-dense .vd-report-doughnut-legend-item{
+  max-width:48%!important;
+  white-space:normal!important;
+  font-size:4.35px!important;
+  line-height:1.12!important;
+  text-align:right!important;
+}
+body.vd-report-v2-mode #vdReportV2 .vd-report-master-control .vd-report-doughnut-ultra-dense .vd-report-chart-image-doughnut{
+  width:80%!important;
+  height:27mm!important;
+  max-height:27mm!important;
+  flex:0 0 27mm!important;
+}
+body.vd-report-v2-mode #vdReportV2 .vd-report-master-control .vd-report-doughnut-ultra-dense .vd-report-control-doughnut-legend{
+  min-height:15mm!important;
+  max-height:17mm!important;
+  gap:.5mm 1.1mm!important;
+  padding:0 .6mm!important;
+}
+body.vd-report-v2-mode #vdReportV2 .vd-report-master-control .vd-report-doughnut-ultra-dense .vd-report-doughnut-legend-item{
+  max-width:48%!important;
+  white-space:normal!important;
+  font-size:3.95px!important;
+  line-height:1.08!important;
+  text-align:right!important;
+}
+body.vd-report-v2-mode #vdReportV2 .vd-report-master-control .vd-report-doughnut-dense .vd-report-doughnut-legend-item i,
+body.vd-report-v2-mode #vdReportV2 .vd-report-master-control .vd-report-doughnut-ultra-dense .vd-report-doughnut-legend-item i{
+  flex:0 0 1.8mm!important;
+  width:1.8mm!important;
+  height:1.8mm!important;
+  min-width:1.8mm!important;
+}

@@ -755,6 +755,38 @@
         ? dataset.backgroundColor
         : labels.map(() => dataset.backgroundColor || '#64748b');
 
+      /*
+        تقرير الرئيسية في جدة كان يلتقط Legend الخاص بـ Chart.js داخل صورة
+        الـ canvas ثم يضيف Legend HTML أسفلها، فيضيق الدونات خصوصًا عند كثرة
+        الفئات. نلتقط صورة نظيفة للدونات بدون الـ Legend الداخلي ثم نعيده
+        كـ HTML مستقل قابل للطباعة.
+      */
+      if (panel.closest('#masterExecutiveControl') && sourceCanvas) {
+        try {
+          const legendOptions = liveChart.options?.plugins?.legend;
+          const previousDisplay = legendOptions?.display;
+
+          if (legendOptions) {
+            legendOptions.display = false;
+            liveChart.update?.('none');
+
+            const cleanImage = clone.querySelector('.vd-report-chart-image');
+            if (cleanImage) {
+              cleanImage.src = sourceCanvas.toDataURL('image/png', 1);
+            }
+
+            legendOptions.display = previousDisplay;
+            liveChart.update?.('none');
+          }
+        } catch (_) {}
+      }
+
+      if (labels.length >= 8) {
+        clone.classList.add('vd-report-doughnut-ultra-dense');
+      } else if (labels.length >= 5) {
+        clone.classList.add('vd-report-doughnut-dense');
+      }
+
       if (labels.length) {
         const legend = document.createElement('div');
         legend.className = 'vd-report-doughnut-legend vd-report-control-doughnut-legend';
