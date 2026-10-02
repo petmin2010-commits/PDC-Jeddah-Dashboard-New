@@ -1101,3 +1101,21 @@ body.vd-report-dark #vdReportV2 .vd-report-safety-detail-page .table-link *{
   max-width:18mm!important;
   white-space:nowrap!important;
 }
+
+
+/* Jeddah projects PDF parity with Makkah */
+.vd-report-projects-chart-page-last .vd-report-chart-grid{
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  grid-template-rows:1fr!important;
+  width:100%!important;
+}
+.vd-report-projects-chart-page-last .vd-report-chart-card{
+  width:100%!important;
+  max-width:100%!important;
+}
+.vd-report-projects-priority-page .vd-report-summary-table,
+.vd-report-projects-bottleneck-page .vd-report-summary-table{
+  width:100%!important;
+  max-width:100%!important;
+}

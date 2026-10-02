@@ -713,7 +713,37 @@
       const title = panel.querySelector('.panel-title h3')?.textContent?.trim() || 'تحليل تنفيذي للمشاريع';
       const subtitle = index === 0 ? 'الأوامر ذات الأولوية للتدخل' : 'تشخيص الاختناقات للأوامر غير المنفذة';
       const sourceRows = [...panel.querySelectorAll('tbody tr')];
-      const batches = index === 0 && sourceRows.length > 10 ? chunk(sourceRows, 10) : [sourceRows];
+
+      // جدة بها إفادات أطول بكثير من مكة؛ تقسيم الصفوف بعدد ثابت كان يجعل
+      // العنوان في صفحة والجدول في صفحة أخرى. نوزع الصفوف حسب طول النص الفعلي.
+      const packRows = (rows, capacity, maxRows) => {
+        const batches = [];
+        let batch = [];
+        let used = 0;
+
+        rows.forEach((row, rowIndex) => {
+          const cells = [...row.children];
+          const tailText = String(cells[cells.length - 1]?.textContent || '').trim();
+          const extraUnits = tailText.length <= 160 ? 0 : Math.ceil((tailText.length - 160) / 320);
+          const units = 1 + Math.min(4, extraUnits);
+
+          if (batch.length && (batch.length >= maxRows || used + units > capacity)) {
+            batches.push(batch);
+            batch = [];
+            used = 0;
+          }
+
+          batch.push({ rowIndex, units });
+          used += units;
+        });
+
+        if (batch.length) batches.push(batch);
+        return batches.length ? batches : [[]];
+      };
+
+      const batches = index === 0
+        ? packRows(sourceRows, 12, 10)
+        : packRows(sourceRows, 16, 16);
 
       batches.forEach((batch, batchIndex) => {
         const pageClass = index === 0
@@ -730,12 +760,10 @@
         clone.classList.add('vd-report-summary-table');
         clone.querySelector('.panel-title')?.remove();
 
-        if (batches.length > 1) {
-          const start = batchIndex * 10;
-          [...clone.querySelectorAll('tbody tr')].forEach((row, rowIndex) => {
-            if (rowIndex < start || rowIndex >= start + batch.length) row.remove();
-          });
-        }
+        const allowed = new Set(batch.map(item => item.rowIndex));
+        [...clone.querySelectorAll('tbody tr')].forEach((row, rowIndex) => {
+          if (!allowed.has(rowIndex)) row.remove();
+        });
 
         page.querySelector('.vd-report-section-body').appendChild(clone);
         report.appendChild(page);
