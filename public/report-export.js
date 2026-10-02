@@ -719,36 +719,11 @@
       const subtitle = index === 0 ? 'الأوامر ذات الأولوية للتدخل' : 'تشخيص الاختناقات للأوامر غير المنفذة';
       const sourceRows = [...panel.querySelectorAll('tbody tr')];
 
-      // جدة بها إفادات أطول بكثير من مكة؛ تقسيم الصفوف بعدد ثابت كان يجعل
-      // العنوان في صفحة والجدول في صفحة أخرى. نوزع الصفوف حسب طول النص الفعلي.
-      const packRows = (rows, capacity, maxRows) => {
-        const batches = [];
-        let batch = [];
-        let used = 0;
-
-        rows.forEach((row, rowIndex) => {
-          const cells = [...row.children];
-          const tailText = String(cells[cells.length - 1]?.textContent || '').trim();
-          const extraUnits = tailText.length <= 160 ? 0 : Math.ceil((tailText.length - 160) / 320);
-          const units = 1 + Math.min(4, extraUnits);
-
-          if (batch.length && (batch.length >= maxRows || used + units > capacity)) {
-            batches.push(batch);
-            batch = [];
-            used = 0;
-          }
-
-          batch.push({ rowIndex, units });
-          used += units;
-        });
-
-        if (batch.length) batches.push(batch);
-        return batches.length ? batches : [[]];
-      };
-
+      // جدة بها نصوص إفادات أطول من مكة؛ توزيع متوازن يمنع صفحة أخيرة شبه فارغة.
+      const indexedRows = sourceRows.map((row, rowIndex) => ({ rowIndex }));
       const batches = index === 0
-        ? packRows(sourceRows, 12, 10)
-        : packRows(sourceRows, 16, 16);
+        ? chunk(indexedRows, 5)
+        : chunk(indexedRows, 9);
 
       batches.forEach((batch, batchIndex) => {
         const pageClass = index === 0
