@@ -2923,7 +2923,7 @@
       button.className = 'vd-tab-report-btn';
       button.title =
         'تصدير التقرير الكامل للتاب الحالي مباشرة';
-      button.textContent = '⤓ تصدير تقرير';
+      button.textContent = '↓ تصدير التقرير PDF';
 
       button.onclick = event => {
         event.preventDefault();
