@@ -1359,3 +1359,52 @@ body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table td:nth-
   -webkit-text-fill-color:#000!important;
   font-weight:700!important;
 }
+
+
+/* Jeddah projects PDF: hard fallback for doughnut legends and x-axis category labels */
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-chart-page .vd-report-doughnut-legend{
+  display:flex!important;
+  visibility:visible!important;
+  opacity:1!important;
+  position:relative!important;
+  z-index:5!important;
+  min-height:5mm!important;
+  margin-top:.5mm!important;
+  color:#000!important;
+  -webkit-text-fill-color:#000!important;
+}
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-chart-page .vd-report-doughnut-legend-item{
+  display:inline-flex!important;
+  visibility:visible!important;
+  opacity:1!important;
+}
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-chart-page .vd-report-projects-xlabels{
+  display:grid!important;
+  width:100%!important;
+  align-items:start!important;
+  justify-items:center!important;
+  column-gap:.5mm!important;
+  margin-top:-1mm!important;
+  padding:0 2mm 1mm!important;
+  box-sizing:border-box!important;
+  direction:rtl!important;
+  color:#000!important;
+  -webkit-text-fill-color:#000!important;
+}
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-chart-page .vd-report-projects-xlabels span{
+  display:block!important;
+  width:100%!important;
+  font-family:Cairo,Tahoma,Arial,sans-serif!important;
+  font-size:5.2px!important;
+  line-height:1.15!important;
+  font-weight:700!important;
+  text-align:center!important;
+  color:#000!important;
+  -webkit-text-fill-color:#000!important;
+  white-space:normal!important;
+  overflow-wrap:anywhere!important;
+}
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-chart-page .vd-report-chart-image-with-xlabels{
+  height:45mm!important;
+  max-height:45mm!important;
+}

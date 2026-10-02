@@ -189,6 +189,9 @@
 
   function cloneWithCanvases(source) {
     const clone = source.cloneNode(true);
+    const isProjectsChart =
+      !!source.closest?.('#projectsAdvancedAnalytics')
+      || source.id === 'projectsAdvancedAnalytics';
 
     const sourceCanvases = [...source.querySelectorAll('canvas')];
     const cloneCanvases = [...clone.querySelectorAll('canvas')];
@@ -215,43 +218,33 @@
         }
 
         const img = document.createElement('img');
-
         img.className = 'vd-report-chart-image';
         img.alt = 'Chart';
         img.src = canvas.toDataURL('image/png', 1);
 
-        if (liveChart?.config?.type === 'doughnut') {
-          img.classList.add('vd-report-chart-image-doughnut');
-          clone.classList.add('vd-report-doughnut-card');
+        const chartType = liveChart?.config?.type;
+        const labels = Array.isArray(liveChart?.data?.labels)
+          ? liveChart.data.labels.map(label => String(label ?? ''))
+          : [];
 
-          const legend = document.createElement('div');
-          legend.className = 'vd-report-doughnut-legend';
-
-          const labels = Array.isArray(liveChart.data?.labels)
-            ? liveChart.data.labels
-            : [];
+        if (chartType === 'doughnut') {
           const dataset = liveChart.data?.datasets?.[0] || {};
           const colors = Array.isArray(dataset.backgroundColor)
             ? dataset.backgroundColor
             : labels.map(() => dataset.backgroundColor || '#64748b');
 
-          labels.forEach((label, labelIndex) => {
-            const item = document.createElement('span');
-            item.className = 'vd-report-doughnut-legend-item';
-
-            const swatch = document.createElement('i');
-            swatch.style.background = colors[labelIndex] || '#64748b';
-
-            const text = document.createElement('b');
-            text.textContent = String(label ?? '');
-
-            item.append(swatch, text);
-            legend.appendChild(item);
-          });
-
-          clonedCanvas.replaceWith(img);
-          img.insertAdjacentElement('afterend', legend);
-          return;
+          img.classList.add('vd-report-chart-image-doughnut');
+          img.dataset.vdLegend = JSON.stringify(labels);
+          img.dataset.vdColors = JSON.stringify(colors);
+          clone.classList.add('vd-report-doughnut-card');
+        } else if (
+          isProjectsChart
+          && labels.length
+          && ['bar', 'line'].includes(chartType)
+          && liveChart?.options?.indexAxis !== 'y'
+        ) {
+          img.classList.add('vd-report-chart-image-with-xlabels');
+          img.dataset.vdXLabels = JSON.stringify(labels);
         }
 
         clonedCanvas.replaceWith(img);
@@ -262,6 +255,55 @@
 
     pruneHiddenClone(source, clone);
     cleanupClone(clone);
+
+    clone.querySelectorAll('.vd-report-chart-image-doughnut').forEach(img => {
+      let labels = [];
+      let colors = [];
+
+      try { labels = JSON.parse(img.dataset.vdLegend || '[]'); } catch (_) {}
+      try { colors = JSON.parse(img.dataset.vdColors || '[]'); } catch (_) {}
+
+      if (!labels.length) return;
+
+      const legend = document.createElement('div');
+      legend.className = 'vd-report-doughnut-legend';
+
+      labels.forEach((label, labelIndex) => {
+        const item = document.createElement('span');
+        item.className = 'vd-report-doughnut-legend-item';
+
+        const swatch = document.createElement('i');
+        swatch.style.background = colors[labelIndex] || '#64748b';
+
+        const text = document.createElement('b');
+        text.textContent = label;
+
+        item.append(swatch, text);
+        legend.appendChild(item);
+      });
+
+      img.insertAdjacentElement('afterend', legend);
+    });
+
+    clone.querySelectorAll('.vd-report-chart-image-with-xlabels').forEach(img => {
+      let labels = [];
+
+      try { labels = JSON.parse(img.dataset.vdXLabels || '[]'); } catch (_) {}
+      if (!labels.length) return;
+
+      const axis = document.createElement('div');
+      axis.className = 'vd-report-projects-xlabels';
+      axis.style.gridTemplateColumns =
+        `repeat(${labels.length}, minmax(0, 1fr))`;
+
+      labels.forEach(label => {
+        const item = document.createElement('span');
+        item.textContent = label;
+        axis.appendChild(item);
+      });
+
+      img.insertAdjacentElement('afterend', axis);
+    });
 
     return clone;
   }
