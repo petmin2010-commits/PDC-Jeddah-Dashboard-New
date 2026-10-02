@@ -1192,3 +1192,117 @@ body.vd-report-dark #vdReportV2 .vd-report-safety-detail-page .table-link *{
   max-width:none!important;
   white-space:normal!important;
 }
+
+
+/* Projects PDF: slightly shrink doughnut charts so the lower arc/legend is never clipped */
+.vd-report-projects-chart-page .vd-report-doughnut-card .pa-chart-box{
+  height:48mm!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  overflow:visible!important;
+}
+.vd-report-projects-chart-page .vd-report-doughnut-card .vd-report-chart-image-doughnut{
+  width:92%!important;
+  height:44mm!important;
+  max-height:44mm!important;
+  object-fit:contain!important;
+  object-position:center center!important;
+  margin:0 auto!important;
+}
+
+
+/* Jeddah projects detail table — readability pass.
+   Override older nth-child nowrap rules with stronger selectors so cells wrap instead of overlapping. */
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table{
+  width:100%!important;
+  max-width:100%!important;
+  table-layout:fixed!important;
+  font-size:4px!important;
+  line-height:1.12!important;
+}
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table th{
+  padding:.32mm .18mm!important;
+  font-size:3.7px!important;
+  line-height:1.08!important;
+  white-space:normal!important;
+  word-break:normal!important;
+  overflow-wrap:anywhere!important;
+  text-align:center!important;
+  vertical-align:middle!important;
+}
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table td{
+  padding:.34mm .18mm!important;
+  font-size:4px!important;
+  line-height:1.12!important;
+  white-space:normal!important;
+  word-break:normal!important;
+  overflow-wrap:anywhere!important;
+  vertical-align:middle!important;
+}
+
+/* Compact LTR values stay isolated so dates/numbers do not merge visually with Arabic cells. */
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table td:nth-child(2),
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table td:nth-child(7),
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table td:nth-child(8),
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table td:nth-child(9),
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table td:nth-child(12),
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table td:nth-child(13),
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table td:nth-child(17),
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table td:nth-child(18),
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table td:nth-child(19),
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table td:nth-child(20),
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table td:nth-child(23){
+  direction:ltr!important;
+  unicode-bidi:isolate!important;
+  white-space:nowrap!important;
+  overflow-wrap:normal!important;
+}
+
+/* Rebalance widths: preserve the two final columns while giving dates/statuses enough room. */
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table th:nth-child(1),
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table td:nth-child(1){width:1.5%!important}
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table th:nth-child(2),
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table td:nth-child(2){width:4.2%!important}
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table th:nth-child(3),
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table td:nth-child(3){width:2.7%!important}
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table th:nth-child(4),
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table td:nth-child(4){width:4.5%!important}
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table th:nth-child(5),
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table td:nth-child(5){width:6.3%!important}
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table th:nth-child(6),
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table td:nth-child(6){width:3.5%!important}
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table th:nth-child(7),
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table td:nth-child(7){width:4.2%!important}
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table th:nth-child(8),
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table td:nth-child(8){width:2%!important}
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table th:nth-child(9),
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table td:nth-child(9){width:2%!important}
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table th:nth-child(10),
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table td:nth-child(10){width:5%!important}
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table th:nth-child(11),
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table td:nth-child(11){width:4.2%!important}
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table th:nth-child(12),
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table td:nth-child(12){width:4.3%!important}
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table th:nth-child(13),
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table td:nth-child(13){width:4.3%!important}
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table th:nth-child(14),
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table td:nth-child(14){width:5.5%!important}
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table th:nth-child(15),
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table td:nth-child(15){width:4.5%!important}
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table th:nth-child(16),
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table td:nth-child(16){width:4.5%!important}
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table th:nth-child(17),
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table td:nth-child(17),
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table th:nth-child(18),
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table td:nth-child(18),
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table th:nth-child(19),
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table td:nth-child(19),
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table th:nth-child(20),
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table td:nth-child(20){width:2.3%!important}
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table th:nth-child(21),
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table td:nth-child(21){width:7.8%!important}
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table th:nth-child(22),
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table td:nth-child(22){width:13.5%!important}
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table th:nth-child(23),
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table td:nth-child(23){width:6.3%!important}

@@ -220,6 +220,11 @@
         img.alt = 'Chart';
         img.src = canvas.toDataURL('image/png', 1);
 
+        if (liveChart?.config?.type === 'doughnut') {
+          img.classList.add('vd-report-chart-image-doughnut');
+          clone.classList.add('vd-report-doughnut-card');
+        }
+
         clonedCanvas.replaceWith(img);
       } catch (_) {
         clonedCanvas.remove();
@@ -839,6 +844,23 @@
             serialCell.textContent = String(rowIndex + 1);
             serialCell.classList.add('vd-projects-serial-col');
             row.insertBefore(serialCell, row.firstElementChild);
+          });
+
+          const shortHeaders = new Map([
+            ['الأيام منذ الإسناد','الأيام'],
+            ['بداية التصريح','بداية تصريح'],
+            ['نهاية التصريح','نهاية تصريح'],
+            ['مرحلة التنفيذ','المرحلة'],
+            ['حالة المرحلة','الحالة'],
+            ['الحفر المستهدف','حفر مستهدف'],
+            ['الحفر المنفذ','حفر منفذ'],
+            ['التمديد المستهدف','تمديد مستهدف'],
+            ['التمديد المنفذ','تمديد منفذ'],
+            ['تفصيل أمر العمل','تفصيل الأمر']
+          ]);
+          [...detailTable.querySelectorAll('thead th')].forEach(th => {
+            const label = th.textContent.trim();
+            if (shortHeaders.has(label)) th.textContent = shortHeaders.get(label);
           });
         }
 
