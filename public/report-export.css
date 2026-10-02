@@ -1119,3 +1119,76 @@ body.vd-report-dark #vdReportV2 .vd-report-safety-detail-page .table-link *{
   width:100%!important;
   max-width:100%!important;
 }
+
+
+/* Jeddah projects detailed table - force all agreed columns to fit on A4 landscape */
+.vd-report-projects-detail-page .vd-report-footer{
+  display:none!important;
+}
+.vd-report-projects-detail-page{
+  padding-bottom:0!important;
+  min-height:0!important;
+  overflow:visible!important;
+}
+.vd-report-projects-detail-page .vd-report-detail-panel,
+.vd-report-projects-detail-page .table-wrap{
+  width:100%!important;
+  max-width:100%!important;
+  overflow:visible!important;
+}
+.vd-report-projects-detail-page table{
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  table-layout:fixed!important;
+  font-size:3.65px!important;
+  line-height:1.08!important;
+}
+.vd-report-projects-detail-page th,
+.vd-report-projects-detail-page td{
+  min-width:0!important;
+  max-width:none!important;
+  width:auto!important;
+  padding:.25mm .15mm!important;
+  line-height:1.08!important;
+  white-space:normal!important;
+  word-break:normal!important;
+  overflow-wrap:break-word!important;
+  vertical-align:middle!important;
+}
+/* 23 columns after removing «القسم» and adding serial */
+.vd-report-projects-detail-page th:nth-child(1), .vd-report-projects-detail-page td:nth-child(1){width:1.5%!important}
+.vd-report-projects-detail-page th:nth-child(2), .vd-report-projects-detail-page td:nth-child(2){width:4%!important}
+.vd-report-projects-detail-page th:nth-child(3), .vd-report-projects-detail-page td:nth-child(3){width:2.5%!important}
+.vd-report-projects-detail-page th:nth-child(4), .vd-report-projects-detail-page td:nth-child(4){width:4.5%!important}
+.vd-report-projects-detail-page th:nth-child(5), .vd-report-projects-detail-page td:nth-child(5){width:6.5%!important}
+.vd-report-projects-detail-page th:nth-child(6), .vd-report-projects-detail-page td:nth-child(6){width:3.5%!important}
+.vd-report-projects-detail-page th:nth-child(7), .vd-report-projects-detail-page td:nth-child(7){width:4.5%!important}
+.vd-report-projects-detail-page th:nth-child(8), .vd-report-projects-detail-page td:nth-child(8){width:2.5%!important}
+.vd-report-projects-detail-page th:nth-child(9), .vd-report-projects-detail-page td:nth-child(9){width:2.5%!important}
+.vd-report-projects-detail-page th:nth-child(10), .vd-report-projects-detail-page td:nth-child(10){width:5.5%!important}
+.vd-report-projects-detail-page th:nth-child(11), .vd-report-projects-detail-page td:nth-child(11){width:4.5%!important}
+.vd-report-projects-detail-page th:nth-child(12), .vd-report-projects-detail-page td:nth-child(12){width:4.5%!important}
+.vd-report-projects-detail-page th:nth-child(13), .vd-report-projects-detail-page td:nth-child(13){width:4.5%!important}
+.vd-report-projects-detail-page th:nth-child(14), .vd-report-projects-detail-page td:nth-child(14){width:5.5%!important}
+.vd-report-projects-detail-page th:nth-child(15), .vd-report-projects-detail-page td:nth-child(15){width:4.5%!important}
+.vd-report-projects-detail-page th:nth-child(16), .vd-report-projects-detail-page td:nth-child(16){width:5%!important}
+.vd-report-projects-detail-page th:nth-child(17), .vd-report-projects-detail-page td:nth-child(17),
+.vd-report-projects-detail-page th:nth-child(18), .vd-report-projects-detail-page td:nth-child(18),
+.vd-report-projects-detail-page th:nth-child(19), .vd-report-projects-detail-page td:nth-child(19),
+.vd-report-projects-detail-page th:nth-child(20), .vd-report-projects-detail-page td:nth-child(20){width:2.6%!important}
+.vd-report-projects-detail-page th:nth-child(21), .vd-report-projects-detail-page td:nth-child(21){width:7%!important}
+.vd-report-projects-detail-page th:nth-child(22), .vd-report-projects-detail-page td:nth-child(22){width:11.6%!important}
+.vd-report-projects-detail-page th:nth-child(23), .vd-report-projects-detail-page td:nth-child(23){width:5%!important}
+.vd-report-projects-detail-page .vd-projects-advice-col{
+  width:11.6%!important;
+  min-width:0!important;
+  max-width:none!important;
+  white-space:normal!important;
+}
+.vd-report-projects-detail-page .vd-projects-advice-date-col{
+  width:5%!important;
+  min-width:0!important;
+  max-width:none!important;
+  white-space:normal!important;
+}
