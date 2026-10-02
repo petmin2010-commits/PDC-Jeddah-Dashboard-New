@@ -1359,3 +1359,57 @@ body.vd-report-v2-mode #vdReportV2 .vd-report-projects-detail-page table td:nth-
   -webkit-text-fill-color:#000!important;
   font-weight:700!important;
 }
+
+
+/* Jeddah projects PDF: guaranteed doughnut legend inserted after cloning */
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-chart-page .vd-report-doughnut-card .pa-chart-box{
+  height:50mm!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  overflow:visible!important;
+  gap:.8mm!important;
+}
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-chart-page .vd-report-doughnut-card .vd-report-chart-image-doughnut{
+  width:88%!important;
+  height:36mm!important;
+  max-height:36mm!important;
+  object-fit:contain!important;
+  object-position:center center!important;
+  margin:0 auto!important;
+  flex:0 0 auto!important;
+}
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-chart-page .vd-report-doughnut-legend-final{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:100%!important;
+  min-height:8mm!important;
+  gap:1mm 2.4mm!important;
+  padding:.4mm 1.5mm 0!important;
+  box-sizing:border-box!important;
+  direction:rtl!important;
+  visibility:visible!important;
+  opacity:1!important;
+  overflow:visible!important;
+}
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-chart-page .vd-report-doughnut-legend-final .vd-report-doughnut-legend-item{
+  display:inline-flex!important;
+  align-items:center!important;
+  gap:.8mm!important;
+  color:#000!important;
+  -webkit-text-fill-color:#000!important;
+  font-size:5.6px!important;
+  line-height:1.15!important;
+  font-weight:700!important;
+  white-space:nowrap!important;
+}
+body.vd-report-v2-mode #vdReportV2 .vd-report-projects-chart-page .vd-report-doughnut-legend-final .vd-report-doughnut-legend-item i{
+  display:inline-block!important;
+  width:2.3mm!important;
+  height:2.3mm!important;
+  min-width:2.3mm!important;
+  border-radius:50%!important;
+}

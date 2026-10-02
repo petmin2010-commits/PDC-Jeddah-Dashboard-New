@@ -740,7 +740,50 @@
       const page = createPage('التحليلات والرسوم البيانية', 'تحليل المشاريع ' + (index + 1), 'vd-report-chart-page vd-report-projects-chart-page');
       if (group.length === 1) page.classList.add('vd-report-projects-chart-page-last');
       const grid = document.createElement('div'); grid.className = 'vd-report-chart-grid';
-      group.forEach(panel => { const clone = cloneWithCanvases(panel); clone.classList.add('vd-report-chart-card'); grid.appendChild(clone); });
+      group.forEach(panel => {
+        const clone = cloneWithCanvases(panel);
+        clone.classList.add('vd-report-chart-card');
+
+        const sourceCanvas = panel.querySelector('canvas');
+        const liveChart = sourceCanvas ? window.Chart?.getChart?.(sourceCanvas) : null;
+
+        if (liveChart?.config?.type === 'doughnut') {
+          clone.classList.add('vd-report-doughnut-card');
+          clone.querySelectorAll('.vd-report-doughnut-legend').forEach(el => el.remove());
+
+          const labels = Array.isArray(liveChart.data?.labels)
+            ? liveChart.data.labels
+            : [];
+          const dataset = liveChart.data?.datasets?.[0] || {};
+          const colors = Array.isArray(dataset.backgroundColor)
+            ? dataset.backgroundColor
+            : labels.map(() => dataset.backgroundColor || '#64748b');
+
+          if (labels.length) {
+            const legend = document.createElement('div');
+            legend.className = 'vd-report-doughnut-legend vd-report-doughnut-legend-final';
+
+            labels.forEach((label, labelIndex) => {
+              const item = document.createElement('span');
+              item.className = 'vd-report-doughnut-legend-item';
+
+              const swatch = document.createElement('i');
+              swatch.style.background = colors[labelIndex] || '#64748b';
+
+              const text = document.createElement('b');
+              text.textContent = String(label ?? '');
+
+              item.append(swatch, text);
+              legend.appendChild(item);
+            });
+
+            const box = clone.querySelector('.pa-chart-box') || clone;
+            box.appendChild(legend);
+          }
+        }
+
+        grid.appendChild(clone);
+      });
       page.querySelector('.vd-report-section-body').appendChild(grid); report.appendChild(page);
     });
     [...root.querySelectorAll('.pa-actions .panel')].filter(isVisible).forEach((panel, index) => {
