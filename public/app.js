@@ -168,7 +168,7 @@ function bindWednesdayInfoPopups(){
          <p><b>جهة التنفيذ / المكتب:</b> العمود U.</p>
          <p><b>حالة التصاريح:</b> تعتمد كليًا على العمود AO (حالة التصريح من بلدي). جميع القيم المختلفة في AO تظهر تلقائيًا في الجدول والرسم، بما فيها «انتهاء التنسيق - رفض»، وأي حالة جديدة مستقبلًا تظهر تلقائيًا.</p>
          <p><b>شريحة أيام التأخير:</b> العمود BE مباشرة.</p>
-         <p><b>شجرة تم التنفيذ:</b> تبدأ من العمود AK إلى «مستلم 155 للمقاول» و«غير مستلم 155 للمقاول». فرع «غير مستلم 155 للمقاول» ينقسم حسب BF إلى «تم الاستلام من المقاول» و«لم يتم الاستلام من المقاول»، ثم «تم الاستلام من المقاول» ينقسم تلقائيًا حسب الحالات الموجودة في BG.</p>
+         <p><b>شجرة تم التنفيذ:</b> تبدأ من العمود AK إلى «مستلم 155 للمقاول» و«غير مستلم 155 للمقاول». كل فرع منهما ينقسم بنفس المنطق حسب BF إلى «تم الاستلام من المقاول» و«لم يتم الاستلام من المقاول»، ثم «تم الاستلام من المقاول» ينقسم تلقائيًا حسب الحالات الموجودة في BG.</p>
        </div>`;
      if(modal){
        modal.classList.add('show');
@@ -432,15 +432,18 @@ function renderWednesdayMeeting(){
  const akReceivedRows=completedRows.filter(r=>akNorm(r.contractor155Status)==='نعم');
  const akNotReceivedRows=completedRows.filter(r=>akNorm(r.contractor155Status)==='لا');
 
- // BF يطبق على فرع "غير مستلم 155 للمقاول" فقط.
- const bfReceivedRows=akNotReceivedRows.filter(r=>statusNorm(r.docsStatus)==='تم الاستلام من المقاول');
- const bfNotReceivedRows=akNotReceivedRows.filter(r=>statusNorm(r.docsStatus)==='لم يتم الاستلام من المقاول');
-
- // BG تفصيل حالة المستندات تحت BF = تم الاستلام من المقاول.
- const bgEntries=meetingCountBy(bfReceivedRows,'docsSubStatus');
- const bgHtml=bgEntries.length
-   ? bgEntries.map(([label,count])=>`<article class="kpi-story-card kpi-story-greatgrandchild"><span>${esc(label)}</span><strong>${fmt(count)}</strong><small>${pct(count)}</small></article>`).join('')
-   : '<article class="kpi-story-card kpi-story-greatgrandchild"><span>غير محدد</span><strong>0</strong><small>0.0%</small></article>';
+ // BF ثم BG يطبقان بنفس المنطق على فرعي AK: مستلم 155 وغير مستلم 155.
+ const buildDocsBranch=sourceRows=>{
+   const bfReceivedRows=sourceRows.filter(r=>statusNorm(r.docsStatus)==='تم الاستلام من المقاول');
+   const bfNotReceivedRows=sourceRows.filter(r=>statusNorm(r.docsStatus)==='لم يتم الاستلام من المقاول');
+   const bgEntries=meetingCountBy(bfReceivedRows,'docsSubStatus');
+   const bgHtml=bgEntries.length
+     ? bgEntries.map(([label,count])=>`<article class="kpi-story-card kpi-story-greatgrandchild"><span>${esc(label)}</span><strong>${fmt(count)}</strong><small>${pct(count)}</small></article>`).join('')
+     : '<article class="kpi-story-card kpi-story-greatgrandchild"><span>غير محدد</span><strong>0</strong><small>0.0%</small></article>';
+   return {bfReceivedRows,bfNotReceivedRows,bgHtml};
+ };
+ const received155Docs=buildDocsBranch(akReceivedRows);
+ const notReceived155Docs=buildDocsBranch(akNotReceivedRows);
 
  // BC: حالات أوامر العمل غير المنفذة.
  const bcEntries=meetingCountBy(incompleteRows,'nonExecutionStatus');
@@ -456,15 +459,24 @@ function renderWednesdayMeeting(){
     <section class="kpi-story-node completed">
      <article class="kpi-story-card"><span>تم التنفيذ</span><strong>${fmt(completedRows.length)}</strong><small>${pct(completedRows.length)}</small></article>
      <div class="kpi-story-children ak-level">
-      <article class="kpi-story-card kpi-story-child"><span>مستلم 155 للمقاول</span><strong>${fmt(akReceivedRows.length)}</strong><small>${pct(akReceivedRows.length)}</small></article>
+      <div class="kpi-story-child-node ak-received">
+       <article class="kpi-story-card kpi-story-child"><span>مستلم 155 للمقاول</span><strong>${fmt(akReceivedRows.length)}</strong><small>${pct(akReceivedRows.length)}</small></article>
+       <div class="kpi-story-grandchildren bf-level">
+        <div class="kpi-story-grandchild-node bf-received">
+         <article class="kpi-story-card kpi-story-grandchild"><span>تم الاستلام من المقاول</span><strong>${fmt(received155Docs.bfReceivedRows.length)}</strong><small>${pct(received155Docs.bfReceivedRows.length)}</small></article>
+         <div class="kpi-story-greatgrandchildren bg-level">${received155Docs.bgHtml}</div>
+        </div>
+        <article class="kpi-story-card kpi-story-grandchild"><span>لم يتم الاستلام من المقاول</span><strong>${fmt(received155Docs.bfNotReceivedRows.length)}</strong><small>${pct(received155Docs.bfNotReceivedRows.length)}</small></article>
+       </div>
+      </div>
       <div class="kpi-story-child-node ak-not-received">
        <article class="kpi-story-card kpi-story-child"><span>غير مستلم 155 للمقاول</span><strong>${fmt(akNotReceivedRows.length)}</strong><small>${pct(akNotReceivedRows.length)}</small></article>
        <div class="kpi-story-grandchildren bf-level">
         <div class="kpi-story-grandchild-node bf-received">
-         <article class="kpi-story-card kpi-story-grandchild"><span>تم الاستلام من المقاول</span><strong>${fmt(bfReceivedRows.length)}</strong><small>${pct(bfReceivedRows.length)}</small></article>
-         <div class="kpi-story-greatgrandchildren bg-level">${bgHtml}</div>
+         <article class="kpi-story-card kpi-story-grandchild"><span>تم الاستلام من المقاول</span><strong>${fmt(notReceived155Docs.bfReceivedRows.length)}</strong><small>${pct(notReceived155Docs.bfReceivedRows.length)}</small></article>
+         <div class="kpi-story-greatgrandchildren bg-level">${notReceived155Docs.bgHtml}</div>
         </div>
-        <article class="kpi-story-card kpi-story-grandchild"><span>لم يتم الاستلام من المقاول</span><strong>${fmt(bfNotReceivedRows.length)}</strong><small>${pct(bfNotReceivedRows.length)}</small></article>
+        <article class="kpi-story-card kpi-story-grandchild"><span>لم يتم الاستلام من المقاول</span><strong>${fmt(notReceived155Docs.bfNotReceivedRows.length)}</strong><small>${pct(notReceived155Docs.bfNotReceivedRows.length)}</small></article>
        </div>
       </div>
      </div>
