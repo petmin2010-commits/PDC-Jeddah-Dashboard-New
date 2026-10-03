@@ -3634,9 +3634,11 @@
   }
 
   window.VDReportExport = {
+    exportCurrent: () => showModal(),
     exportCurrentTab: () => printReport('full'),
     showModal,
-    printReport
+    printReport,
+    getActivePageKey
   };
 
   if (document.readyState === 'loading') {
