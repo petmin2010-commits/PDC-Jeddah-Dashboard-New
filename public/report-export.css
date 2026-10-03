@@ -41,7 +41,7 @@ body.vd-report-v2-mode #vdReportV2{display:block!important}
 .vd-report-cover-title h1:before{content:"";position:absolute;left:50%;margin-top:11mm;width:4mm;height:4mm;background:#f2a31b;transform:translateX(-50%) rotate(45deg)}
 .vd-report-cover-title p{margin:4mm 0 1mm;color:#172b5f;font-size:12px;font-weight:800}.vd-report-cover-title>strong{color:#525d6d;font-size:9px}
 .vd-report-cover-meta{position:relative;margin:8mm 0 5mm;border:1.2px solid #24366d;border-radius:3px;display:grid;grid-template-columns:repeat(3,1fr)}
-.vd-report-cover-meta:before{content:"ط¨ظٹط§ظ†ط§طھ ط§ظ„طھظ‚ط±ظٹط±";position:absolute;right:-1px;top:-7mm;background:#172b5f;color:#fff;padding:2mm 5mm;border-radius:3px 3px 0 0;font-weight:900;font-size:9px}
+.vd-report-cover-meta:before{content:"بيانات التقرير";position:absolute;right:-1px;top:-7mm;background:#172b5f;color:#fff;padding:2mm 5mm;border-radius:3px 3px 0 0;font-weight:900;font-size:9px}
 .vd-report-cover-meta>div{padding:3mm;text-align:center;background:#f7f8fa;border-left:1px solid #d0d5dd}.vd-report-cover-meta>div:nth-child(even){background:#eef0f4}.vd-report-cover-meta>div:last-child{border-left:0}
 .vd-report-cover-meta span{display:block;color:#697386;font-size:7px}.vd-report-cover-meta b{display:block;color:#172b5f;font-size:11px;margin-top:1mm}
 .vd-report-cover-kpis,.vd-report-kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:3mm}
@@ -2091,6 +2091,7 @@ body.vd-report-v2-mode #vdReportV2 td.vd-projects-advice-col{
 @media print{.vd-report-closures-tree-page{height:194mm!important;min-height:194mm!important;max-height:194mm!important;break-inside:avoid!important;page-break-inside:avoid!important;break-after:page!important;page-break-after:always!important}}
 
 /* Human Resources PDF: stable page boundaries, balanced pagination and no decorative overlap. */
+.vd-report-hr-control.vd-report-control-cover,
 .vd-report-hr-kpi-page,
 .vd-report-hr-chart-page{
   box-sizing:border-box!important;
@@ -2099,6 +2100,15 @@ body.vd-report-v2-mode #vdReportV2 td.vd-projects-advice-col{
   max-height:194mm!important;
   overflow:hidden!important;
 }
+.vd-report-hr-control.vd-report-control-cover{
+  padding:5mm 7mm 13mm!important;
+}
+.vd-report-hr-control.vd-report-control-cover .vd-report-cover-top{min-height:18mm!important}
+.vd-report-hr-control.vd-report-control-cover .vd-report-cover-title{margin:3mm 0 3mm!important}
+.vd-report-hr-control.vd-report-control-cover .vd-report-cover-meta{margin:6mm 0 4mm!important}
+.vd-report-hr-control.vd-report-control-cover .vd-report-cover-kpis{margin-top:3mm!important;gap:2.2mm!important}
+.vd-report-hr-control.vd-report-control-cover .vd-report-kpi-clone{padding:2mm!important}
+.vd-report-hr-control.vd-report-control-cover .vd-report-cover-filters{margin-top:3mm!important;padding:2.4mm!important}
 .vd-report-hr-kpi-page .vd-report-section-body,
 .vd-report-hr-chart-page .vd-report-section-body{
   margin-top:1.5mm!important;
