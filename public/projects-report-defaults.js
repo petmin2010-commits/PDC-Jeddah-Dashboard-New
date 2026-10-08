@@ -618,6 +618,24 @@ function fillEstimatedHistoryBeforeYesterday(){
  });
  return days.length;
 }
+function completeEstimatedDailyColumns(){
+ const history=details.filter(r=>r.Section==='PLAN_POINT'&&clean(r['Responsible / Issuing Authority'])==='AUTO ESTIMATE'&&valueInputDate(r['Start / Observation Date'])<reportReferenceIso());
+ if(!history.length)return 0;
+ // Reference quantity is only an estimate: spread the available quantity evenly over historical rows.
+ const boq=primaryDailyBoqRow()||details.find(r=>r.Section==='BOQ_ITEM');
+ const reference=boq?tableNumber(boq['Period Qty']):null;
+ const target=dailyTargetQuantity();
+ const label=clean(boq?.['Text Value / Description']||boq?.['Field / Item / Permit No.'])||'أعمال المشروع';
+ history.sort((a,b)=>valueInputDate(a['Start / Observation Date']).localeCompare(valueInputDate(b['Start / Observation Date'])));
+ const n=history.length;
+ history.forEach((r,i)=>{
+  const share=reference==null?null:((Math.round(reference*100)/100)/n);
+  if(!clean(r['Period Qty'])&&share!=null)r['Period Qty']=(i===n-1?Math.round((reference-share*(n-1))*100)/100:Math.round(share*100)/100);
+  if(!clean(r['Planned / Required Qty'])&&target!=null)r['Planned / Required Qty']=target;
+  r['Text Value / Description']='تقديري تاريخي - '+label+' (كميات موزعة، ليست قياسًا فعليًا)';
+ });
+ return n;
+}
 function dailyLogRowsWithCurrent(){
  const current=currentDailyLogRow(),today=valueInputDate(current['Start / Observation Date']);
  const list=details.filter(r=>r.Section==='PLAN_POINT').map(r=>({...r}));
@@ -727,7 +745,7 @@ async function loadDefaults(wo){
   passthrough=rows.filter(r=>!SECTION_LABELS[r.Section]&&!isKnownGeneral(r)&&!isSignature(r)).map(r=>({...r}));
   await Promise.all([ensureLiveAuto(wo),ensureStaffNames()]);
   applyDetailDefaults();
-  loadGeneralDraft();fillEstimatedHistoryBeforeYesterday();pageByTab={};render();setStatus(rows.length?'تم تحميل '+rows.length+' سجل محفوظ':'لا توجد بيانات افتراضية محفوظة بعد','ok');
+  loadGeneralDraft();fillEstimatedHistoryBeforeYesterday();completeEstimatedDailyColumns();pageByTab={};render();setStatus(rows.length?'تم تحميل '+rows.length+' سجل محفوظ':'لا توجد بيانات افتراضية محفوظة بعد','ok');
  }catch(e){rows=[];details=[];passthrough=[];generalDraft={};deletedRows=[];render();setStatus(e.message||String(e),'error')}
  finally{setBusy(false)}
 }
@@ -783,6 +801,7 @@ async function save(){
  const warning=validateBoqWeights();if(warning){setStatus(warning,'error');alert(warning);activeTab='boq';renderTabs();renderContent();return;}
  details.forEach(updateBoqStatus);details.forEach(updateMaterialStatus);
  fillEstimatedHistoryBeforeYesterday();
+ completeEstimatedDailyColumns();
  upsertDailyLogRow();
  const payload=[...buildGeneralRows(),...passthrough.map(compactDetail),...details.map(compactDetail).filter(r=>r.Section)];
  setBusy(true,'جاري حفظ البيانات الافتراضية...');
