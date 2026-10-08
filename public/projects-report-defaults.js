@@ -213,15 +213,21 @@ function modalMarkup(){
   '</div></div>';
 }
 
-function workOrdersValue(data,label){
+function workOrdersValue(data,labels){
+ const aliases=Array.isArray(labels)?labels:[labels];
  const sources=data?.sources||[];
- const src=sources.find(s=>clean(s.sheet).includes('اوامر العمل'));if(!src)return '';
- for(const rec of src.records||[])for(const f of rec.fields||[])if(clean(f.label)===label&&clean(f.value))return clean(f.value);
+ const normalize=s=>clean(s).normalize('NFKC').toLowerCase().replace(/[أإآ]/g,'ا').replace(/\s+/g,' ');
+ const ordered=[...sources.filter(s=>normalize(s.sheet)===normalize('أوامر العمل')),...sources.filter(s=>normalize(s.sheet)===normalize('مشاريع داش بورد غير تابعة لل pdc'))];
+ const remaining=sources.filter(s=>!ordered.includes(s));
+ for(const src of [...ordered,...remaining])for(const label of aliases){
+  for(const rec of src.records||[])for(const f of rec.fields||[])
+   if(normalize(f.label)===normalize(label)&&clean(f.value))return clean(f.value);
+ }
  return '';
 }
-function contractorFromWorkOrdersData(data){return workOrdersValue(data,'المقاول')}
-function durationFromWorkOrdersData(data){return workOrdersValue(data,'المدة uds')}
-function locationFromWorkOrdersData(data){return workOrdersValue(data,'الموقع')}
+function contractorFromWorkOrdersData(data){return workOrdersValue(data,['المقاول','المقاول uds'])}
+function durationFromWorkOrdersData(data){return workOrdersValue(data,['المدة uds','المدة التعاقدية (يوم)','المدة التعاقدية','مدة امر العمل','مدة أمر العمل','مدة التنفيذ','مدة المشروع'])}
+function locationFromWorkOrdersData(data){return workOrdersValue(data,['الموقع','الموقع / المنطقة','موقع المشروع','المنطقة','الحي'])}
 function generalValue(g){
  if(g.fixedToday)return reportReferenceIso();
  if(g.fixed)return clean(g.value);
