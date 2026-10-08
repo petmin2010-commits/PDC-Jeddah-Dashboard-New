@@ -591,6 +591,33 @@ function currentDailyLogRow(){
   'Responsible / Issuing Authority':dailyPreparedBy()
  };
 }
+function fillEstimatedHistoryBeforeYesterday(){
+ // Backfill only when there is no actual historical series; never replace observed progress.
+ const reportDay=reportReferenceIso();
+ const existing=details.filter(r=>r.Section==='PLAN_POINT'&&valueInputDate(r['Start / Observation Date'])<reportDay);
+ if(existing.length)return 0;
+ const start=valueInputDate(clean(generalDraft.ACTUAL_START_DATE)||currentSuggestion('ACTUAL_START_DATE'));
+ const actual=weightedActualRatio();
+ if(!start||actual==null||!Number.isFinite(actual)||actual<0)return 0;
+ const end=new Date(reportDay+'T12:00:00');end.setDate(end.getDate()-1);
+ const cursor=new Date(start+'T12:00:00');
+ if(!Number.isFinite(cursor.getTime())||cursor>end)return 0;
+ const days=[];
+ while(cursor<=end&&days.length<730){
+  if(cursor.getDay()!==5)days.push(cursor.getFullYear()+'-'+String(cursor.getMonth()+1).padStart(2,'0')+'-'+String(cursor.getDate()).padStart(2,'0'));
+  cursor.setDate(cursor.getDate()+1);
+ }
+ if(!days.length||cursor<=end)return 0;
+ const total=actual*100;
+ days.forEach((day,i)=>{
+  const cumulative=i===days.length-1?total:total*(i+1)/days.length;
+  details.push({Section:'PLAN_POINT',Sequence:i+1,'Start / Observation Date':day,
+   'Numeric Value':cumulative.toFixed(6)+'%',
+   'Text Value / Description':'توزيع تاريخي تقديري بالتساوي - ليس قياس إنجاز فعلي',
+   'Responsible / Issuing Authority':'AUTO ESTIMATE'});
+ });
+ return days.length;
+}
 function dailyLogRowsWithCurrent(){
  const current=currentDailyLogRow(),today=valueInputDate(current['Start / Observation Date']);
  const list=details.filter(r=>r.Section==='PLAN_POINT').map(r=>({...r}));
@@ -700,7 +727,7 @@ async function loadDefaults(wo){
   passthrough=rows.filter(r=>!SECTION_LABELS[r.Section]&&!isKnownGeneral(r)&&!isSignature(r)).map(r=>({...r}));
   await Promise.all([ensureLiveAuto(wo),ensureStaffNames()]);
   applyDetailDefaults();
-  loadGeneralDraft();pageByTab={};render();setStatus(rows.length?'تم تحميل '+rows.length+' سجل محفوظ':'لا توجد بيانات افتراضية محفوظة بعد','ok');
+  loadGeneralDraft();fillEstimatedHistoryBeforeYesterday();pageByTab={};render();setStatus(rows.length?'تم تحميل '+rows.length+' سجل محفوظ':'لا توجد بيانات افتراضية محفوظة بعد','ok');
  }catch(e){rows=[];details=[];passthrough=[];generalDraft={};deletedRows=[];render();setStatus(e.message||String(e),'error')}
  finally{setBusy(false)}
 }
@@ -755,6 +782,7 @@ async function save(){
  if(busy)return;
  const warning=validateBoqWeights();if(warning){setStatus(warning,'error');alert(warning);activeTab='boq';renderTabs();renderContent();return;}
  details.forEach(updateBoqStatus);details.forEach(updateMaterialStatus);
+ fillEstimatedHistoryBeforeYesterday();
  upsertDailyLogRow();
  const payload=[...buildGeneralRows(),...passthrough.map(compactDetail),...details.map(compactDetail).filter(r=>r.Section)];
  setBusy(true,'جاري حفظ البيانات الافتراضية...');
