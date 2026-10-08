@@ -610,13 +610,22 @@ function fillEstimatedHistoryBeforeYesterday(){
  if(!days.length||cursor<=end)return 0;
  const total=actual*100;
  days.forEach((day,i)=>{
-  const cumulative=i===days.length-1?total:total*(i+1)/days.length;
+  const cumulative=total*(i+1)/(days.length+1);
   details.push({Section:'PLAN_POINT',Sequence:i+1,'Start / Observation Date':day,
    'Numeric Value':cumulative.toFixed(6)+'%',
    'Text Value / Description':'توزيع تاريخي تقديري بالتساوي - ليس قياس إنجاز فعلي',
    'Responsible / Issuing Authority':'AUTO ESTIMATE'});
  });
  return days.length;
+}
+function rebalanceEstimatedHistoryForReportDay(){
+ const current=weightedActualRatio();
+ if(current==null||!Number.isFinite(current))return 0;
+ const estimated=details.filter(r=>r.Section==='PLAN_POINT'&&clean(r['Responsible / Issuing Authority'])==='AUTO ESTIMATE'&&valueInputDate(r['Start / Observation Date'])<reportReferenceIso()).sort((a,b)=>valueInputDate(a['Start / Observation Date']).localeCompare(valueInputDate(b['Start / Observation Date'])));
+ if(!estimated.length)return 0;
+ // Reserve a full equal daily increment for the report date, leaving historical estimates below current completion.
+ estimated.forEach((r,i)=>{r['Numeric Value']=(current*100*(i+1)/(estimated.length+1)).toFixed(6)+'%';});
+ return estimated.length;
 }
 function completeEstimatedDailyColumns(){
  const history=details.filter(r=>r.Section==='PLAN_POINT'&&clean(r['Responsible / Issuing Authority'])==='AUTO ESTIMATE'&&valueInputDate(r['Start / Observation Date'])<reportReferenceIso());
@@ -745,7 +754,7 @@ async function loadDefaults(wo){
   passthrough=rows.filter(r=>!SECTION_LABELS[r.Section]&&!isKnownGeneral(r)&&!isSignature(r)).map(r=>({...r}));
   await Promise.all([ensureLiveAuto(wo),ensureStaffNames()]);
   applyDetailDefaults();
-  loadGeneralDraft();fillEstimatedHistoryBeforeYesterday();completeEstimatedDailyColumns();pageByTab={};render();setStatus(rows.length?'تم تحميل '+rows.length+' سجل محفوظ':'لا توجد بيانات افتراضية محفوظة بعد','ok');
+  loadGeneralDraft();fillEstimatedHistoryBeforeYesterday();rebalanceEstimatedHistoryForReportDay();completeEstimatedDailyColumns();pageByTab={};render();setStatus(rows.length?'تم تحميل '+rows.length+' سجل محفوظ':'لا توجد بيانات افتراضية محفوظة بعد','ok');
  }catch(e){rows=[];details=[];passthrough=[];generalDraft={};deletedRows=[];render();setStatus(e.message||String(e),'error')}
  finally{setBusy(false)}
 }
@@ -801,6 +810,7 @@ async function save(){
  const warning=validateBoqWeights();if(warning){setStatus(warning,'error');alert(warning);activeTab='boq';renderTabs();renderContent();return;}
  details.forEach(updateBoqStatus);details.forEach(updateMaterialStatus);
  fillEstimatedHistoryBeforeYesterday();
+ rebalanceEstimatedHistoryForReportDay();
  completeEstimatedDailyColumns();
  upsertDailyLogRow();
  const payload=[...buildGeneralRows(),...passthrough.map(compactDetail),...details.map(compactDetail).filter(r=>r.Section)];
