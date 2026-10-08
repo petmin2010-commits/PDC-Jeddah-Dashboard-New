@@ -133,7 +133,22 @@ function sourceExactValue(data,sheetName,label){
  return '';
 }
 function extraRows(data){const s=source(data,EXTRA_SHEET);state.extraSheetId=s?.sheetId||'';return (s?.records||[]).map(r=>({...toObj(r),_row:r.rowNumber}))}
-function originalFields(data){const out=[];(data.sources||[]).filter(s=>norm(s.sheet)!==norm(EXTRA_SHEET)).forEach(s=>{(s.records||[]).forEach(r=>{(r.fields||[]).forEach(f=>out.push({sheet:s.sheet,label:clean(f.label),value:f.value}))})});return out}
+function originalFields(data){
+ const out=[];
+ const primary='أوامر العمل',fallback='مشاريع داش بورد غير تابعة لل pdc';
+ const ranked=(data.sources||[]).filter(s=>norm(s.sheet)!==norm(EXTRA_SHEET)).sort((a,b)=>{
+  const rank=s=>norm(s.sheet)===norm(primary)?0:norm(s.sheet)===norm(fallback)?1:2;
+  return rank(a)-rank(b);
+ });
+ ranked.forEach(s=>(s.records||[]).forEach(r=>(r.fields||[]).forEach(f=>out.push({sheet:s.sheet,label:clean(f.label),value:f.value}))));
+ return out;
+}
+function workOrderBasic(data,labels){
+ const fields=originalFields(data);
+ const primary=fields.filter(f=>norm(f.sheet)===norm('أوامر العمل'));
+ const fallback=fields.filter(f=>norm(f.sheet)===norm('مشاريع داش بورد غير تابعة لل pdc'));
+ return val(primary,labels)||val(fallback,labels)||val(fields.filter(f=>!primary.includes(f)&&!fallback.includes(f)),labels);
+}
 function pick(fs,labels){
  for(const wanted of labels){const nw=norm(wanted);const hit=fs.find(f=>norm(f.label)===nw&&clean(f.value));if(hit)return hit}
  for(const wanted of labels){const nw=norm(wanted);const hit=fs.find(f=>norm(f.label).includes(nw)&&clean(f.value));if(hit)return hit}
@@ -305,18 +320,18 @@ function render(data){
  const rows=extraRows(data),fs=originalFields(data),extras=rows.filter(r=>r.Section==='PROJECT_EXTRA');
  if(!data.totalRecords){state.report=null;$('preBody').className='pre-state';$('preBody').innerHTML='<b>لم يتم العثور على أمر العمل '+esc(data.workOrder)+'</b><span>لا توجد سجلات مطابقة في ملف المشروع.</span>';return}
  const ex=k=>extraValue(extraBy(extras,k));
- const projectTitle=ex('PROJECT_TITLE')||val(fs,['وصف امر العمل','وصف امر العمل uds','شرح تفصيل امر العمل'])||'مشروع '+data.workOrder;
- const desc=ex('DETAILED_WORK_DESCRIPTION')||val(fs,['شرح تفصيل امر العمل','وصف امر العمل','وصف امر العمل uds']);
- const contractor=sourceExactValue(data,'اوامر العمل','المقاول')||val(fs,['المقاول','المقاول uds'])||ex('CONTRACTOR_REPORT_NAME');
- const location=val(fs,['الموقع']);
- const engineer=val(fs,['المهندس المسئول','المهندس المسؤول']);
- const stage=val(fs,['مرحلة التنفيذ']);
- const stageStatus=val(fs,['حالة المرحلة','حالة التنفيذ','حالة الامر وفقا لمتابعة المهندس المسئول']);
+ const projectTitle=ex('PROJECT_TITLE')||workOrderBasic(data,['وصف امر العمل','وصف امر العمل uds','شرح تفصيل امر العمل'])||'مشروع '+data.workOrder;
+ const desc=ex('DETAILED_WORK_DESCRIPTION')||workOrderBasic(data,['شرح تفصيل امر العمل','وصف امر العمل','وصف امر العمل uds']);
+ const contractor=workOrderBasic(data,['المقاول','المقاول uds'])||ex('CONTRACTOR_REPORT_NAME');
+ const location=workOrderBasic(data,['الموقع','الموقع / المنطقة','موقع المشروع']);
+ const engineer=workOrderBasic(data,['المهندس المسئول','المهندس المسؤول']);
+ const stage=workOrderBasic(data,['مرحلة التنفيذ']);
+ const stageStatus=workOrderBasic(data,['حالة المرحلة','حالة التنفيذ','حالة الامر وفقا لمتابعة المهندس المسئول']);
  const reportType=ex('REPORT_TYPE')||'يومي';
- const reportNo=String(reportDayNumber(ex('ACTUAL_START_DATE')||val(fs,['تاريخ المباشرة','تاريخ البدء']),reportReferenceDate())??'');
- const contractDuration=sourceExactValue(data,'اوامر العمل','المدة uds')||val(fs,['المدة التعاقدية','مدة امر العمل','مدة أمر العمل','مدة التنفيذ','مدة المشروع'])||ex('CONTRACTUAL_DURATION_DAYS');
+ const reportNo=String(reportDayNumber(ex('ACTUAL_START_DATE')||workOrderBasic(data,['تاريخ المباشرة','تاريخ البدء','تاريخ بدء التنفيذ']),reportReferenceDate())??'');
+ const contractDuration=workOrderBasic(data,['المدة uds','المدة التعاقدية (يوم)','المدة التعاقدية','مدة امر العمل','مدة أمر العمل','مدة التنفيذ','مدة المشروع'])||ex('CONTRACTUAL_DURATION_DAYS');
  const consultant='شركة أبعاد الرؤية للاستشارات الهندسية';
- const secFollowup=ex('SEC_FOLLOWUP_ENGINEER')||val(fs,['مهندس المتابعة','مهندس شركة الكهرباء','المهندس المسئول','المهندس المسؤول']);
+ const secFollowup=ex('SEC_FOLLOWUP_ENGINEER')||workOrderBasic(data,['مهندس المتابعة','مهندس شركة الكهرباء','المهندس المسئول','المهندس المسؤول']);
  const signatureValue=key=>extraValue(rows.find(r=>r.Section==='SIGNATURE'&&norm(r['Field / Item / Permit No.'])===norm(key)));
  const preparedBy=signatureValue('PREPARED_BY')||engineer;
  const reviewedBy=signatureValue('REVIEWED_BY');
@@ -387,7 +402,7 @@ function render(data){
    ${fact('المدة التعاقدية (يوم)',contractDuration,'LIVE',true)}${fact('المتبقي على التشغيل (يوم)',contractDurationCalendar==null?'—':contractDurationCalendar,'CALC',true)}
   </div>
  </section>
- <div class="pre-kpis pre-print-section">${cards.map(c=>'<article class="pre-kpi '+(c.bad?'bad':'')+'"><small>'+esc(c.label)+' • '+c.src+'</small><strong'+(c.ltr?' class="pre-ltr"':'')+'>'+esc(c.value)+'</strong>'+(c.sub?'<em>'+esc(c.sub)+'</em>':'')+'</article>').join('')}</div>
+ <div class="pre-kpis pre-print-section">${cards.map((c,i)=>'<article class="pre-kpi '+(c.bad?'bad':'')+(i===3?' pre-kpi-status':'')+'"><small>'+esc(c.label)+' • '+c.src+'</small><strong'+(c.ltr?' class="pre-ltr"':'')+'>'+esc(c.value)+'</strong>'+(c.sub?'<em>'+esc(c.sub)+'</em>':'')+'</article>').join('')}</div>
  ${qualityAlerts.length?'<div class="pre-quality-alert pre-print-section"><b>تنبيه اتساق البيانات</b>'+qualityAlerts.map(x=>'<span>'+esc(x)+'</span>').join('')+'</div>':''}
  ${progressBlock(actual,planned)}
  ${progressHistoryChart(planRows,actual,rdate,start)}

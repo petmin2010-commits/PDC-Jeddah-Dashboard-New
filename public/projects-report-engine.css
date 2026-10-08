@@ -248,3 +248,7 @@ body.vd-projects-report-engine-active #filterBar{
     letter-spacing:1.2px;
   }
 }
+
+/* Keep project status on one line without changing other KPI cards. */
+.pre-kpi.pre-kpi-status strong { font-size: 16px; line-height: 1.25; white-space: nowrap; text-align: center; letter-spacing: 0; }
+
