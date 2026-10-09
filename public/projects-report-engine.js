@@ -97,7 +97,7 @@ async function exportProjectExcel(){
   });
   if(!response.ok){
    let msg='تعذر تصدير Excel';
-   try{const j=await response.json();msg=j.error||msg}catch(e){}
+   try{const j=await response.json();msg=j.error||msg}catch(e){msg+=' (HTTP '+response.status+')'}
    throw new Error(msg);
   }
   const blob=await response.blob();

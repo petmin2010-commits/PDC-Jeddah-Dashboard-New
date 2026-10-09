@@ -2173,7 +2173,7 @@ const INDEX_FILE=path.join(PUBLIC_DIR,'index.html');
 
 app.set('trust proxy',1);
 
-app.use(express.json({limit:'1mb'}));
+app.use(express.json({limit:'8mb'}));
 
 app.use(session({
 
