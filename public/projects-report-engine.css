@@ -252,3 +252,12 @@ body.vd-projects-report-engine-active #filterBar{
 /* Keep project status on one line without changing other KPI cards. */
 .pre-kpi.pre-kpi-status strong { font-size: 16px; line-height: 1.25; white-space: nowrap; text-align: center; letter-spacing: 0; }
 
+
+/* Variance segment: screen and PDF share sign-aware styling. */
+.pre-progress-row.variance .variance-track{position:relative}
+.pre-progress-row.variance .variance-track>i{position:absolute;top:0;height:100%;border-radius:99mm}
+.pre-progress-row.variance.positive .variance-track>i{background:#198754!important}
+.pre-progress-row.variance.negative .variance-track>i{background:#cf3b45!important}
+.pre-progress-row.variance.neutral .variance-track>i{background:#8797a8!important}
+.pre-progress-row.variance.positive>strong{color:#198754!important}
+.pre-progress-row.variance.negative>strong{color:#cf3b45!important}

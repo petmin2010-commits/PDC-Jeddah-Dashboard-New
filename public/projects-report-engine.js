@@ -228,9 +228,23 @@ function miniSummary(items,cls=''){
 function svgText(v){return esc(clean(v)).replace(/&amp;/g,'&amp;')}
 function shortLabel(v,max=24){const s=clean(v);return s.length>max?s.slice(0,max-1)+'…':s}
 function boqSummary(rows){
- let running=0,notStarted=0,completed=0;
- rows.forEach(r=>{const n=norm(r.Status);if(n.includes('مكتمل')||n.includes('تم التنفيذ'))completed++;else if(n.includes('لم يبدأ'))notStarted++;else if(n.includes('جاري')||n.includes('تنفيذ'))running++});
- return{total:rows.length,running,notStarted,completed};
+ let running=0,notStarted=0,completed=0,unverified=0;
+ rows.forEach(r=>{
+  const quantity=Number(r['Planned / Required Qty']),executed=Number(r['Executed / Issued Qty']);
+  const hasQuantity=r['Planned / Required Qty']!==''&&r['Planned / Required Qty']!=null&&Number.isFinite(quantity)&&quantity>0;
+  const hasExecuted=r['Executed / Issued Qty']!==''&&r['Executed / Issued Qty']!=null&&Number.isFinite(executed);
+  const percentage=Number(r._completion);
+  if(hasQuantity&&hasExecuted){
+   if(executed<=0)notStarted++;
+   else if(executed>=quantity)completed++;
+   else running++;
+  }else if(r._completion!=null&&Number.isFinite(percentage)){
+   if(percentage<=0)notStarted++;
+   else if(percentage>=100)completed++;
+   else running++;
+  }else unverified++;
+ });
+ return{total:rows.length,running,notStarted,completed,unverified};
 }
 function riskSummary(rows){
  const out={total:rows.length,open:0,solved:0,high:0,medium:0,low:0};
@@ -305,12 +319,8 @@ function latestHistoryActual(planRows,startValue,reportDateValue){
  const pts=historyPoints(planRows,startValue,reportDateValue,null,false).filter(p=>p.actual!=null);
  return pts.length?pts[pts.length-1]:null;
 }
-function progressHistoryChart(planRows,currentActual,reportDateValue,startValue,finalDurationDays){
+function progressHistoryChart(planRows,currentActual,reportDateValue,startValue){
  const points=historyPoints(planRows,startValue,reportDateValue,currentActual,true);
- const startDate=dateObj(startValue),duration=Number(finalDurationDays);
- if(startDate&&Number.isFinite(duration)&&duration>0){
-  points.forEach(p=>{const elapsed=daysBetween(startValue,p.date);if(elapsed!=null)p.planned=Math.max(0,Math.min(100,((elapsed+1)/duration)*100))});
- }
  if(!points.length)return '';
  const n=Math.max(points.length,1),w=820,h=220,padL=42,padR=18,padT=18,padB=42,plotW=w-padL-padR,plotH=h-padT-padB;
  const x=i=>padL+(n===1?plotW/2:(i/(n-1))*plotW),y=v=>padT+plotH-(Math.max(0,Math.min(100,v||0))/100)*plotH;
@@ -332,7 +342,7 @@ function render(data){
  const stage=workOrderBasic(data,['مرحلة التنفيذ']);
  const stageStatus=workOrderBasic(data,['حالة المرحلة','حالة التنفيذ','حالة الامر وفقا لمتابعة المهندس المسئول']);
  const reportType=ex('REPORT_TYPE')||'يومي';
- const reportNo=String(reportDayNumber(ex('ACTUAL_START_DATE')||workOrderBasic(data,['تاريخ المباشرة','تاريخ البدء','تاريخ بدء التنفيذ']),reportReferenceDate())??'');
+ const reportNo=String(reportDayNumber(ex('ACTUAL_START_DATE')||workOrderBasic(data,['تاريخ المباشرة','تاريخ البدء','تاريخ بدء التنفيذ','تاريخ الإسناد','تاريخ الاسناد']),reportReferenceDate())??'');
  const contractDuration=workOrderBasic(data,['المدة uds','المدة التعاقدية (يوم)','المدة التعاقدية','مدة امر العمل','مدة أمر العمل','مدة التنفيذ','مدة المشروع'])||ex('CONTRACTUAL_DURATION_DAYS');
  const consultant='شركة أبعاد الرؤية للاستشارات الهندسية';
  const secFollowup=ex('SEC_FOLLOWUP_ENGINEER')||workOrderBasic(data,['مهندس المتابعة','مهندس شركة الكهرباء','المهندس المسئول','المهندس المسؤول']);
@@ -342,8 +352,14 @@ function render(data){
  const approvedBy=signatureValue('APPROVED_BY');
  const liveActual=pct(val(fs,['نسبة الانجاز الكلية','نسبة الإنجاز الكلية']));
  const planRows=rows.filter(r=>r.Section==='PLAN_POINT');
- const start=ex('ACTUAL_START_DATE')||val(fs,['تاريخ الاسناد','تاريخ الإسناد']);
+  const start=dateObj(ex('ACTUAL_START_DATE')||workOrderBasic(data,['تاريخ المباشرة','تاريخ البدء','تاريخ بدء التنفيذ']));
  const expected=ex('EXPECTED_OPERATION_DATE');
+ const workingDaysToOperation=contractDurationWithWeekends(start,contractDuration);
+ const operationDate=dateObj(expected);
+ const today=new Date();
+ const dayToday=Date.UTC(today.getFullYear(),today.getMonth(),today.getDate());
+ const dayOperation=operationDate?Date.UTC(operationDate.getFullYear(),operationDate.getMonth(),operationDate.getDate()):null;
+ const daysUntilOperation=dayOperation==null?null:Math.round((dayOperation-dayToday)/86400000);
  const rdate=reportReferenceDate();
  const contractDurationCalendar=contractDurationWithWeekends(start,contractDuration);
  const validPlanPoints=historyPoints(planRows,start,rdate,null,false).filter(p=>p.planned!=null);
@@ -354,7 +370,7 @@ function render(data){
  const referenceSnapshot=datedProgress.find(p=>p.date===referenceIso)||null;
  const previousDay=datedProgress.filter(p=>p.date<referenceIso).at(-1);
 
- const elapsed=daysBetween(start,rdate),remaining=contractDurationCalendar>0&&elapsed!=null?Math.max(0,contractDurationCalendar-Math.max(0,elapsed)):null;
+ const elapsed=daysBetween(start,rdate),remaining=contractDurationCalendar>0&&elapsed!=null?Math.max(0,contractDurationCalendar-Math.max(0,elapsed+1)):null;
  const boq=rows.filter(r=>r.Section==='BOQ_ITEM').map(r=>({...r,_completion:completion(r)}));
  const boqMetric=weightedBoqMetrics(boq);
  const actual=boqMetric.valid?boqMetric.progress:liveActual;
@@ -364,7 +380,7 @@ function render(data){
  const periodProgress=periodBase==null||!previousDay||previousDay.actual>periodBase+0.000001?null:Math.max(0,periodBase-previousDay.actual);
  const variance=actual!=null&&planned!=null?actual-planned:null;
  const projectStatus=actual==null?'':actual>=99.9?'مكتمل':variance==null?'':variance>=0?'وفق المخطط':variance>=-10?'تحت المتابعة':'متأخر';
- const dailyRequired=actual!=null&&contractDurationCalendar?Math.max(0,(100-actual)/Math.max(contractDurationCalendar,1)):null;
+ const dailyRequired=actual==null||remaining==null?null:actual>=99.999?0:remaining>0?(100-actual)/remaining:null;
  const mats=rows.filter(r=>r.Section==='MATERIAL'),permits=rows.filter(r=>r.Section==='PERMIT_DETAIL');
  const risks=rows.filter(r=>r.Section==='ISSUE_RISK'),periodRows=rows.filter(r=>r.Section==='PERIOD_SUMMARY'),managementRows=rows.filter(r=>r.Section==='MANAGEMENT_NOTE');
  const matSum=materialSummary(mats),permitSum=permitSummary(permits);
@@ -374,6 +390,9 @@ function render(data){
  const historyLast=latestHistoryActual(planRows,start,rdate);
  const historyDiff=historyLast&&actual!=null?historyLast.actual-actual:null;
  const qualityAlerts=[];
+ const unverifiedBoq=boqSummary(boq).unverified;
+ if(unverifiedBoq)qualityAlerts.push(unverifiedBoq+' بند/بنود لم يمكن تصنيفها لغياب كميات صالحة.');
+ if(actual!=null&&actual<99.999&&remaining===0)qualityAlerts.push('انتهت المدة الحسابية دون اكتمال المشروع؛ لا يمكن حساب معدل يومي مطلوب دون إعادة جدولة.');
  if(boqMetric.hasWeights&&!boqMetric.valid)qualityAlerts.push('مجموع أوزان البنود = '+boqMetric.totalWeightPct.toFixed(2)+'%؛ لم يتم اعتماد الإنجاز المرجح وتم الرجوع إلى نسبة الإنجاز الحية.');
  if(historyDiff!=null&&Math.abs(historyDiff)>0.5)qualityAlerts.push('آخر إنجاز تاريخي مسجل '+historyLast.actual.toFixed(2)+'% يختلف عن الإنجاز الحالي '+actual.toFixed(2)+'% بفارق '+Math.abs(historyDiff).toFixed(2)+' نقطة.');
  const report={workOrder:data.workOrder,projectTitle,desc,contractor,location,engineer,stage,stageStatus,reportType,reportNo,contractDuration,contractDurationCalendar,consultant,secFollowup,preparedBy,reviewedBy,approvedBy,actual,actualSource,liveActual,planned,periodProgress,variance,projectStatus,dailyRequired,start,expected,rdate,elapsed,remaining,boq,boqMetric,mats,permits,risks,periodRows,managementRows,matSum,permitSum,issuedLen,doneLen,permitExecution,planRows,qualityAlerts};
@@ -387,14 +406,22 @@ function render(data){
  const summaryPlanned=inputKpis?inputKpis.planned:(contractDurationCalendar>0?100/contractDurationCalendar:null);
  const summaryVariance=summaryActual!=null&&summaryPlanned!=null?summaryActual-summaryPlanned:null;
  const summaryStatus=inputKpis?inputKpis.status:projectStatus;
- const summaryPeriod=inputKpis?inputKpis.period:periodProgress;
+ const inputPeriodText=document.querySelector('.prd-indicators-section [data-indicator-output="period"]')?.textContent?.trim();
+ const inputPeriodNumber=inputPeriodText&&/^[-+]?\d+(?:\.\d+)?\s*%$/.test(inputPeriodText)?Number.parseFloat(inputPeriodText):null;
+ const storedPeriodRaw=String(ex('PERIOD_PROGRESS')||'').trim();
+ const storedPeriodNumber=/^[-+]?\d+(?:\.\d+)?\s*%?$/.test(storedPeriodRaw)?Number.parseFloat(storedPeriodRaw):null;
+ const calculatedPeriodCandidate=inputPeriodNumber!=null?inputPeriodNumber:(inputKpis?inputKpis.period:periodProgress);
+ const summaryPeriod=storedPeriodNumber!=null&&storedPeriodNumber>=0&&storedPeriodNumber<=summaryActual+0.0001?storedPeriodNumber:(calculatedPeriodCandidate!=null&&calculatedPeriodCandidate>=0&&calculatedPeriodCandidate<=summaryActual+0.0001?calculatedPeriodCandidate:null);
  const summaryDaily=inputKpis?inputKpis.daily:dailyRequired;
+ // Keep downstream Excel/PDF report data aligned with the displayed input indicators.
+ report.periodProgress=summaryPeriod;
+ report.dailyRequired=summaryDaily;
  const cards=[
   {label:'نسبة الإنجاز الكلية',value:summaryActual==null?'—':fmtPct(summaryActual),src:actualSource,ltr:true},
   {label:'نسبة الإنجاز المخططة',value:summaryPlanned==null?'—':fmtPct(summaryPlanned),src:'CALC',ltr:true},
   {label:'الانحراف',value:summaryVariance==null?'—':((summaryVariance>=0?'+':'')+summaryVariance.toFixed(2)+'%'),src:'CALC',ltr:true,bad:summaryVariance!=null&&summaryVariance<0},
   {label:'حالة المشروع',value:summaryStatus||'—',src:'CALC',ltr:false,bad:summaryStatus==='متأخر'},
-  {label:'إنجاز الفترة منذ آخر تقرير (اليوم السابق)',value:summaryPeriod==null?'—':fmtPct(summaryPeriod),src:'EXTRA',ltr:true},
+  {label:'إنجاز الفترة منذ آخر تقرير (اليوم السابق)',value:summaryPeriod==null?'—':summaryPeriod.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+'%',src:'EXTRA',ltr:true},
   {label:'المعدل اليومي المطلوب',value:summaryDaily==null?'—':fmtPct(summaryDaily),src:'CALC',ltr:true}
  ];
  $('preBody').className='pre-report';$('preBody').innerHTML=`
@@ -403,13 +430,13 @@ function render(data){
   <div class="pre-facts">
    ${fact('المقاول',contractor,'LIVE')}${fact('الموقع',location,'LIVE')}${fact('المهندس المسؤول',engineer,'LIVE')}${fact('مهندس متابعة الكهرباء',secFollowup,ex('SEC_FOLLOWUP_ENGINEER')?'EXTRA':'LIVE')}
    ${fact('تاريخ بدء التنفيذ',start,ex('ACTUAL_START_DATE')?'EXTRA':'LIVE',true)}${fact('تاريخ التشغيل المتوقع',expected,'EXTRA',true)}
-   ${fact('المدة التعاقدية (يوم)',contractDuration,'LIVE',true)}${fact('المتبقي على التشغيل (يوم)',contractDurationCalendar==null?'—':contractDurationCalendar,'CALC',true)}
+   ${fact('المدة التعاقدية (يوم)',contractDuration,'LIVE',true)}${fact('عدد الأيام الفعلية (الجمعة إجازة)',workingDaysToOperation==null?'—':workingDaysToOperation,'CALC',true)}${fact('عدد الأيام حتى التشغيل',daysUntilOperation==null?'—':daysUntilOperation>=0?daysUntilOperation:'متأخر '+Math.abs(daysUntilOperation),'CALC · TODAY',true).replace('</div>','<em class="pre-countdown-note">محسوب بتاريخ يوم التصدير</em></div>')}
   </div>
  </section>
- <div class="pre-kpis pre-print-section">${cards.map((c,i)=>'<article class="pre-kpi '+(c.bad?'bad':'')+(i===3?' pre-kpi-status':'')+'"><small>'+esc(c.label)+' • '+c.src+'</small><strong'+(c.ltr?' class="pre-ltr"':'')+'>'+esc(c.value)+'</strong>'+(c.sub?'<em>'+esc(c.sub)+'</em>':'')+'</article>').join('')}</div>
+ <div class="pre-kpis pre-print-section">${cards.map(c=>'<article class="pre-kpi '+(c.bad?'bad':'')+'"><small>'+esc(c.label)+' • '+c.src+'</small><strong'+(c.ltr?' class="pre-ltr"':'')+'>'+esc(c.value)+'</strong>'+(c.sub?'<em>'+esc(c.sub)+'</em>':'')+'</article>').join('')}</div>
  ${qualityAlerts.length?'<div class="pre-quality-alert pre-print-section"><b>تنبيه اتساق البيانات</b>'+qualityAlerts.map(x=>'<span>'+esc(x)+'</span>').join('')+'</div>':''}
  ${progressBlock(actual,planned)}
- ${progressHistoryChart(planRows,actual,rdate,start,contractDurationCalendar)}
+ ${progressHistoryChart(planRows,actual,rdate,start)}
  ${boqBlock(boq,actual,planned,variance)}
  ${materialsBlock(mats,matSum)}
  ${permitsBlock(permits,permitSum,issuedLen,doneLen,permitExecution)}
@@ -419,12 +446,17 @@ function render(data){
  <div class="pre-source-note">تم العثور على أمر العمل في <b>${data.matchedSheets}</b> ورقة / مصدر و <b>${data.totalRecords}</b> سجل. البيانات الموسومة LIVE تأتي من أوراق المشروع الحالية، وEXTRA من صفحة الإدخال الإضافية.</div>`;
  setTimeout(()=>initReportMap(data),80);
 }
-function fact(k,v,src,isLtr=false){return '<div class="pre-fact"><small>'+esc(k)+' • '+src+'</small><b'+(isLtr?' class="pre-ltr"':'')+'>'+esc(v||'—')+'</b></div>'}
+function fact(k,v,src,isLtr=false){if(v instanceof Date&&!Number.isNaN(v.getTime()))v=String(v.getDate()).padStart(2,'0')+'/'+String(v.getMonth()+1).padStart(2,'0')+'/'+v.getFullYear();return '<div class="pre-fact"><small>'+esc(k)+' • '+src+'</small><b'+(isLtr?' class="pre-ltr"':'')+'>'+esc(v||'—')+'</b></div>'}
 function progressBlock(actual,planned){
  const a=Math.max(0,Math.min(100,actual||0)),p=Math.max(0,Math.min(100,planned||0));
+ const variance=actual!=null&&planned!=null?actual-planned:null;
+ const vWidth=variance==null?0:Math.abs(a-p);
+ const vStart=variance==null?0:Math.min(a,p);
+ const vState=variance==null?'neutral':variance>0?'positive':variance<0?'negative':'neutral';
+ const varianceText=variance==null?'—':(variance>0?'+':'')+variance.toFixed(2)+'%';
  return `<section class="pre-panel pre-progress-panel pre-print-section"><div class="pre-panel-head"><div><span>PROGRESS CONTROL</span><h3>التقدم الفعلي مقابل المخطط</h3></div></div>
  <div class="pre-progress-row"><b>الفعلي</b><div class="pre-track"><i style="width:${a}%"></i></div><strong class="pre-ltr">${actual==null?'—':actual.toFixed(2)+'%'}</strong></div>
- <div class="pre-progress-row planned"><b>المخطط</b><div class="pre-track"><i style="width:${p}%"></i></div><strong class="pre-ltr">${planned==null?'—':planned.toFixed(2)+'%'}</strong></div></section>`
+ <div class="pre-progress-row planned"><b>المخطط</b><div class="pre-track"><i style="width:${p}%"></i></div><strong class="pre-ltr">${planned==null?'—':planned.toFixed(2)+'%'}</strong></div><div class="pre-progress-row variance ${vState}"><b>الانحراف</b><div class="pre-track variance-track"><i style="width:${vWidth}%;right:${vStart}%;"></i></div><strong class="pre-ltr">${varianceText}</strong></div></section>`
 }
 function cell(v,cls=''){return '<td'+(cls?' class="'+cls+'"':'')+'>'+esc(v==null||v===''?'—':v)+'</td>'}
 function boqBlock(rows,actual,planned,variance){
@@ -745,10 +777,11 @@ function initReportMap(data){
  setTimeout(()=>{map.invalidateSize();fitAll()},180);
 }
 async function captureReportMap(){
- const stage=$('preProjectMapStage');if(!stage||!state.map||!window.html2canvas)return '';
+ const stage=document.getElementById('preProjectMapStage')||document.getElementById('preProjectMap');
+ if(!stage||!state.map||typeof window.html2canvas!=='function')return '';
  try{
   state.map.invalidateSize();await new Promise(r=>setTimeout(r,300));
-  const canvas=await window.html2canvas(stage,{useCORS:true,allowTaint:false,backgroundColor:'#eef5f7',scale:1.6,logging:false,ignoreElements:el=>el.classList?.contains('leaflet-control-container')});
+  const canvas=await Promise.race([window.html2canvas(stage,{useCORS:true,allowTaint:false,backgroundColor:'#eef5f7',scale:1.6,logging:false,ignoreElements:el=>el.classList?.contains('leaflet-control-container')}),new Promise((_,reject)=>setTimeout(()=>reject(new Error('Map capture timeout')),12000))]);
   state.mapSnapshot=canvas.toDataURL('image/png',.94);return state.mapSnapshot;
  }catch(e){console.warn('Projects Report map capture failed',e);return ''}
 }
@@ -765,13 +798,13 @@ function methodologyAppendix(){
 
  const sections=[
  ['01','مصادر البيانات','يجمع التقرير بيانات أوامر العمل والسجلات التكميلية في Projects Report Engine Data. LIVE مصدر مباشر، EXTRA بيانات مكملة، CALC حساب آلي، وCALC-BOQ حساب من جدول البنود.'],
- ['02','إنجاز البند','نسبة إنجاز البند = إجمالي المنفذ ÷ الكمية المخططة × 100، وتُحدّد بحد أقصى 100%. إذا كانت الكمية المخططة صفراً أو فارغة، لا تُحسب النسبة.'],
- ['03','الإنجاز الكلي','النسبة الكلية = مجموع حاصل ضرب وزن كل بند في نسبة إنجازه، باستخدام أوزان مجموعها 100%. يجب اكتمال كميات البنود والأوزان قبل اعتماد الإجمالي.'],
- ['04','الإنجاز المخطط','النسبة اليومية المخططة = 100 ÷ المدة النهائية بالأيام. الإنجاز المخطط التراكمي = النسبة اليومية × عدد الأيام المنقضية منذ بداية العمل شاملة يوم البداية، بحد أقصى 100%.'],
+ ['02','إنجاز البند','يُقرأ إجمالي التنفيذ التراكمي والكمية المستهدفة لنفس البند وبنفس الوحدة. نسبة الإنجاز = (إجمالي المنفذ ÷ الكمية المخططة) × 100، ويُحدّد العرض عند 100% حتى إذا تجاوز التنفيذ الكمية. مثال: تنفيذ 2,000 متر من 6,900 متر = 28.99%. عند غياب الكمية المخططة أو كونها صفراً لا يُعتمد المؤشر، وتُراجع قيمة البند قبل إصدار التقرير.'],
+ ['03','الإنجاز الكلي','يُضرب إنجاز كل بند في وزنه النسبي، ثم تُجمع مساهمات البنود للحصول على الإنجاز الكلي للمشروع: مجموع (وزن البند × نسبة إنجازه). مثال: بند وزنه 25% وإنجازه 20% يضيف 5 نقاط مئوية إلى الإجمالي. يجب أن يبلغ مجموع أوزان جميع البنود 100% وأن تكون الكميات صحيحة، ولا يجوز جمع أطوال وأعداد ووحدات مختلفة مباشرة بوصفها نسبة إنجاز واحدة.'],
+ ['04','الإنجاز المخطط','المدة النهائية المستخدمة في التخطيط = المدة التعاقدية + أيام الجمعة الواقعة داخل المدة التعاقدية ابتداءً من تاريخ بدء التنفيذ الفعلي، وفق قاعدة المشروع المعتمدة. يُحسب معدل التخطيط اليومي = 100 ÷ المدة النهائية؛ ثم الإنجاز التراكمي المخطط = المعدل × الأيام المنقضية حتى تاريخ التقرير، ويُحصر بين 0 و100%. يجب تدقيق تاريخ البدء ومرجع يوم التقرير عند مراجعة أي اختلاف.'],
  ['05','الانحراف والحالة','الانحراف بالنقاط المئوية = الإنجاز الفعلي الكلي − الإنجاز المخطط التراكمي. موجب يعني التقدم، وسالب التأخر، وصفر المطابقة؛ بينما الحالة تتبع قواعد التصنيف المبرمجة.'],
  ['06','إنجاز الفترة منذ آخر تقرير','إنجاز الفترة هو الفرق بالنقاط المئوية بين الإنجاز التراكمي الحالي المحسوب من البنود الموزونة، وأحدث إنجاز تراكمي سابق مؤرخ في سجل PLAN_POINT. مثال: 10.16% حالياً مقابل 8.20% سابقاً = 1.96 نقطة. إذا غاب السجل السابق تظهر (—) بدلاً من اعتبار البداية صفراً. وإذا كانت القراءة السابقة أكبر من الحالية تُوقف النتيجة السالبة ويُلزم تدقيق التاريخ أو الكميات قبل اعتماد التقرير.'],
- ['07','المعدل اليومي المطلوب','المعدل اليومي المطلوب = (100 − الإنجاز الكلي) ÷ المدة النهائية المستخدمة في الحقل. وهو مؤشر تقديري منفصل عن كمية التنفيذ اليومية.'],
- ['08','رقم التقرير','يُعد تلقائياً من الأيام منذ تاريخ البدء حتى تاريخ التقرير، مع احتساب البداية واستبعاد أيام الجمعة فقط. السبت يوم محسوب.'],
+ ['07','المعدل اليومي المطلوب','المعدل اليومي المطلوب لاستكمال المشروع = (100 − الإنجاز الكلي) ÷ أيام التنفيذ المتبقية من تاريخ التقرير المرجعي وحتى نهاية المدة. إذا انتهت المدة ولم يكتمل المشروع تظهر حالة تستوجب إعادة التخطيط. المؤشر مختلف عن إنجاز الفترة اليومية.'],
+ ['08','أيام التنفيذ المنقضية','تُحسب من تاريخ البدء الفعلي حتى تاريخ التقرير المرجعي شاملًا تاريخ البدء، مع استبعاد الجمعة فقط، والسبت محسوب. تقرير اليوم السابق يظل مرجعه ذلك اليوم حتى لو صُدّر صباح اليوم التالي.'],
  ['09','الكميات والمواد','المتبقي = المطلوب − المنفذ/المنصرف. حالة التنفيذ: لم يبدأ عند الصفر، جاري عند التنفيذ الجزئي، ومنجز عند اكتمال المطلوب. وحالة المواد تعكس عدم الصرف أو الصرف الجزئي أو الكامل.'],
  ['10','التصاريح والوثائق','ملخص التصاريح يحصي الحالات المسجلة. تعرض الخريطة مواقع وطبقات KMZ/KML الظاهرة عند التصدير؛ الصور وتعليقاتها توثيق للأعمال ولا تحل محل قياس الكميات.'],
  ['11','العوائق والتحقق','تُعرض المخاطر بحسب أثرها وحالتها وتاريخها. راجع أوزان البنود، تواريخ آخر تقرير، الكميات، ومصدر كل مؤشر قبل اعتماد النتائج.'],
@@ -780,7 +813,7 @@ function methodologyAppendix(){
  ['14','التوثيق والاعتماد','صور التنفيذ توثيق بصري للموقع وتشمل أوصاف الأعمال وتواريخها وفق المتاح. الخريطة وسيلة لتحديد مواقع الأعمال وليست اعتماداً مساحياً للكميات. يتحقق معد التقرير من المرفقات والأوصاف والمواقع، ويعتمد المسؤول النتائج بعد مطابقتها مع سجلات المشروع.'],
  ['15','قراءة الإشارات اللونية','الأخضر يبرز الحالات المكتملة أو السليمة، والأزرق يعرض المعلومات ومؤشرات المتابعة، والبرتقالي ينبه إلى حالات تتطلب متابعة، والأحمر يشير إلى تعثر أو ملاحظة تستوجب التحقق. لا تُعتمد الألوان وحدها؛ اقرأ النص والقيمة وتاريخها والمصدر المصاحب.']
  ];
- return '<section class="pre-guide-appendix"><header class="pre-guide-title"><span>APPENDIX · REPORT METHODOLOGY</span><h2>دليل قراءة التقرير ومنهجية الاحتساب</h2><p>ملحق تفسيري ثابت، يُرفق تلقائياً بتقرير PDF ولا يُغيّر البيانات الأساسية.</p></header><div class="pre-guide-grid">'+sections.map(s=>'<article class="pre-guide-item"><b>'+s[0]+'</b><div><h3>'+s[1]+'</h3><p>'+s[2]+'</p></div></article>').join('')+'</div><section class="pre-formula-appendix"><h2>معادلات الاحتساب وأمثلة تطبيقية</h2><p>توضيحات حسابية مرجعية للبطاقات والمؤشرات.</p><div class="pre-formula-grid">'+calculationExamples.map((f,i)=>'<article class="pre-formula-card"><b>'+String(i+1).padStart(2,'0')+'</b><div><h3>'+f[0]+'</h3><p>'+f[1]+'</p><small>'+f[2]+'</small></div></article>').join('')+'</div></section><div class="pre-guide-foot"><strong>ملاحظة اعتماد:</strong> في حال اختلاف قيمة داخل البطاقة عن الرسم البياني أو السجل التاريخي، يجب مراجعة المصدر وتاريخ التقرير قبل الاعتماد النهائي.</div></section>';
+ return '<section class="pre-guide-appendix"><header class="pre-guide-title"><span>APPENDIX · REPORT METHODOLOGY</span><h2>دليل قراءة التقرير ومنهجية الاحتساب</h2><p>ملحق تفسيري ثابت، يُرفق تلقائياً بتقرير PDF ولا يُغيّر البيانات الأساسية.</p></header><div class="pre-guide-grid">'+sections.slice(0,8).map(s=>'<article class="pre-guide-item"><b>'+s[0]+'</b><div><h3>'+s[1]+'</h3><p>'+s[2]+'</p></div></article>').join('')+'</div><div class="pre-guide-page-break"></div><div class="pre-guide-grid">'+sections.slice(8).map(s=>'<article class="pre-guide-item"><b>'+s[0]+'</b><div><h3>'+s[1]+'</h3><p>'+s[2]+'</p></div></article>').join('')+'</div><section class="pre-formula-appendix"><h2>معادلات الاحتساب وأمثلة تطبيقية</h2><p>توضيحات حسابية مرجعية للبطاقات والمؤشرات.</p><div class="pre-formula-grid">'+calculationExamples.map((f,i)=>'<article class="pre-formula-card"><b>'+String(i+1).padStart(2,'0')+'</b><div><h3>'+f[0]+'</h3><p>'+f[1]+'</p><small>'+f[2]+'</small></div></article>').join('')+'</div></section><div class="pre-guide-foot"><strong>ملاحظة اعتماد:</strong> في حال اختلاف قيمة داخل البطاقة عن الرسم البياني أو السجل التاريخي، يجب مراجعة المصدر وتاريخ التقرير قبل الاعتماد النهائي.</div></section>';
 }
 async function printReport(){
  if(!state.report||!document.querySelector('#preBody.pre-report')){alert('أنشئ التقرير أولاً ثم اضغط تصدير التقرير PDF.');return}
@@ -793,6 +826,8 @@ async function printReport(){
  const mapImage=await captureReportMap();
  if(win.closed)return;
  const clone=document.querySelector('#preBody.pre-report').cloneNode(true);
+ const firstSummary=clone.querySelector('.pre-summary');
+ if(firstSummary){const logos=document.createElement('div');logos.className='pre-first-page-logos';logos.innerHTML='<img src="'+location.origin+'/company-logo.png" alt="Vision Dimensions"><img src="'+location.origin+'/pdc-logo.jpg" alt="PDC">';firstSummary.prepend(logos)}
  clone.querySelectorAll('.pre-system-col,.pre-source-note,.vd-universal-info,.calc-help-btn,.vd-info-host > .vd-universal-info').forEach(x=>x.remove());
  clone.querySelectorAll('.pre-table-wrap').forEach(x=>{x.style.overflow='visible'});
  let mapPanel=clone.querySelector('#preMapPanel');
@@ -818,7 +853,7 @@ async function printReport(){
  win.document.close();
  const go=async()=>{
   const imgs=[...win.document.images];
-  await Promise.all(imgs.map(img=>img.complete?Promise.resolve():new Promise(resolve=>{img.addEventListener('load',resolve,{once:true});img.addEventListener('error',resolve,{once:true})})));
+  await Promise.all(imgs.map(img=>img.complete?Promise.resolve():new Promise(resolve=>{const timer=setTimeout(resolve,8000);const done=()=>{clearTimeout(timer);resolve()};img.addEventListener('load',done,{once:true});img.addEventListener('error',done,{once:true})})));
   setTimeout(()=>{win.focus();win.print()},350);
  };
  if(win.document.readyState==='complete')go();else win.addEventListener('load',go,{once:true});
@@ -979,6 +1014,66 @@ html,body{color:#1d334a;font-family:Tahoma,Arial,sans-serif;font-size:9pt}
 .pre-formula-card h3{font-size:9.5pt;color:#133f5a;margin:0 0 1mm}
 .pre-formula-card p{font-size:8.1pt;line-height:1.65;margin:0 0 1mm}
 .pre-formula-card small{font-size:7.5pt;color:#167b70;font-weight:700}
+/* QA: hold cards and section titles away from repeating footer */
+.pre-table-wrap td,.pre-table-wrap th{overflow-wrap:anywhere}
+.pre-permits-panel .pre-table-wrap table{table-layout:fixed}
+.pre-permits-panel .pre-table-wrap td{font-size:6.5pt;line-height:1.45}
+.pre-guide-appendix{break-inside:auto;page-break-inside:auto}
+.pre-guide-grid{display:grid;grid-template-columns:1fr 1fr;gap:2.4mm 3mm}
+.pre-guide-item{padding:2.4mm 3mm}
+.pre-guide-item p{font-size:7.7pt;line-height:1.5}
+.pre-guide-item h3{font-size:9.6pt}
+.pre-guide-foot{break-inside:avoid;page-break-inside:avoid;margin:3mm 0 0;padding:3mm;background:#f6fafc;border:1px solid #d8e5ec}
+.pre-formula-card{padding:2.5mm}
+.pre-formula-card p{font-size:7.5pt;line-height:1.5}
+.pre-formula-card small{font-size:7pt;line-height:1.35}
+.pre-narrative-panel,.pre-photo-pdf-card,.pre-guide-item{break-inside:avoid;page-break-inside:avoid}
+.pre-guide-foot{margin-top:2mm;padding:2mm;font-size:7.5pt;line-height:1.4}.pre-formula-grid{gap:2mm 3mm}.pre-formula-card{padding:1.7mm 2mm;break-inside:avoid}.pre-formula-card p{font-size:7pt;line-height:1.3}.pre-formula-card small{font-size:6.6pt;line-height:1.25}.pre-formula-appendix{margin-bottom:0;padding-bottom:0}.pre-photos-pdf-panel{break-inside:auto;page-break-inside:auto}.pre-photo-pdf-card{break-inside:avoid;page-break-inside:avoid}
+/* Print pagination correction 2026-10-09: keep content clear of running brand strips */
+@page{size:A4 landscape;margin:24mm 12mm 23mm;@bottom-left{content:"Vision Dimensions Engineering Consultancy";font:700 7.5pt Arial;color:#526b82}@bottom-right{content:"Page " counter(page) " / " counter(pages);font:700 7.5pt Arial;color:#526b82}}
+.pdf-header{position:fixed;top:-21mm;height:16mm;max-height:16mm;padding:1mm 1mm 1.5mm;z-index:20}
+.pdf-footer{display:none!important}
+.pdf-main{padding:0 0 1mm!important;overflow:visible}
+.pre-panel,.pre-summary{max-width:100%;overflow:visible}
+.pre-table-wrap{overflow:visible!important}
+.pre-table-wrap table{break-inside:auto!important;page-break-inside:auto!important}
+.pre-table-wrap thead{display:table-header-group}
+.pre-table-wrap tr{break-inside:avoid;page-break-inside:avoid}
+.pre-table-wrap th,.pre-table-wrap td{vertical-align:top;overflow-wrap:anywhere}
+.pre-material-panel,.pre-permits-panel,.pre-boq-panel,.pre-risk-panel{break-inside:auto!important;page-break-inside:auto!important}
+.pre-material-panel .pre-panel-head,.pre-permits-panel .pre-panel-head,.pre-boq-panel .pre-panel-head,.pre-risk-panel .pre-panel-head{break-after:avoid;page-break-after:avoid}
+.pre-photos-pdf-panel{break-inside:auto!important;page-break-inside:auto!important}
+.pre-photos-pdf-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:2mm}
+.pre-photo-pdf-card{break-inside:avoid!important;page-break-inside:avoid!important;min-width:0}
+.pre-photo-pdf-card img,.pre-photo-pdf-empty{height:43mm!important;max-height:43mm}
+.pre-photo-pdf-caption{min-height:14mm;padding:1.5mm 2mm;overflow-wrap:anywhere}
+.pre-photo-pdf-caption span{font-size:7pt;line-height:1.32}
+.pre-guide-grid{display:block;column-count:2;column-gap:3mm}
+.pre-guide-item{display:flex;break-inside:avoid!important;page-break-inside:avoid!important;margin:0 0 2mm;padding:2mm 2.5mm}
+.pre-guide-item p{font-size:7.5pt;line-height:1.4}
+.pre-guide-title{break-after:avoid;page-break-after:avoid}
+.pre-formula-appendix{break-before:page;page-break-before:always}
+.pre-formula-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2mm 3mm}
+.pre-formula-card{break-inside:avoid!important;page-break-inside:avoid!important}
+.pre-formula-card p,.pre-formula-card small{unicode-bidi:plaintext}
+.pre-history-chart svg{height:66mm;max-height:66mm}
+/* Archive print safety: disable Chromium fixed masthead repetition that overlays page content. */
+@page{size:A4 landscape;margin:17mm 11mm 17mm;@top-left{content:"VISION DIMENSIONS";font:700 8pt Arial;color:#284e69}@top-center{content:"VISION DIMENSIONS | PROJECT CONTROL | PDC";font:700 8pt Arial;color:#284e69}@top-right{content:"PDC | ENGINEERING REPORT";font:700 8pt Arial;color:#284e69}@bottom-left{content:"Vision Dimensions Engineering Consultancy";font:700 7pt Arial;color:#526b82}@bottom-right{content:"Page " counter(page) " / " counter(pages);font:700 7pt Arial;color:#526b82}}
+.pdf-header,.pdf-footer{display:none!important;position:static!important}
+.pre-table-wrap tr{break-inside:avoid!important;page-break-inside:avoid!important}
+.pre-permits-panel .pre-table-wrap th,.pre-permits-panel .pre-table-wrap td{font-size:6.35pt!important;padding:.85mm 1.1mm!important;line-height:1.16!important}
+.pre-boq-panel .pre-table-wrap th,.pre-boq-panel .pre-table-wrap td{font-size:7pt!important;padding:1.1mm 1.1mm!important;line-height:1.26!important}
+.pre-extra-panel,.pre-narrative-panel{break-inside:auto!important;page-break-inside:auto!important}
+.pre-guide-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;column-count:auto!important;gap:2.5mm 3mm!important}
+.pre-guide-item{margin:0!important;min-width:0}
+.pre-guide-item p{overflow-wrap:anywhere}
+.pre-map-pdf-image{max-height:133mm!important}
+.pre-guide-page-break{break-before:page;page-break-before:always;height:0}
+.pre-formula-card small{direction:ltr;unicode-bidi:isolate;text-align:right;font-variant-numeric:tabular-nums}
+.pre-first-page-logos{display:flex;align-items:center;justify-content:space-between;direction:ltr;gap:8mm;margin:0 0 3mm;padding-bottom:2mm;border-bottom:1px solid #d4e2ec;break-inside:avoid}.pre-first-page-logos img{display:block;width:auto;max-width:39mm;max-height:16mm;object-fit:contain}.pre-summary .pre-fact small{font-size:6.3pt!important;line-height:1.2}.pre-summary .pre-fact b{font-size:8pt!important}.pre-kpi small{font-size:6pt!important;line-height:1.25!important}.pre-kpi strong{font-size:14pt!important;line-height:1.16}.pre-kpi em{font-size:5.7pt!important}.pre-progress-row.variance .variance-track{position:relative}.pre-progress-row.variance .variance-track i{position:absolute;top:0;height:100%;border-radius:99mm}.pre-progress-row.variance.positive .pre-track i{background:#198754}.pre-progress-row.variance.negative .pre-track i{background:#cf3b45}.pre-progress-row.variance.neutral .pre-track i{background:#8797a8}.pre-progress-row.variance.positive>strong{color:#168251}.pre-progress-row.variance.negative>strong{color:#c83241}.pre-progress-row.variance.neutral>strong{color:#60758a}.pre-progress-row.variance>strong{font-weight:900}.pre-material-panel .pre-table-wrap td:first-child{direction:ltr;text-align:right;overflow-wrap:anywhere;word-break:normal;hyphens:none;font-size:7.2pt!important;line-height:1.34!important}.pre-formula-card p{unicode-bidi:plaintext;line-height:1.4}
+.pre-countdown-note{display:block;font-style:normal;font-size:6.3pt;color:#687f92;margin-top:1mm;line-height:1.3}
+.pdf-footer{z-index:60;background:white}
+
 
 `}
 
