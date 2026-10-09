@@ -319,8 +319,12 @@ function latestHistoryActual(planRows,startValue,reportDateValue){
  const pts=historyPoints(planRows,startValue,reportDateValue,null,false).filter(p=>p.actual!=null);
  return pts.length?pts[pts.length-1]:null;
 }
-function progressHistoryChart(planRows,currentActual,reportDateValue,startValue){
+function progressHistoryChart(planRows,currentActual,reportDateValue,startValue,finalDurationDays){
  const points=historyPoints(planRows,startValue,reportDateValue,currentActual,true);
+ const startDate=dateObj(startValue),duration=Number(finalDurationDays);
+ if(startDate&&Number.isFinite(duration)&&duration>0){
+  points.forEach(point=>{const elapsed=daysBetween(startValue,point.date);if(elapsed!=null&&elapsed>=0)point.planned=Math.max(0,Math.min(100,((elapsed+1)/duration)*100));});
+ }
  if(!points.length)return '';
  const n=Math.max(points.length,1),w=820,h=220,padL=42,padR=18,padT=18,padB=42,plotW=w-padL-padR,plotH=h-padT-padB;
  const x=i=>padL+(n===1?plotW/2:(i/(n-1))*plotW),y=v=>padT+plotH-(Math.max(0,Math.min(100,v||0))/100)*plotH;
@@ -436,7 +440,7 @@ function render(data){
  <div class="pre-kpis pre-print-section">${cards.map(c=>'<article class="pre-kpi '+(c.bad?'bad':'')+'"><small>'+esc(c.label)+' • '+c.src+'</small><strong'+(c.ltr?' class="pre-ltr"':'')+'>'+esc(c.value)+'</strong>'+(c.sub?'<em>'+esc(c.sub)+'</em>':'')+'</article>').join('')}</div>
  ${qualityAlerts.length?'<div class="pre-quality-alert pre-print-section"><b>تنبيه اتساق البيانات</b>'+qualityAlerts.map(x=>'<span>'+esc(x)+'</span>').join('')+'</div>':''}
  ${progressBlock(actual,planned)}
- ${progressHistoryChart(planRows,actual,rdate,start)}
+ ${progressHistoryChart(planRows,actual,rdate,start,contractDurationCalendar)}
  ${boqBlock(boq,actual,planned,variance)}
  ${materialsBlock(mats,matSum)}
  ${permitsBlock(permits,permitSum,issuedLen,doneLen,permitExecution)}
