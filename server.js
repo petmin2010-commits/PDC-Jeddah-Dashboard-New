@@ -610,7 +610,7 @@ function wo360FieldLabel_(header,index){
   return h||('عمود '+wo360Col_(index));
 }
 
-async function getWorkOrder360(workOrder){
+async function getWorkOrder360Uncached_(workOrder){
   const target=wo360Key_(workOrder);
   if(!target)throw new Error('أدخل رقم أمر العمل أولاً');
   assertConfig();
@@ -701,6 +701,30 @@ async function getWorkOrder360(workOrder){
     scannedSheets:sheetDefs.length,searchableSheets:candidates.length,
     matchedSheets:sources.length,totalRecords:records.length,sources,updatedAt:now_()
   };
+}
+
+const wo360RequestCache_=new Map();
+const wo360RequestInFlight_=new Map();
+async function getWorkOrder360(workOrder){
+ const key=wo360Key_(workOrder);
+ if(!key)return getWorkOrder360Uncached_(workOrder);
+ const hit=wo360RequestCache_.get(key);
+ if(hit&&Date.now()-hit.at<60000)return hit.data;
+ if(wo360RequestInFlight_.has(key))return wo360RequestInFlight_.get(key);
+ const pending=(async()=>{
+  for(let attempt=0;attempt<3;attempt++){
+   try{const data=await getWorkOrder360Uncached_(workOrder);
+    if(wo360RequestCache_.size>80)wo360RequestCache_.delete(wo360RequestCache_.keys().next().value);
+    wo360RequestCache_.set(key,{at:Date.now(),data});return data;
+   }catch(error){
+    if(!isSheetsQuotaError_(error))throw error;
+    if(hit&&Date.now()-hit.at<300000)return {...hit.data,cacheStale:true};
+    if(attempt===2)throw error;
+    await new Promise(resolve=>setTimeout(resolve,1500*2**attempt+Math.random()*500));
+   }
+  }
+ })();wo360RequestInFlight_.set(key,pending);
+ try{return await pending}finally{wo360RequestInFlight_.delete(key)}
 }
 
 async function getHrStaffData_(){

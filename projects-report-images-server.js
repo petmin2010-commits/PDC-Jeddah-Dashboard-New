@@ -69,6 +69,27 @@ module.exports=function installProjectImages(ctx){
     return out;
   }
 
+  const imagesReadCache_=new Map(),imagesInFlight_=new Map();
+  async function cachedLoadImages(workOrder){
+    const key=safeWo(workOrder),hit=imagesReadCache_.get(key);
+    if(hit&&Date.now()-hit.at<60000)return hit.images;
+    if(imagesInFlight_.has(key))return imagesInFlight_.get(key);
+    const pending=(async()=>{
+      for(let attempt=0;attempt<3;attempt++){
+        try{const images=await loadImages(key);
+          if(imagesReadCache_.size>80)imagesReadCache_.delete(imagesReadCache_.keys().next().value);
+          imagesReadCache_.set(key,{at:Date.now(),images});return images;
+        }catch(e){
+          const quota=Number(e?.code||e?.response?.status)===429||/quota exceeded|read requests per minute/i.test(String(e?.message||''));
+          if(!quota)throw e;
+          if(hit&&Date.now()-hit.at<300000)return hit.images;
+          if(attempt===2)throw e;
+          await new Promise(resolve=>setTimeout(resolve,1500*2**attempt+Math.random()*500));
+        }
+      }
+    })();imagesInFlight_.set(key,pending);
+    try{return await pending}finally{imagesInFlight_.delete(key)}
+  }
   async function loadImages(workOrder){
     const wo=safeWo(workOrder); if(!wo)return [];
     const rows=await rowsForWorkOrder_(wo),groups=new Map();
@@ -91,12 +112,14 @@ module.exports=function installProjectImages(ctx){
   }
 
   async function clearSlot_(wo,slot){
+    imagesReadCache_.delete(safeWo(wo));
     const {sheets}=await ensureSheet(),rows=await indexRows_();
     const ranges=rows.filter(x=>clean(x.v[0])===wo&&Number(x.v[1])===slot).map(x=>`${qSheet(SHEET)}!A${x.row}:I${x.row}`);
     if(ranges.length)await sheets.spreadsheets.values.batchClear({spreadsheetId:SPREADSHEET_ID,requestBody:{ranges}});
   }
 
   async function saveImage(workOrder,slot,payload,updatedBy){
+    imagesReadCache_.delete(safeWo(workOrder));
     const wo=safeWo(workOrder),n=Number(slot);
     if(!wo)throw new Error('رقم أمر العمل غير صالح.');
     if(!(n>=1&&n<=8))throw new Error('رقم خانة الصورة غير صالح.');
@@ -130,7 +153,7 @@ module.exports=function installProjectImages(ctx){
   }
 
   app.get('/api/projects-report-engine/images/:workOrder',requireAuth_,async(req,res)=>{
-    try{res.set('Cache-Control','no-store');res.json({ok:true,images:await loadImages(req.params.workOrder)})}
+    try{res.set('Cache-Control','no-store');res.json({ok:true,images:await cachedLoadImages(req.params.workOrder)})}
     catch(e){console.error('Project images load:',e);res.status(500).json({ok:false,error:e.message||String(e)})}
   });
   app.post('/api/projects-report-engine/images/:workOrder/:slot',requireAuth_,async(req,res)=>{
@@ -142,5 +165,5 @@ module.exports=function installProjectImages(ctx){
     catch(e){console.error('Project image delete:',e);res.status(400).json({ok:false,error:e.message||String(e)})}
   });
 
-  return {loadImages,saveImage,ensureSheet};
+  return {loadImages:cachedLoadImages,saveImage,ensureSheet};
 };
