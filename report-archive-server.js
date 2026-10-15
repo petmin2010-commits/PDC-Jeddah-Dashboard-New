@@ -86,11 +86,22 @@ module.exports=function installArchive({app,requireAuth_,getSheets,spreadsheetId
        await new Promise(done=>setTimeout(done,900*(attempt+1)));
      }
    }
-   if(options.expected?.includes(response.status))return response;
-   if([301,302,307,308].includes(response.status)){
+   for(let redirects=0;redirects<2&&[301,302,307,308].includes(response.status);redirects++){
      const next=new URL(response.headers.get('location')||'',address);
-     throw Error('WEBDAV_REDIRECT_'+response.status+'_TO_'+next.hostname.replace(/[^a-z0-9.-]/gi,'_'));
+     if(next.protocol!=='https:'||next.hostname!==davHost||next.port||next.username||next.password){
+       throw Error('WEBDAV_UNTRUSTED_REDIRECT_'+next.hostname.replace(/[^a-z0-9.-]/gi,'_'));
+     }
+     const redirectPath=next.pathname;
+     try{
+       response=await fetch(next.toString(),{method,headers:header,body:options.body,redirect:'manual',signal:AbortSignal.timeout(45000)});
+     }catch(e){
+       throw Error('WEBDAV_REDIRECT_FETCH_'+String(e.cause?.code||e.name||'UNKNOWN').replace(/[^A-Z0-9_]/gi,'_').slice(0,35));
+     }
+     if([301,302,307,308].includes(response.status)&&redirects===1){
+       throw Error('WEBDAV_REDIRECT_LOOP_'+redirectPath.slice(0,40).replace(/[^A-Za-z0-9/_-]/g,'_'));
+     }
    }
+   if(options.expected?.includes(response.status))return response;
    if(response.status===401||response.status===403)throw Error('WEBDAV_LOGIN_CONFIRMATION_REQUIRED_'+response.status);
    throw Error('WEBDAV_HTTP_'+response.status);
  }
