@@ -78,7 +78,7 @@ module.exports=function installArchive({app,requireAuth_,getSheets,spreadsheetId
    let response;
    for(let attempt=0;attempt<3;attempt++){
      try{
-       response=await fetch(address,{method,headers:header,body:options.body,redirect:'error',signal:AbortSignal.timeout(45000)});
+       response=await fetch(address,{method,headers:header,body:options.body,redirect:'manual',signal:AbortSignal.timeout(45000)});
        break;
      }catch(e){
        const reason=String(e.cause?.code||e.name||'UNKNOWN').replace(/[^A-Z0-9_]/gi,'_').slice(0,35);
