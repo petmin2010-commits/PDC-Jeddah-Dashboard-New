@@ -154,7 +154,7 @@ module.exports=function installArchive({app,requireAuth_,getSheets,spreadsheetId
    if(!cloudEnabled)return res.json({ok:true,configured:false,connected:false,mode:'not-configured'});
    const mode=davReady?'webdav':(preferPassword?'username-password':'access-token');
    try{
-     if(davReady)await checkDav();
+     if(davReady)await probeDavWritable();
      else await cloud('userinfo',{});
      res.json({ok:true,configured:true,connected:true,mode});
    }catch(e){
@@ -189,6 +189,8 @@ module.exports=function installArchive({app,requireAuth_,getSheets,spreadsheetId
      const id=String(req.params.id||'');
      if(!/^[0-9a-f-]{36}$/i.test(id))return res.status(400).json({ok:false,error:'INVALID_ID'});
      const messages={
+       PCLOUD_NOT_CONFIGURED:'لم يتم حفظ التقرير: إعدادات pCloud غير مكتملة',
+       REPORT_NOT_READY:'تعذر تجهيز صفحات التقرير للحفظ',
        PDF_LIBRARY_UNAVAILABLE:'تعذر إنشاء PDF تلقائيًا (مكتبة PDF غير متاحة)',
        PDF_RENDER_FAILED:'تعذر إنشاء ملف PDF تلقائيًا',
        PDF_FILE_TOO_LARGE:'تعذر رفع PDF لأن حجمه يتجاوز الحد المسموح',
@@ -232,7 +234,12 @@ module.exports=function installArchive({app,requireAuth_,getSheets,spreadsheetId
      const saved=await upload(req.body,file,id),url=archiveUrl(req,id);
      await sheets.spreadsheets.values.update({spreadsheetId,range:range('H'+(found.index+2)+':L'+(found.index+2)),valueInputOption:'RAW',requestBody:{values:[[file,'محفوظ في pCloud',url,saved.fileId,saved.folder]]}});
      res.json({ok:true,url});
-   }catch(e){console.error('Archive upload',e.message);res.status(502).json({ok:false,error:'UPLOAD_FAILED'})}
+   }catch(e){
+     const reason=String(e?.message||'UPLOAD_FAILED');
+     console.error('Archive upload',reason);
+     const safe=/^(?:WEBDAV_|PCLOUD_|INVALID_PCLOUD_)/.test(reason)?reason.slice(0,90):'UPLOAD_FAILED';
+     res.status(502).json({ok:false,error:safe});
+   }
  });
  app.get('/api/report-archive/file/:id',requireAuth_,async(req,res)=>{
    try{
