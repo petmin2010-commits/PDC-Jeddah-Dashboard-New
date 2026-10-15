@@ -2584,6 +2584,8 @@ require('./projects-report-excel-server')({
   loadProjectImages:projectsReportImages.loadImages
 });
 
+require('./safety-presentation-server')({app,requireAuth_,getSheets,city:'Jeddah',spreadsheetId:process.env.CONTRACTOR_SAFETY_SHEET_ID||'1PaUULWNLfnXQSg3rJPCgKq3fTVgNbJGzVPUwPGJJpGA'});
+
 app.get('/api/safety/contractor-evaluation',requireAuth_,async(req,res)=>{
   try {
     const reader=require('./contractor-safety-server');
