@@ -76,9 +76,16 @@ module.exports=function installArchive({app,requireAuth_,getSheets,spreadsheetId
    const address='https://'+davHost+safeDavPath(p);
    const header={Authorization:'Basic '+Buffer.from(cloudUser+':'+cloudPass).toString('base64'),...options.headers};
    let response;
-   try{
-     response=await fetch(address,{method,headers:header,body:options.body,redirect:'error',signal:AbortSignal.timeout(45000)});
-   }catch(e){throw Error('WEBDAV_NETWORK_ERROR')}
+   for(let attempt=0;attempt<3;attempt++){
+     try{
+       response=await fetch(address,{method,headers:header,body:options.body,redirect:'error',signal:AbortSignal.timeout(45000)});
+       break;
+     }catch(e){
+       const reason=String(e.cause?.code||e.name||'UNKNOWN').replace(/[^A-Z0-9_]/gi,'_').slice(0,35);
+       if(attempt===2)throw Error('WEBDAV_NETWORK_ERROR_'+reason);
+       await new Promise(done=>setTimeout(done,900*(attempt+1)));
+     }
+   }
    if(options.expected?.includes(response.status))return response;
    if(response.status===401||response.status===403)throw Error('WEBDAV_LOGIN_CONFIRMATION_REQUIRED_'+response.status);
    throw Error('WEBDAV_HTTP_'+response.status);
