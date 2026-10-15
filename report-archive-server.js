@@ -87,6 +87,10 @@ module.exports=function installArchive({app,requireAuth_,getSheets,spreadsheetId
      }
    }
    if(options.expected?.includes(response.status))return response;
+   if([301,302,307,308].includes(response.status)){
+     const next=new URL(response.headers.get('location')||'',address);
+     throw Error('WEBDAV_REDIRECT_'+response.status+'_TO_'+next.hostname.replace(/[^a-z0-9.-]/gi,'_'));
+   }
    if(response.status===401||response.status===403)throw Error('WEBDAV_LOGIN_CONFIRMATION_REQUIRED_'+response.status);
    throw Error('WEBDAV_HTTP_'+response.status);
  }
