@@ -3725,9 +3725,13 @@
       cleanupReport();
     };
 
+    let archiveTask=null;
     window.addEventListener(
       'afterprint',
-      cleanup,
+      () => {
+        if(archiveTask?.finally)archiveTask.finally(cleanup);
+        else cleanup();
+      },
       { once: true }
     );
 
