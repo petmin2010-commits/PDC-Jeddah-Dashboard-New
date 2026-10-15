@@ -2584,6 +2584,17 @@ require('./projects-report-excel-server')({
   loadProjectImages:projectsReportImages.loadImages
 });
 
+app.get('/api/safety/contractor-evaluation',requireAuth_,async(req,res)=>{
+  try {
+    const reader=require('./contractor-safety-server');
+    const result=await reader.getData({getSheets,spreadsheetId:process.env.CONTRACTOR_SAFETY_SHEET_ID||'1PaUULWNLfnXQSg3rJPCgKq3fTVgNbJGzVPUwPGJJpGA',city:'Jeddah',refresh:Boolean(req.query&&req.query.refresh)});
+    res.set('Cache-Control','no-store');res.json(result);
+  }catch(error){
+    console.error('Safety contractor report:',error.message);
+    res.status(error.response?.status===403?403:500).json({ok:false,error:error.response?.status===403?'لا توجد صلاحية قراءة لورقة Intellect. يرجى منح حساب خدمة الداشبورد صلاحية عرض الملف.':error.message});
+  }
+});
+
 app.get('/api/hr/staff',requireAuth_,async(req,res)=>{
   try{
     const result=await getHrStaffData_();
