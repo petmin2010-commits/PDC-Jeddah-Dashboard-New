@@ -2674,6 +2674,8 @@ app.get('/api/monitor',requireAuth_,async(req,res)=>{
   }
 });
 
+require('./report-archive-server')({app,requireAuth_,getSheets,spreadsheetId:SPREADSHEET_ID,city:'Jeddah',baseUrl:'https://pdc-jeddah-dashboard-new.onrender.com'});
+
 app.post('/api/rpc',requireAuth_,async(req,res)=>{
   try{
     const {method,args=[]}=req.body||{};
