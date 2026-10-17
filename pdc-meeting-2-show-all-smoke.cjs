@@ -46,7 +46,7 @@ async function backend(city){
 }
 async function browser(city,browser){
  const folder=path.join(ROOT,city),pub=path.join(folder,'public'),html=fs.readFileSync(path.join(pub,'index.html'),'utf8');
- assert(html.includes('pdc-meeting-2.js?v=20261017-show-all-3'));
+ assert(html.includes('pdc-meeting-2-unfiltered.js?v=20261017-v4'));
  const page=await browser.newPage();
  await page.setContent('<html lang="ar" dir="rtl"><head><meta charset="utf-8"></head><body><div id="pageTitle"></div><div id="filterBar"></div><aside class="sidebar"><nav id="nav"><button class="nav-item" data-page="wednesdayMeeting"><span>اجتماع PDC</span></button><button class="nav-item" id="pdcMeeting2Nav" data-page="pdcMeeting2"><span>اجتماع PDC 2</span></button></nav></aside><main><section class="page active" id="meetingPage"></section></main></body></html>');
  await page.evaluate(({newer,older})=>{
