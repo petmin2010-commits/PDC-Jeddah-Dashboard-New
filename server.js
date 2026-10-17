@@ -169,14 +169,25 @@ async function readDashboardUsers_(){
     E = Active / inactive
     F = User photo (=IMAGE("https://..."))
     G = Allowed dashboard pages (multi-select)
+    H = ACL version (internal metadata; not part of the dropdown)
   */
 
   const sheets=await getSheets();
-  const response=await sheets.spreadsheets.values.get({
-    spreadsheetId:SPREADSHEET_ID,
-    range:qSheet(USERS_SHEET)+'!A:G',
-    valueRenderOption:'FORMULA'
-  });
+  let response;
+  try{
+    response=await sheets.spreadsheets.values.get({
+      spreadsheetId:SPREADSHEET_ID,
+      range:qSheet(USERS_SHEET)+'!A:H',
+      valueRenderOption:'FORMULA'
+    });
+  }catch(error){
+    // Older user sheets may stop at column G. Do not break login.
+    const message=String(error?.message||'');
+    if(Number(error?.code||error?.response?.status)!==400 || !/range|grid|column/i.test(message))throw error;
+    response=await sheets.spreadsheets.values.get({
+      spreadsheetId:SPREADSHEET_ID,range:qSheet(USERS_SHEET)+'!A:G',valueRenderOption:'FORMULA'
+    });
+  }
   const values=response.data.values || [];
 
   if(!Array.isArray(values) || values.length<2){
@@ -203,7 +214,8 @@ async function readDashboardUsers_(){
 
       image:dashboardUserImageUrl_(r[5]),
 
-      permissions:parseDashboardPermissions_(r[6])
+      permissions:parseDashboardPermissions_(r[6]),
+      precisePermissions:clean_(r[7])==='v2'
 
     }))
     .filter(u=>u.email);
@@ -216,7 +228,8 @@ function publicUser_(user){
     role:user.role,
     email:user.email,
     image:user.image || '',
-    permissions:Array.isArray(user.permissions) ? user.permissions : []
+    permissions:Array.isArray(user.permissions) ? user.permissions : [],
+    precisePermissions:user.precisePermissions===true
   };
 
 }
