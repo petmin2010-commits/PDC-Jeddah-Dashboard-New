@@ -2449,7 +2449,10 @@ app.post('/api/auth/login',async(req,res)=>{
 });
 
 
+const onlinePresence_ = require('./online-presence-server')(app, requireAuth_);
+
 app.post('/api/auth/logout',(req,res)=>{
+  onlinePresence_.remove(req);
 
   res.set('Cache-Control','no-store');
 
