@@ -2584,6 +2584,10 @@ require('./projects-report-defaults-server')({
   }
 });
 
+// Isolated Jeddah PDC 2 manual inputs and live source aggregation.
+const pdcMeeting2ManualStore=require('./pdc-meeting-2-manual-store')({app,requireAuth_,getSheets,SPREADSHEET_ID,qSheet,DateTime,APP});
+require('./pdc-meeting-2-server')({app,requireAuth_,getWednesdayMeetingData,getPageData,getSheets,SPREADSHEET_ID,qSheet,APP,manualStore:pdcMeeting2ManualStore});
+
 const safetyCorrectiveImages=require('./safety-corrective-images-server')({ app, requireAuth_, getSheets, SPREADSHEET_ID, qSheet, APP, DateTime });
 require('./safety-corrective-server')({ app, requireAuth_, getSheets, SPREADSHEET_ID, qSheet, APP, DateTime, deletePhotos:safetyCorrectiveImages.deleteAllImages, getContractors:()=>require('./safety-contractor-info')({valuesGet,qSheet}) });
 const qualityCorrectiveImages=require('./quality-corrective-images-server')({ app, requireAuth_, getSheets, SPREADSHEET_ID, qSheet, APP, DateTime });
