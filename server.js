@@ -1204,7 +1204,7 @@ function meetingPermitStatus_(v){
 }
 
 async function getWednesdayMeetingData(){
-  const key='PDC_WEDNESDAY_MEETING_V9_AF155';
+  const key='PDC_WEDNESDAY_MEETING_V10_AF155_SEQUENCE';
   const hit=cacheGet(key);
   if(hit)return hit;
 
@@ -1303,7 +1303,9 @@ async function getWednesdayMeetingData(){
       delayedClosure,
       delayStatus,
       contractor155Status:clean_(r[ix.contractor155Status])||'غير محدد',
+      contractor155Date:clean_(r[37]), // AL: contractor 155 input date
       consultant155Status:clean_(r[ix.consultant155Status])||'غير محدد',
+      consultant155Date:clean_(r[32]), // AG: consultant 155 input date
       nonExecutionStatus:clean_(r[ix.nonExecutionStatus])||'غير محدد',
       delayDays,
       delayBucket:clean_(r[ix.delayBucket])||'غير محدد',

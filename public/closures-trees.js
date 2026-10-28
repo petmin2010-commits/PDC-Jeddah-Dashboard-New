@@ -27,11 +27,15 @@ function meetingDocumentsFirstHtml(rows,total,pct,fmt,esc){
    card('af-consultant-card af-consultant-not-received','غير مستلم 155 استشاري',consultantNotReceived)+
    '</div>';
   const consultantNote=consultantUnknown?'<p class="ak-uds-unknown">حالة 155 للاستشاري غير محددة: '+fmt(consultantUnknown)+'</p>':'';
+  // The red sequence audit is a side-child of AK=no, not a third AK sibling.
+  // Preserve the existing audit count and clickable details across all UDS rows.
+  const sequenceCard=window.PDC155Sequence?.branch(items,total,pct,fmt,esc)||'';
   const cards='<div class="ak-uds-node ak-uds-received-node">'+
    card('ak-uds-card','مستلم 155 للمقاول',receivedRows.length)+
    consultantCards+consultantNote+'</div>'+
    '<div class="ak-uds-node ak-uds-not-received-node">'+
-   card('ak-uds-card','غير مستلم 155 للمقاول',notReceived)+'</div>';
+   card('ak-uds-card','غير مستلم 155 للمقاول',notReceived)+
+   sequenceCard+'</div>';
   const note=unknown?'<p class="ak-uds-unknown">حالات 155 غير محددة: '+fmt(unknown)+'</p>':'';
   return '<div class="ak-uds-children">'+cards+'</div>'+note;
  };
