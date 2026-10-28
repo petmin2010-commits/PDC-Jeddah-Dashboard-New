@@ -1204,7 +1204,7 @@ function meetingPermitStatus_(v){
 }
 
 async function getWednesdayMeetingData(){
-  const key='PDC_WEDNESDAY_MEETING_V8';
+  const key='PDC_WEDNESDAY_MEETING_V9_AF155';
   const hit=cacheGet(key);
   if(hit)return hit;
 
@@ -1232,6 +1232,7 @@ async function getWednesdayMeetingData(){
     duration:col(['المدة uds','المدة'],26),
     delayStatus:27, // العمود AB مباشرة: موقف التأخير
     contractor155Status:36, // العمود AK مباشرة: نعم / لا
+    consultant155Status:31, // العمود AF مباشرة: نعم / لا للاستشاري
     permitStatus:col(['حالة التصريح من بلدي','حالة التصريح'],40),
     advice:col(['إفادة الاستشاري','افادة الاستشاري'],53),
     stage:col(['مرحلة التنفيذ'],54),
@@ -1302,6 +1303,7 @@ async function getWednesdayMeetingData(){
       delayedClosure,
       delayStatus,
       contractor155Status:clean_(r[ix.contractor155Status])||'غير محدد',
+      consultant155Status:clean_(r[ix.consultant155Status])||'غير محدد',
       nonExecutionStatus:clean_(r[ix.nonExecutionStatus])||'غير محدد',
       delayDays,
       delayBucket:clean_(r[ix.delayBucket])||'غير محدد',
