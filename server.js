@@ -2542,6 +2542,8 @@ app.use(express.static(PUBLIC_DIR,{
   index:false
 }));
 
+require('./naif-diagnostics-server')({app,requireAuth_,getSheets,spreadsheetId:SPREADSHEET_ID,city:'Jeddah'});
+
 app.get('/api/health',(req,res)=>{
   let ui='';
   try{ui=fs.readFileSync(INDEX_FILE,'utf8')}catch{}
