@@ -10,12 +10,53 @@ const launch=document.createElement('button');launch.id='vdNaifLauncher';launch.
 const adminLabel=[...nav.querySelectorAll('.nav-section-label')].find(el=>el.textContent.includes('المتابعة الادارية'));
 if(adminLabel)adminLabel.after(launch);else nav.append(launch);
 const dialog=document.createElement('section');dialog.className='vd-naif';dialog.hidden=true;dialog.dataset.state='idle';dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');dialog.setAttribute('aria-label','نايف، مساعد مشروع '+project);
-dialog.innerHTML=`<div class="vd-naif-window"><div class="vd-naif-portrait">${engineer}<div><h2>المهندس نايف</h2><p>مساعد العمليات الذكي — مشروع ${project}</p><div class="vd-naif-status" role="status">جاهز للمساعدة</div></div></div><div class="vd-naif-content"><div class="vd-naif-header"><b>محادثة نايف</b><button type="button" class="vd-naif-close" aria-label="إغلاق">×</button></div><div class="vd-naif-messages" aria-live="polite"></div><div class="vd-naif-quick"><button data-query="أوامر العمل">أوامر العمل</button><button data-query="المشاريع">المشاريع</button><button data-query="التقارير">التقارير</button><button data-query="السلامة">السلامة</button></div><form class="vd-naif-form"><input aria-label="سؤالك لنايف" placeholder="اسأل نايف عن المشروع أو افتح قسمًا..." required><button type="button" class="vd-naif-mic" aria-label="التحدث بالصوت" title="إملاء صوتي">🎤</button><button type="submit">إرسال</button><button type="button" class="vd-naif-sound" title="تفعيل أو إيقاف الصوت" aria-label="الصوت">🔊</button></form><p class="vd-naif-note">نسخة الشخصية التفاعلية: إرشاد وتنقل داخل التبويبات فقط. لا تدعي الاتصال بمكالمات أو قراءة بيانات غير معروضة.</p></div></div>`;
+dialog.innerHTML=`<div class="vd-naif-window"><div class="vd-naif-portrait">${engineer}<div><h2>المهندس نايف</h2><p>مساعد العمليات الذكي — مشروع ${project}</p><div class="vd-naif-status" role="status">جاهز للمساعدة</div></div></div><div class="vd-naif-content"><div class="vd-naif-header"><b>محادثة نايف</b><button type="button" class="vd-naif-close" aria-label="إغلاق">×</button></div><div class="vd-naif-messages" aria-live="polite"></div><div class="vd-naif-quick"><button data-query="أوامر العمل">أوامر العمل</button><button data-query="المشاريع">المشاريع</button><button data-query="التقارير">التقارير</button><button data-query="السلامة">السلامة</button><button data-query="كم الإفادات الضعيفة والشكلية؟">جودة الإفادات</button></div><form class="vd-naif-form"><input aria-label="سؤالك لنايف" placeholder="اسأل نايف عن المشروع أو افتح قسمًا..." required><button type="button" class="vd-naif-mic" aria-label="التحدث بالصوت" title="إملاء صوتي">🎤</button><button type="submit">إرسال</button><button type="button" class="vd-naif-sound" title="تفعيل أو إيقاف الصوت" aria-label="الصوت">🔊</button></form><p class="vd-naif-note">نسخة الشخصية التفاعلية: إرشاد وتنقل داخل التبويبات فقط. لا تدعي الاتصال بمكالمات أو قراءة بيانات غير معروضة.</p></div></div>`;
 document.body.append(dialog);const input=dialog.querySelector('input'),messages=dialog.querySelector('.vd-naif-messages'),status=dialog.querySelector('.vd-naif-status');let voice=false,recognition=null,previousFocus=null;
 const state=(s,label)=>{dialog.dataset.state=s;status.textContent=label};
 const say=text=>{if(!voice||!window.speechSynthesis)return;window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='ar-SA';u.rate=.92;u.onstart=()=>state('speaking','يتحدث');u.onend=()=>state('idle','جاهز للمساعدة');u.onerror=()=>state('idle','جاهز للمساعدة');window.speechSynthesis.speak(u)};
 const bubble=(text,isUser)=>{const item=document.createElement('div');item.className='vd-naif-bubble'+(isUser?' user':'');item.textContent=text;messages.append(item);messages.scrollTop=messages.scrollHeight};
-function reply(question){const query=question.trim();if(!query)return;bubble(query,true);state('thinking','يبحث عن القسم المناسب');let answer='';
+
+/* Read-only bridge to the existing advice-quality engine. Never reclassify or write sheet data. */
+const qualityIntent=/جود[ةه]|إفاد|افاد|جوهري|شكلي|وهمي|مشتبه|ضعيف|إهمال|اهمال|متابع[ةه]/i;
+const numeral=n=>Number(n||0).toLocaleString('ar-SA');
+const qualityNav=()=>[...document.querySelectorAll('#nav [data-page="dataQuality"]')].find(e=>!e.hidden&&getComputedStyle(e).display!=='none');
+function qualityAnswer(query,ai){
+ const counts=ai.counts||{},age=ai.age||{},orders=Array.isArray(ai.currentOrders)?ai.currentOrders:[];
+ const classifications={weak:'ضعيف',suspicious:'شكلي',substantive:'جوهري',pending:'بانتظار'};
+ let type=/وهمي|شكلي|مشتبه/.test(query)?'suspicious':/ضعيف/.test(query)?'weak':/جوهري/.test(query)?'substantive':/انتظار|لم تحلل/.test(query)?'pending':/15|١٥|إهمال شديد/.test(query)?'severe':/3|٣|تأخر|متأخر|متابع/.test(query)?'stale':'';
+ const days=r=>Number(r.daysSinceSubstantive);
+ const selected=type==='stale'?orders.filter(r=>Number.isFinite(days(r))&&days(r)>=3):type==='severe'?orders.filter(r=>Number.isFinite(days(r))&&days(r)>=15):type?orders.filter(r=>type==='suspicious'?r.classification==='شكلي'||String(r.classification||'').includes('مشتبه'):String(r.classification||'').includes(classifications[type])):orders;
+ const total={suspicious:counts.suspicious,weak:counts.weak,substantive:counts.substantive,pending:counts.pending,severe:age.severe,stale:['old','veryOld','neglect','severe'].reduce((s,k)=>s+Number(age[k]||0),0)};
+ let answer='نتائج محرك جودة الإفادات في جدة (المصدر: تبويب جودة البيانات):\n';
+ answer+='أوامر تحت الرقابة: '+numeral(ai.trackedOrders)+'؛ جوهرية: '+numeral(counts.substantive)+'؛ ضعيفة: '+numeral(counts.weak)+'؛ شكلية/مشتبهة: '+numeral(counts.suspicious)+'؛ بانتظار التحليل: '+numeral(counts.pending)+'؛ دون متابعة جوهرية 3+ أيام: '+numeral(total.stale)+'؛ 15+ يوم: '+numeral(age.severe)+'.';
+ if(!ai.agentEnabled)answer+='\nتنبيه: محرك التحليل الذكي غير مفعل حاليًا؛ بعض الحالات قد تكون بانتظار تحليل.';
+ if(ai.error)answer+='\nتنبيه من المصدر: '+String(ai.error).slice(0,180);
+ const wantsPeople=/من |مين|المهندس|المهندسين|أسماء|اسماء|اعرض|تفاصيل|قائمة|أكثر|اكثر|حسب/.test(query);
+ if(wantsPeople){
+   const groups=new Map();for(const row of selected){const name=String(row.engineer||'غير محدد').trim();groups.set(name,(groups.get(name)||0)+1)}
+   const top=[...groups].sort((a,b)=>b[1]-a[1]).slice(0,10);
+   answer+='\n'+(type?'الحالات المطلوبة':'توزيع الحالات الحالية')+': '+numeral(type?total[type]??selected.length:selected.length)+'.';
+   if(top.length)answer+='\nأبرز المهندسين: '+top.map(([name,n])=>name+' ('+numeral(n)+')').join('، ')+'.';
+   else answer+='\nلا توجد سجلات تفصيلية متاحة في بيانات المصدر لهذه الفئة.';
+ }
+ answer+='\nأوامر العمل في مرحلة الإغلاق مستبعدة من فحص الجودة وفق قواعد النظام.';
+ return answer;
+}
+async function replyQuality(query){
+ const nav=qualityNav();
+ if(!nav)return 'لا يمكنني الاطلاع على بيانات جودة الإفادات من هذا الحساب، أو أن تبويب جودة البيانات غير متاح في نسخة المشروع الحالية. لن أعرض أرقامًا دون مصدر مصرح به.';
+ try{
+   const response=await fetch('/api/rpc',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({method:'getPageData',args:['dataQuality']})});
+   if(response.status===401||response.status===403)return 'انتهت الجلسة أو ليست لديك صلاحية قراءة جودة البيانات. سجّل الدخول بحساب مخول.';
+   if(!response.ok)return 'تعذر الاتصال بمحرك جودة الإفادات (HTTP '+response.status+').';
+   const payload=await response.json();const page=payload?.result;
+   if(!payload?.ok||page?.key!=='dataQuality'||!page.adviceIntelligence)return 'لم أجد محرك جودة الإفادات مرتبطًا بهذه النسخة من الداشبورد؛ لن أخمن النتائج.';
+   return qualityAnswer(query,page.adviceIntelligence);
+ }catch(e){return 'تعذر الوصول إلى نتائج الجودة الحالية. تحقق من الاتصال بالمشروع، ثم أعد المحاولة. ('+String(e.message||e).slice(0,100)+')'}
+}
+
+async function reply(question){const query=question.trim();if(!query)return;bubble(query,true);state('thinking','يبحث عن القسم المناسب');let answer='';
+if(qualityIntent.test(query)){state('thinking','يقرأ نتائج جودة الإفادات');const result=await replyQuality(query);bubble(result,false);state('idle','جاهز للمساعدة');say(result);return;}
 const found=labels.find(([title])=>query.includes(title));if(found){let target=[...document.querySelectorAll('#nav .nav-item[data-page]')].find(el=>el.dataset.page===found[1]);if(!target)target=[...document.querySelectorAll('#nav .nav-item[data-page]')].find(el=>el.textContent.includes(found[0]));if(target&&!target.hidden&&getComputedStyle(target).display!=='none'){target.click();answer='فتحت لك قسم '+found[0]+' في لوحة مشروع '+project+'. يمكنك مراجعة التفاصيل والفلاتر هناك.'}else{answer='قسم '+found[0]+' غير متاح في القائمة الحالية لصلاحيات حسابك؛ لا يمكنني فتح بيانات غير مصرّح بها.'}}
 else if(/عرف نفسك|من أنت|مين انت|اسمك/.test(query))answer='أنا المهندس نايف، الشخصية الافتراضية لمتابعة عمليات مشروع كهرباء '+project+'. أساعدك في الوصول إلى أقسام الداشبورد، ويمكنك استخدام الكتابة أو الإملاء الصوتي.';
 else if(/كم|عدد|نسبة|حالة|تأخير|ملخص|بيانات|تقرير/.test(query))answer='لإجابة دقيقة عن الأرقام أحتاج ربط محرك المحادثة بمصادر بيانات المشروع. حاليًا يمكنني فتح التبويب المطلوب، لكن لن أخمن أرقامًا أو نتائج.';
